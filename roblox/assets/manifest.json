@@ -1,0 +1,1047 @@
+{
+  "acc:bling": {
+    "file": "acc__bling.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:bling_2": {
+    "file": "acc__bling_2.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl": {
+    "file": "acc__chips_xl.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_diamond": {
+    "file": "acc__chips_xl_diamond.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_double_choco": {
+    "file": "acc__chips_xl_double_choco.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_galaxy": {
+    "file": "acc__chips_xl_galaxy.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_golden": {
+    "file": "acc__chips_xl_golden.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_hologram": {
+    "file": "acc__chips_xl_hologram.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_lava": {
+    "file": "acc__chips_xl_lava.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_matcha": {
+    "file": "acc__chips_xl_matcha.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_pixel": {
+    "file": "acc__chips_xl_pixel.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_plasma": {
+    "file": "acc__chips_xl_plasma.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_rainbow": {
+    "file": "acc__chips_xl_rainbow.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_red_velvet": {
+    "file": "acc__chips_xl_red_velvet.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_robux": {
+    "file": "acc__chips_xl_robux.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_vip": {
+    "file": "acc__chips_xl_vip.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:chips_xl_void": {
+    "file": "acc__chips_xl_void.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:crown": {
+    "file": "acc__crown.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:crystals": {
+    "file": "acc__crystals.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:face": {
+    "file": "acc__face.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:face_blink": {
+    "file": "acc__face_blink.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:face_fever": {
+    "file": "acc__face_fever.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:face_open": {
+    "file": "acc__face_open.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:galaxy_core": {
+    "file": "acc__galaxy_core.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:glaze": {
+    "file": "acc__glaze.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:glaze_2": {
+    "file": "acc__glaze_2.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:halo": {
+    "file": "acc__halo.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:headphones": {
+    "file": "acc__headphones.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:holo": {
+    "file": "acc__holo.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:laser_eyes": {
+    "file": "acc__laser_eyes.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:rgb_rim": {
+    "file": "acc__rgb_rim.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:shades": {
+    "file": "acc__shades.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:sprinkles": {
+    "file": "acc__sprinkles.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:sprinkles_2": {
+    "file": "acc__sprinkles_2.png",
+    "w": 640,
+    "h": 640
+  },
+  "acc:wings": {
+    "file": "acc__wings.png",
+    "w": 640,
+    "h": 640
+  },
+  "b:antimatter": {
+    "file": "b__antimatter.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:bank": {
+    "file": "b__bank.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:cursor": {
+    "file": "b__cursor.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:factory": {
+    "file": "b__factory.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:farm": {
+    "file": "b__farm.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:granny": {
+    "file": "b__granny.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:lab": {
+    "file": "b__lab.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:mine": {
+    "file": "b__mine.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:portal": {
+    "file": "b__portal.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:prism": {
+    "file": "b__prism.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:rocket": {
+    "file": "b__rocket.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:streamer": {
+    "file": "b__streamer.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:temple": {
+    "file": "b__temple.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:timemachine": {
+    "file": "b__timemachine.png",
+    "w": 128,
+    "h": 128
+  },
+  "b:wizard": {
+    "file": "b__wizard.png",
+    "w": 128,
+    "h": 128
+  },
+  "bg:aurora": {
+    "file": "bg__aurora.png",
+    "w": 1024,
+    "h": 576
+  },
+  "bg:candy": {
+    "file": "bg__candy.png",
+    "w": 1024,
+    "h": 576
+  },
+  "bg:galaxy": {
+    "file": "bg__galaxy.png",
+    "w": 1024,
+    "h": 576
+  },
+  "bg:inferno": {
+    "file": "bg__inferno.png",
+    "w": 1024,
+    "h": 576
+  },
+  "bg:matrix": {
+    "file": "bg__matrix.png",
+    "w": 1024,
+    "h": 576
+  },
+  "bg:synthwave": {
+    "file": "bg__synthwave.png",
+    "w": 1024,
+    "h": 576
+  },
+  "boss:broccoli": {
+    "file": "boss__broccoli.png",
+    "w": 256,
+    "h": 256
+  },
+  "boss:dentist": {
+    "file": "boss__dentist.png",
+    "w": 256,
+    "h": 256
+  },
+  "boss:ghost": {
+    "file": "boss__ghost.png",
+    "w": 256,
+    "h": 256
+  },
+  "boss:lemon": {
+    "file": "boss__lemon.png",
+    "w": 256,
+    "h": 256
+  },
+  "boss:rat": {
+    "file": "boss__rat.png",
+    "w": 256,
+    "h": 256
+  },
+  "boss:salad": {
+    "file": "boss__salad.png",
+    "w": 256,
+    "h": 256
+  },
+  "boss:salt": {
+    "file": "boss__salt.png",
+    "w": 256,
+    "h": 256
+  },
+  "cookie:classic": {
+    "file": "cookie__classic.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:diamond": {
+    "file": "cookie__diamond.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:double_choco": {
+    "file": "cookie__double_choco.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:galaxy": {
+    "file": "cookie__galaxy.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:golden": {
+    "file": "cookie__golden.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:hologram": {
+    "file": "cookie__hologram.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:lava": {
+    "file": "cookie__lava.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:matcha": {
+    "file": "cookie__matcha.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:pixel": {
+    "file": "cookie__pixel.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:plasma": {
+    "file": "cookie__plasma.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:rainbow": {
+    "file": "cookie__rainbow.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:red_velvet": {
+    "file": "cookie__red_velvet.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:robux": {
+    "file": "cookie__robux.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:vip": {
+    "file": "cookie__vip.png",
+    "w": 640,
+    "h": 640
+  },
+  "cookie:void": {
+    "file": "cookie__void.png",
+    "w": 640,
+    "h": 640
+  },
+  "egg:basic": {
+    "file": "egg__basic.png",
+    "w": 256,
+    "h": 256
+  },
+  "egg:cosmic": {
+    "file": "egg__cosmic.png",
+    "w": 256,
+    "h": 256
+  },
+  "egg:neon": {
+    "file": "egg__neon.png",
+    "w": 256,
+    "h": 256
+  },
+  "fx:black_hole": {
+    "file": "fx__black_hole.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:bolt": {
+    "file": "fx__bolt.png",
+    "w": 256,
+    "h": 64
+  },
+  "fx:bolt_violet": {
+    "file": "fx__bolt_violet.png",
+    "w": 256,
+    "h": 64
+  },
+  "fx:candy_1": {
+    "file": "fx__candy_1.png",
+    "w": 96,
+    "h": 96
+  },
+  "fx:candy_2": {
+    "file": "fx__candy_2.png",
+    "w": 96,
+    "h": 96
+  },
+  "fx:candy_3": {
+    "file": "fx__candy_3.png",
+    "w": 96,
+    "h": 96
+  },
+  "fx:candy_4": {
+    "file": "fx__candy_4.png",
+    "w": 96,
+    "h": 96
+  },
+  "fx:candy_5": {
+    "file": "fx__candy_5.png",
+    "w": 96,
+    "h": 96
+  },
+  "fx:candy_6": {
+    "file": "fx__candy_6.png",
+    "w": 96,
+    "h": 96
+  },
+  "fx:disco_ball": {
+    "file": "fx__disco_ball.png",
+    "w": 256,
+    "h": 256
+  },
+  "fx:fire": {
+    "file": "fx__fire.png",
+    "w": 128,
+    "h": 256
+  },
+  "fx:fire_aura": {
+    "file": "fx__fire_aura.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:fire_aura_2": {
+    "file": "fx__fire_aura_2.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:glow": {
+    "file": "fx__glow.png",
+    "w": 256,
+    "h": 256
+  },
+  "fx:god_rays": {
+    "file": "fx__god_rays.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:golden_rays": {
+    "file": "fx__golden_rays.png",
+    "w": 256,
+    "h": 256
+  },
+  "fx:lightning": {
+    "file": "fx__lightning.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:mountains_synthwave": {
+    "file": "fx__mountains_synthwave.png",
+    "w": 512,
+    "h": 48
+  },
+  "fx:ring": {
+    "file": "fx__ring.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:ring_rgb": {
+    "file": "fx__ring_rgb.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:saturn_back": {
+    "file": "fx__saturn_back.png",
+    "w": 512,
+    "h": 256
+  },
+  "fx:saturn_front": {
+    "file": "fx__saturn_front.png",
+    "w": 512,
+    "h": 256
+  },
+  "fx:shadow": {
+    "file": "fx__shadow.png",
+    "w": 256,
+    "h": 256
+  },
+  "fx:silhouette": {
+    "file": "fx__silhouette.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:silhouette_diamond": {
+    "file": "fx__silhouette_diamond.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:spark": {
+    "file": "fx__spark.png",
+    "w": 128,
+    "h": 128
+  },
+  "fx:spark_core": {
+    "file": "fx__spark_core.png",
+    "w": 128,
+    "h": 128
+  },
+  "fx:star": {
+    "file": "fx__star.png",
+    "w": 128,
+    "h": 128
+  },
+  "fx:sun_synthwave": {
+    "file": "fx__sun_synthwave.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:wing_left": {
+    "file": "fx__wing_left.png",
+    "w": 512,
+    "h": 512
+  },
+  "fx:wing_right": {
+    "file": "fx__wing_right.png",
+    "w": 512,
+    "h": 512
+  },
+  "golden": {
+    "file": "golden.png",
+    "w": 256,
+    "h": 256
+  },
+  "item:broccoli": {
+    "file": "item__broccoli.png",
+    "w": 256,
+    "h": 256
+  },
+  "item:choco": {
+    "file": "item__choco.png",
+    "w": 256,
+    "h": 256
+  },
+  "item:cupcake": {
+    "file": "item__cupcake.png",
+    "w": 256,
+    "h": 256
+  },
+  "item:donut": {
+    "file": "item__donut.png",
+    "w": 256,
+    "h": 256
+  },
+  "item:milk": {
+    "file": "item__milk.png",
+    "w": 256,
+    "h": 256
+  },
+  "item:seven": {
+    "file": "item__seven.png",
+    "w": 256,
+    "h": 256
+  },
+  "mg:flappy": {
+    "file": "mg__flappy.png",
+    "w": 256,
+    "h": 256
+  },
+  "mg:ninja": {
+    "file": "mg__ninja.png",
+    "w": 256,
+    "h": 256
+  },
+  "mg:rhythm": {
+    "file": "mg__rhythm.png",
+    "w": 256,
+    "h": 256
+  },
+  "mg:slots": {
+    "file": "mg__slots.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:cat": {
+    "file": "pet__cat.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:chick": {
+    "file": "pet__chick.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:dog": {
+    "file": "pet__dog.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:dragon": {
+    "file": "pet__dragon.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:fox": {
+    "file": "pet__fox.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:frog": {
+    "file": "pet__frog.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:glitchy": {
+    "file": "pet__glitchy.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:hamster": {
+    "file": "pet__hamster.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:octopus": {
+    "file": "pet__octopus.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:owl": {
+    "file": "pet__owl.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:panda": {
+    "file": "pet__panda.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:robot": {
+    "file": "pet__robot.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:unicorn": {
+    "file": "pet__unicorn.png",
+    "w": 256,
+    "h": 256
+  },
+  "pet:whale": {
+    "file": "pet__whale.png",
+    "w": 256,
+    "h": 256
+  },
+  "tab:games": {
+    "file": "tab__games.png",
+    "w": 128,
+    "h": 128
+  },
+  "tab:options": {
+    "file": "tab__options.png",
+    "w": 128,
+    "h": 128
+  },
+  "tab:pets": {
+    "file": "tab__pets.png",
+    "w": 128,
+    "h": 128
+  },
+  "tab:quests": {
+    "file": "tab__quests.png",
+    "w": 128,
+    "h": 128
+  },
+  "tab:rebirth": {
+    "file": "tab__rebirth.png",
+    "w": 128,
+    "h": 128
+  },
+  "tab:shop": {
+    "file": "tab__shop.png",
+    "w": 128,
+    "h": 128
+  },
+  "tab:style": {
+    "file": "tab__style.png",
+    "w": 128,
+    "h": 128
+  },
+  "tab:upgrades": {
+    "file": "tab__upgrades.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:bolt": {
+    "file": "ui__bolt.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:chart": {
+    "file": "ui__chart.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:check": {
+    "file": "ui__check.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:clock": {
+    "file": "ui__clock.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:close": {
+    "file": "ui__close.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:cookie": {
+    "file": "ui__cookie.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:crown": {
+    "file": "ui__crown.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:cursor": {
+    "file": "ui__cursor.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:dice": {
+    "file": "ui__dice.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:fire": {
+    "file": "ui__fire.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:gem": {
+    "file": "ui__gem.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:gift": {
+    "file": "ui__gift.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:golden": {
+    "file": "ui__golden.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:heart": {
+    "file": "ui__heart.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:heart_empty": {
+    "file": "ui__heart_empty.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:home": {
+    "file": "ui__home.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:lock": {
+    "file": "ui__lock.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:moon": {
+    "file": "ui__moon.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:music": {
+    "file": "ui__music.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:mute": {
+    "file": "ui__mute.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:play": {
+    "file": "ui__play.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:rainbow": {
+    "file": "ui__rainbow.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:save": {
+    "file": "ui__save.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:search": {
+    "file": "ui__search.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:skull": {
+    "file": "ui__skull.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:sound": {
+    "file": "ui__sound.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:sparkle": {
+    "file": "ui__sparkle.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:star": {
+    "file": "ui__star.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:sword": {
+    "file": "ui__sword.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:tap": {
+    "file": "ui__tap.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:tornado": {
+    "file": "ui__tornado.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:trophy": {
+    "file": "ui__trophy.png",
+    "w": 128,
+    "h": 128
+  },
+  "ui:warning": {
+    "file": "ui__warning.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:afterimage": {
+    "file": "vis__afterimage.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:beat_pulse": {
+    "file": "vis__beat_pulse.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:black_hole": {
+    "file": "vis__black_hole.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:bling": {
+    "file": "vis__bling.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:chat": {
+    "file": "vis__chat.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:chips_xl": {
+    "file": "vis__chips_xl.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:confetti_click": {
+    "file": "vis__confetti_click.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:cookie_rain": {
+    "file": "vis__cookie_rain.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:crown": {
+    "file": "vis__crown.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:crystals": {
+    "file": "vis__crystals.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:cursor_rgb": {
+    "file": "vis__cursor_rgb.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:disco": {
+    "file": "vis__disco.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:face": {
+    "file": "vis__face.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:fire_aura": {
+    "file": "vis__fire_aura.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:galaxy_core": {
+    "file": "vis__galaxy_core.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:glaze": {
+    "file": "vis__glaze.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:glitch": {
+    "file": "vis__glitch.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:god_rays": {
+    "file": "vis__god_rays.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:halo": {
+    "file": "vis__halo.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:headphones": {
+    "file": "vis__headphones.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:holo": {
+    "file": "vis__holo.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:laser_eyes": {
+    "file": "vis__laser_eyes.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:lightning": {
+    "file": "vis__lightning.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:orbiters": {
+    "file": "vis__orbiters.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:rgb_rim": {
+    "file": "vis__rgb_rim.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:saturn_ring": {
+    "file": "vis__saturn_ring.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:shades": {
+    "file": "vis__shades.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:shockwave": {
+    "file": "vis__shockwave.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:sprinkles": {
+    "file": "vis__sprinkles.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:warp": {
+    "file": "vis__warp.png",
+    "w": 128,
+    "h": 128
+  },
+  "vis:wings": {
+    "file": "vis__wings.png",
+    "w": 128,
+    "h": 128
+  }
+}
