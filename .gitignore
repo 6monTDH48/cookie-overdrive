@@ -2,3 +2,4 @@
 .DS_Store
 source/dist/
 roblox/sourcemap.json
+roblox/tools/mock/out/

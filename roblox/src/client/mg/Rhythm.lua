@@ -910,7 +910,7 @@ function Rhythm.mount(ctx)
 			if not skip and y <= H + G.nr * 2 then
 				local k = kAt(y)
 				local x, r = laneX(n.lane, y), G.nr * kAt(y)
-				local col = n.j < 0 and COL.red or colOf(n.lane)
+				local col = (n.j or 0) < 0 and COL.red or colOf(n.lane)
 				cvW:glow(x, y, r * 1.7, col, alpha * 0.55, 0.3)
 				cvW:ring(x, y, r * 1.02, 5 * k, INK, alpha)
 				cvW:cookie(x, y, r, vt * 2.2 + n.lane * 1.3 + n.step, { alpha = alpha })
