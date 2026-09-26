@@ -406,7 +406,7 @@ local function buildPanel()
 	K.padding(body, 12, 12, 18, 12)
 	L.body = body
 	body:GetPropertyChangedSignal("AbsoluteWindowSize"):Connect(function()
-		if page and UI.tab and math.abs(page.AbsoluteSize.X - (body.AbsoluteWindowSize.X - 28)) > 2 then UI.render(true) end
+		if L.page and UI.tab and math.abs(L.page.AbsoluteSize.X - (body.AbsoluteWindowSize.X - 28)) > 2 then UI.render(true) end
 	end)
 end
 
@@ -443,6 +443,7 @@ function UI.render(keepScroll: boolean?)
 	local pg = frame({ Name = "Page_" .. UI.tab, Size = UDim2.fromOffset(width, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 2, Parent = body })
 	K.vlist(pg, 8)
 	page = pg
+	L.page = pg
 	Panel.render(UI.tab, pg, width)
 	lastSoft = Panel.softKey(UI.tab)
 	if keepScroll then
