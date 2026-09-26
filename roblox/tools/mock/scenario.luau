@@ -39,6 +39,8 @@ for _, id in { "shop", "upgrades", "games", "pets", "style", "quests", "rebirth"
 	W.click(b); W.run(0.6)
 	local page = W.byName(gui, "Page_" .. id)
 	if not page then M.finding("error", "tab " .. id .. " did not render its page") end
+	local np = #W.findAll(gui, function(_, r) return type(r.props.Name) == "string" and string.sub(r.props.Name, 1, 5) == "Page_" end)
+	if np ~= 1 then M.finding("error", "tab " .. id .. ": " .. np .. " pages alive") end
 	if id == "shop" then
 		local row = W.find(page, function(d, r) return r.class == "TextButton" end)
 		if row then W.click(row); W.run(0.4) end
