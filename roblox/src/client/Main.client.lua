@@ -7,6 +7,7 @@ local D = require(RS:WaitForChild("Shared"):WaitForChild("GameData"))
 local Remotes = RS:WaitForChild("Remotes")
 local ClickEv, ActionFn, SyncEv, FxEv = Remotes:WaitForChild("Click"), Remotes:WaitForChild("Action"), Remotes:WaitForChild("Sync"), Remotes:WaitForChild("Fx")
 
+local Scene = require(script.Parent:WaitForChild("Scene"))
 local Cookie = require(script.Parent:WaitForChild("CookieModel"))
 local UI = require(script.Parent:WaitForChild("UI"))
 local Minigames = require(script.Parent:WaitForChild("Minigames"))
@@ -33,9 +34,21 @@ local function tap(screenPos)
 	ClickEv:FireServer()
 end
 
+Scene.start()
+Cookie.scene = Scene
 Cookie.start()
 Minigames.init(act, UI)
 UI.init(Store, act, tap, Minigames)
+game:GetService("RunService").RenderStepped:Connect(function()
+	Scene.rightInset = UI.rightInset()
+end)
+
+-- Espace = cliquer le cookie (comme sur le site)
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed or Minigames.isOpen() or input.KeyCode ~= Enum.KeyCode.Space then return end
+	local p = camera:WorldToViewportPoint(Cookie.worldPos())
+	tap(Vector2.new(p.X, p.Y))
+end)
 
 -- clic direct sur le cookie 3D
 UserInputService.InputBegan:Connect(function(input, processed)
@@ -45,7 +58,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	local ray = camera:ViewportPointToRay(pos.X, pos.Y)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { player.Character }
+	params.FilterDescendantsInstances = {}
 	local hit = workspace:Raycast(ray.Origin, ray.Direction * 500, params)
 	if hit and Cookie.isCookie(hit.Instance) then
 		tap(Vector2.new(pos.X, pos.Y))
@@ -106,8 +119,8 @@ FxEv.OnClientEvent:Connect(function(kind, d)
 		if d.state == "spawn" then UI.toast(d.emoji .. " " .. d.name .. " attaque ! Clique pour le battre !", "#ff4d6d") end
 	elseif kind == "offline" then
 		UI.modal("Bon retour ! 👋", "Pendant ton absence (" .. math.floor(d.away / 60) .. " min), ta boulangerie a produit\n+" .. D.fmt(d.gain) .. " 🍪", {
-			{ "Cool !", Color3.fromHex("#2bdc6a") },
-			{ "×3 Boost 💎", Color3.fromHex("#ff2bd6"), function() UI.openTab("shop") end },
+			{ "Cool !", "green" },
+			{ "Boost ×3 ⚡", "pink", function() UI.openTab("shop") end },
 		})
 	elseif kind == "purchase" then
 		UI.modal("MERCI ! " .. d.emoji, d.name .. " est activé. Profite bien ! 🍪", nil, Color3.fromHex("#2bdc6a"))
@@ -117,7 +130,7 @@ end)
 -- Première visite : petite aide
 task.delay(4, function()
 	if Store.state and Store.state.clicks == 0 then
-		UI.modal("COOKIE OVERDRIVE 🍪", "Clique sur le cookie géant (ou le bouton 🍪 en bas à gauche) pour produire des cookies.\nAchète des bâtiments et des améliorations avec les onglets à droite !", { { "C'est parti !", Color3.fromHex("#2bdc6a") } })
+		UI.modal("COOKIE OVERDRIVE 🍪", "Clique sur le cookie (ou Espace) pour produire des cookies.\nAchète des bâtiments et des améliorations dans le panneau à droite !", { { "C'est parti !", "green" } })
 	end
 end)
 

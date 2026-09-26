@@ -75,22 +75,22 @@ D.upgrades = {
 
 -- Skins : couleurs du cookie 3D (base / pépites / contour) + matériau
 D.skins = {
-	{ id = "classic", name = "Classique", cost = 0, base = "#d99a4e", chip = "#4a2511", rim = "#8a5220", material = "SmoothPlastic" },
-	{ id = "double_choco", name = "Double Choco", cost = 15, base = "#6b3a1f", chip = "#f5e6d0", rim = "#2e160a", material = "SmoothPlastic" },
-	{ id = "red_velvet", name = "Red Velvet", cost = 25, base = "#c02640", chip = "#fff3e6", rim = "#5e0a1a", material = "SmoothPlastic" },
-	{ id = "matcha", name = "Matcha Zen", cost = 25, base = "#8dbf5a", chip = "#f7f2e0", rim = "#466a24", material = "SmoothPlastic" },
-	{ id = "pixel", name = "Pixel 8-bit", cost = 40, base = "#e0a050", chip = "#3a1c0c", rim = "#1a0b33", material = "Brick" },
-	{ id = "lava", name = "Magma", cost = 60, base = "#2a1210", chip = "#ff6a00", rim = "#ff3d00", material = "CrackedLava" },
-	{ id = "galaxy", name = "Galaxie", cost = 80, base = "#2b1060", chip = "#ff5ef0", rim = "#b16bff", material = "Neon" },
-	{ id = "diamond", name = "Diamant", cost = 120, base = "#9ff3ff", chip = "#e0fbff", rim = "#63d6f0", material = "Glass" },
-	{ id = "hologram", name = "Hologramme", cost = 150, base = "#39f0ff", chip = "#ff4fe1", rim = "#39f0ff", material = "ForceField" },
-	{ id = "golden", name = "Cookie Doré", cost = 0, unlock = { ach = "a_golden10", text = "Attrape 10 cookies dorés" }, base = "#ffcc33", chip = "#b36b00", rim = "#8a5a00", material = "Foil" },
-	{ id = "rainbow", name = "Arc-en-ciel RGB", cost = 250, base = "#ff4fd8", chip = "#1a0b33", rim = "#ffffff", material = "Neon", rgb = true },
-	{ id = "void", name = "Néant", cost = 0, unlock = { rebirths = 3, text = "Fais 3 Rebirths" }, base = "#07030f", chip = "#b16bff", rim = "#b16bff", material = "Slate" },
+	{ id = "classic", name = "Classique", cost = 0, base = "#d99a4e", dark = "#a9652a", light = "#f3c783", chipHi = "#7a4424", chip = "#4a2511", rim = "#8a5220", material = "SmoothPlastic" },
+	{ id = "double_choco", name = "Double Choco", cost = 15, base = "#6b3a1f", dark = "#3f1f0e", light = "#915833", chipHi = "#ffffff", chip = "#f5e6d0", rim = "#2e160a", material = "SmoothPlastic" },
+	{ id = "red_velvet", name = "Red Velvet", cost = 25, base = "#c02640", dark = "#7a0f22", light = "#e8566c", chipHi = "#ffffff", chip = "#fff3e6", rim = "#5e0a1a", material = "SmoothPlastic" },
+	{ id = "matcha", name = "Matcha Zen", cost = 25, base = "#8dbf5a", dark = "#5e8a34", light = "#bde38f", chipHi = "#ffffff", chip = "#f7f2e0", rim = "#466a24", material = "SmoothPlastic" },
+	{ id = "pixel", name = "Pixel 8-bit", cost = 40, base = "#e0a050", dark = "#9c5a1c", light = "#ffd08a", chipHi = "#6e3a1c", chip = "#3a1c0c", rim = "#1a0b33", material = "Brick" },
+	{ id = "lava", name = "Magma", cost = 60, base = "#2a1210", dark = "#140806", light = "#4a221c", chipHi = "#ffd000", chip = "#ff6a00", rim = "#ff3d00", material = "CrackedLava" },
+	{ id = "galaxy", name = "Galaxie", cost = 80, base = "#2b1060", dark = "#120530", light = "#6a3cc9", chipHi = "#9ff6ff", chip = "#ff5ef0", rim = "#b16bff", material = "Neon" },
+	{ id = "diamond", name = "Diamant", cost = 120, base = "#9ff3ff", dark = "#3fb6d9", light = "#ffffff", chipHi = "#ffffff", chip = "#e0fbff", rim = "#63d6f0", material = "Glass" },
+	{ id = "hologram", name = "Hologramme", cost = 150, base = "#39f0ff", dark = "#0b6d8a", light = "#b7fbff", chipHi = "#ffffff", chip = "#ff4fe1", rim = "#39f0ff", material = "ForceField" },
+	{ id = "golden", name = "Cookie Doré", cost = 0, unlock = { ach = "a_golden10", text = "Attrape 10 cookies dorés" }, base = "#ffcc33", dark = "#c98a00", light = "#fff2a8", chipHi = "#ffe07a", chip = "#b36b00", rim = "#8a5a00", material = "Foil" },
+	{ id = "rainbow", name = "Arc-en-ciel RGB", cost = 250, base = "#ff4fd8", dark = "#7a2cff", light = "#ffffff", chipHi = "#5a3a8a", chip = "#1a0b33", rim = "#ffffff", material = "Neon", rgb = true },
+	{ id = "void", name = "Néant", cost = 0, unlock = { rebirths = 3, text = "Fais 3 Rebirths" }, base = "#07030f", dark = "#000000", light = "#1d1033", chipHi = "#ffffff", chip = "#b16bff", rim = "#b16bff", material = "Slate" },
 	-- Skins exclusifs aux Game Passes / produits Robux
-	{ id = "vip", name = "VIP Diamant Rose", cost = 0, unlock = { pass = "VIP", text = "Game Pass VIP" }, base = "#ff2bd6", chip = "#ffffff", rim = "#ffc93c", material = "Glass", rgb = false },
-	{ id = "robux", name = "Cookie Robux", cost = 0, unlock = { pass = "SkinPack", text = "Pack Skins Exclusifs" }, base = "#2bdc6a", chip = "#0b0620", rim = "#ffffff", material = "Foil" },
-	{ id = "plasma", name = "Plasma Overdrive", cost = 0, unlock = { pass = "SkinPack", text = "Pack Skins Exclusifs" }, base = "#1ff4ff", chip = "#ff2bd6", rim = "#8a5cff", material = "Neon", rgb = true },
+	{ id = "vip", name = "VIP Diamant Rose", cost = 0, unlock = { pass = "VIP", text = "Game Pass VIP" }, base = "#ff2bd6", dark = "#a0108a", light = "#ff9cf0", chipHi = "#ffffff", chip = "#ffffff", rim = "#ffc93c", material = "Glass", rgb = false },
+	{ id = "robux", name = "Cookie Robux", cost = 0, unlock = { pass = "SkinPack", text = "Pack Skins Exclusifs" }, base = "#2bdc6a", dark = "#138a3c", light = "#9dffc0", chipHi = "#4a4a6a", chip = "#0b0620", rim = "#ffffff", material = "Foil" },
+	{ id = "plasma", name = "Plasma Overdrive", cost = 0, unlock = { pass = "SkinPack", text = "Pack Skins Exclusifs" }, base = "#1ff4ff", dark = "#0b6d8a", light = "#b7fbff", chipHi = "#ffffff", chip = "#ff2bd6", rim = "#8a5cff", material = "Neon", rgb = true },
 }
 
 -- Thèmes : ambiance de la Lighting + couleur du sol
@@ -283,14 +283,14 @@ local SUF = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", 
 function D.fmt(n)
 	if n ~= n then return "0" end
 	if n < 1000 then
-		if n < 10 and n % 1 ~= 0 then return string.format("%.1f", n) end
+		if n < 10 and n % 1 ~= 0 then return (string.gsub(string.format("%.1f", n), "%.", ",")) end
 		return tostring(math.floor(n))
 	end
 	local e = math.floor(math.log10(n) / 3)
 	if e >= #SUF then return string.format("%.2e", n) end
 	local v = n / 10 ^ (e * 3)
 	local s = v >= 100 and string.format("%.0f", v) or v >= 10 and string.format("%.1f", v) or string.format("%.2f", v)
-	return s .. SUF[e + 1]
+	return (string.gsub(s, "%.", ",")) .. " " .. SUF[e + 1]
 end
 
 function D.color(hex)
