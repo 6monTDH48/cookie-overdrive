@@ -834,10 +834,36 @@
   CO.toast = (text, opts = {}) => CO.emit('toast', { text, ...opts });
 
   /* ═════════════════════════ SAVE / LOAD ═════════════════════════ */
-  let saveTimer = null;
+  let saveTimer = null, saveBlocked = false;
+  const BACKUP_KEY = SAVE_KEY + '-backup';
+  // other tab took over the save slot → stop writing so we never clobber newer progress
+  const TAB_ID = Math.random().toString(36).slice(2);
+  let tabChan = null;
+  try {
+    tabChan = new BroadcastChannel('cookie-overdrive');
+    tabChan.onmessage = (e) => {
+      const m = e.data || {};
+      if (m.type === 'hello' && m.id !== TAB_ID && !saveBlocked) { save(); tabChan.postMessage({ type: 'yield', to: m.id }); saveBlocked = true; CO.emit('tab:blocked', {}); }
+      else if (m.type === 'yield' && m.to === TAB_ID && load()) { afterLoad(); CO.emit('load', { imported: true }); }
+    };
+  } catch (e) { tabChan = null; }
   function save() {
+    if (saveBlocked) return false;
     CO.state.lastSave = Date.now();
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(CO.state)); return true; } catch (e) { return false; }
+    let raw;
+    try { raw = JSON.stringify(CO.state); } catch (e) { return false; }
+    try {
+      // rotate: keep the previous good save as a backup (≥ 5 min apart) in case the main slot gets corrupted
+      const prev = localStorage.getItem(SAVE_KEY);
+      if (prev && prev !== raw) {
+        const bk = localStorage.getItem(BACKUP_KEY);
+        let bkAge = Infinity;
+        try { bkAge = Date.now() - (JSON.parse(bk || '{}').lastSave || 0); } catch (e) { /* corrupt backup */ }
+        if (bkAge > 5 * 60 * 1000) { try { JSON.parse(prev); localStorage.setItem(BACKUP_KEY, prev); } catch (e) { /* skip bad prev */ } }
+      }
+      localStorage.setItem(SAVE_KEY, raw);
+      return true;
+    } catch (e) { return false; }
   }
   function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
   CO.save = save;
@@ -846,7 +872,8 @@
     st.settings = merge(defaultSettings(), obj && obj.settings);
     // sanity
     D.buildings.forEach((b) => { st.buildings[b.id] = Math.max(0, Math.floor(+st.buildings[b.id] || 0)); });
-    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k] || 0; if (st[k] < 0) st[k] = 0; });
+    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k]; if (!Number.isFinite(st[k]) || st[k] < 0) st[k] = 0; });
+    if (!Number.isFinite(+st.lastSave) || +st.lastSave > Date.now() + 60000) st.lastSave = Date.now();
     st.pets = (st.pets || []).filter((p) => PET[p.id]);
     st.equipped = (st.equipped || []).filter((uid) => st.pets.some((p) => p.uid === uid)).slice(0, CO.maxPetSlots);
     if (!SKIN[st.skin] || !st.skinsOwned[st.skin]) st.skin = 'classic';
@@ -856,9 +883,21 @@
   function load() {
     let raw = null;
     try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
-    if (!raw) return false;
-    try { adopt(JSON.parse(raw)); return true; } catch (e) { return false; }
+    const tryRaw = (r) => { if (!r) return false; try { const o = JSON.parse(r); if (!isObj(o)) return false; adopt(o); return true; } catch (e) { return false; } };
+    if (tryRaw(raw)) return true;
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (tryRaw(bk)) { CO.restoredBackup = true; return true; }
+    return false;
   }
+  CO.hasBackup = () => { try { return !!localStorage.getItem(BACKUP_KEY); } catch (e) { return false; } };
+  CO.restoreBackup = () => {
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (!bk) return false;
+    try { const o = JSON.parse(bk); if (!isObj(o)) return false; adopt(o); afterLoad(); CO.emit('load', { imported: true }); return true; } catch (e) { return false; }
+  };
+  CO.saveBlocked = () => saveBlocked;
   CO.exportSave = () => {
     save();
     try { return 'CO1|' + btoa(unescape(encodeURIComponent(JSON.stringify(CO.state)))); } catch (e) { return ''; }
@@ -956,6 +995,9 @@
     lastT = CO.now();
     setInterval(tick, 50);
     window.addEventListener('pagehide', save);
+    window.addEventListener('beforeunload', save);
+    if (tabChan) tabChan.postMessage({ type: 'hello', id: TAB_ID });
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) { /* optional */ }
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
     // hot-reload snapshot for republishes
     try { if (window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function') window.claude.hot.snapshot(() => ({ state: CO.state })); } catch (e) { /* optional */ }

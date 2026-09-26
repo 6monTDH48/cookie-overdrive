@@ -1,5 +1,7 @@
 <title>Cookie Overdrive</title>
 <meta name="description" content="Cookie clicker RGB hyperactif : upgrades qui transforment le cookie, pets, boss, mini-jeux.">
+<meta name="theme-color" content="#14062b">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap">
@@ -3293,10 +3295,36 @@
   CO.toast = (text, opts = {}) => CO.emit('toast', { text, ...opts });
 
   /* ═════════════════════════ SAVE / LOAD ═════════════════════════ */
-  let saveTimer = null;
+  let saveTimer = null, saveBlocked = false;
+  const BACKUP_KEY = SAVE_KEY + '-backup';
+  // other tab took over the save slot → stop writing so we never clobber newer progress
+  const TAB_ID = Math.random().toString(36).slice(2);
+  let tabChan = null;
+  try {
+    tabChan = new BroadcastChannel('cookie-overdrive');
+    tabChan.onmessage = (e) => {
+      const m = e.data || {};
+      if (m.type === 'hello' && m.id !== TAB_ID && !saveBlocked) { save(); tabChan.postMessage({ type: 'yield', to: m.id }); saveBlocked = true; CO.emit('tab:blocked', {}); }
+      else if (m.type === 'yield' && m.to === TAB_ID && load()) { afterLoad(); CO.emit('load', { imported: true }); }
+    };
+  } catch (e) { tabChan = null; }
   function save() {
+    if (saveBlocked) return false;
     CO.state.lastSave = Date.now();
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(CO.state)); return true; } catch (e) { return false; }
+    let raw;
+    try { raw = JSON.stringify(CO.state); } catch (e) { return false; }
+    try {
+      // rotate: keep the previous good save as a backup (≥ 5 min apart) in case the main slot gets corrupted
+      const prev = localStorage.getItem(SAVE_KEY);
+      if (prev && prev !== raw) {
+        const bk = localStorage.getItem(BACKUP_KEY);
+        let bkAge = Infinity;
+        try { bkAge = Date.now() - (JSON.parse(bk || '{}').lastSave || 0); } catch (e) { /* corrupt backup */ }
+        if (bkAge > 5 * 60 * 1000) { try { JSON.parse(prev); localStorage.setItem(BACKUP_KEY, prev); } catch (e) { /* skip bad prev */ } }
+      }
+      localStorage.setItem(SAVE_KEY, raw);
+      return true;
+    } catch (e) { return false; }
   }
   function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
   CO.save = save;
@@ -3305,7 +3333,8 @@
     st.settings = merge(defaultSettings(), obj && obj.settings);
     // sanity
     D.buildings.forEach((b) => { st.buildings[b.id] = Math.max(0, Math.floor(+st.buildings[b.id] || 0)); });
-    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k] || 0; if (st[k] < 0) st[k] = 0; });
+    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k]; if (!Number.isFinite(st[k]) || st[k] < 0) st[k] = 0; });
+    if (!Number.isFinite(+st.lastSave) || +st.lastSave > Date.now() + 60000) st.lastSave = Date.now();
     st.pets = (st.pets || []).filter((p) => PET[p.id]);
     st.equipped = (st.equipped || []).filter((uid) => st.pets.some((p) => p.uid === uid)).slice(0, CO.maxPetSlots);
     if (!SKIN[st.skin] || !st.skinsOwned[st.skin]) st.skin = 'classic';
@@ -3315,9 +3344,21 @@
   function load() {
     let raw = null;
     try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
-    if (!raw) return false;
-    try { adopt(JSON.parse(raw)); return true; } catch (e) { return false; }
+    const tryRaw = (r) => { if (!r) return false; try { const o = JSON.parse(r); if (!isObj(o)) return false; adopt(o); return true; } catch (e) { return false; } };
+    if (tryRaw(raw)) return true;
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (tryRaw(bk)) { CO.restoredBackup = true; return true; }
+    return false;
   }
+  CO.hasBackup = () => { try { return !!localStorage.getItem(BACKUP_KEY); } catch (e) { return false; } };
+  CO.restoreBackup = () => {
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (!bk) return false;
+    try { const o = JSON.parse(bk); if (!isObj(o)) return false; adopt(o); afterLoad(); CO.emit('load', { imported: true }); return true; } catch (e) { return false; }
+  };
+  CO.saveBlocked = () => saveBlocked;
   CO.exportSave = () => {
     save();
     try { return 'CO1|' + btoa(unescape(encodeURIComponent(JSON.stringify(CO.state)))); } catch (e) { return ''; }
@@ -3415,6 +3456,9 @@
     lastT = CO.now();
     setInterval(tick, 50);
     window.addEventListener('pagehide', save);
+    window.addEventListener('beforeunload', save);
+    if (tabChan) tabChan.postMessage({ type: 'hello', id: TAB_ID });
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) { /* optional */ }
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
     // hot-reload snapshot for republishes
     try { if (window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function') window.claude.hot.snapshot(() => ({ state: CO.state })); } catch (e) { /* optional */ }
@@ -10454,6 +10498,33 @@
             p.then(() => CO.toast('Code copié dans le presse-papier.', { icon: 'ui:check', color: '#1ff4ff' }), () => CO.toast('Code prêt : sélectionne-le et copie-le.', { icon: 'ui:save' }));
           } }, 'Exporter'),
           h('button.btn.small', { type: 'button', onclick: () => { if (CO.importSave(ta.value)) { CO.toast('Sauvegarde importée !', { icon: 'ui:check', color: '#2bdc6a' }); render(); } else CO.toast('Code invalide. Il doit commencer par CO1|', { icon: 'ui:warning', color: '#ff4d6d' }); } }, 'Importer')),
+        h('div.btnrow',
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const code = CO.exportSave(); if (!code) return;
+            try {
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' }));
+              a.download = 'cookie-overdrive-' + new Date().toISOString().slice(0, 10) + '.txt';
+              document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+              CO.toast('Fichier de sauvegarde téléchargé.', { icon: 'ui:save', color: '#1ff4ff' });
+            } catch (e) { CO.toast('Téléchargement impossible : utilise Exporter.', { icon: 'ui:warning', color: '#ff4d6d' }); }
+          } }, 'Télécharger'),
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.txt,text/plain';
+            inp.onchange = () => {
+              const f = inp.files && inp.files[0]; if (!f) return;
+              f.text().then((txt) => {
+                if (CO.importSave(txt)) { CO.toast('Sauvegarde chargée depuis le fichier !', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+                else CO.toast('Fichier invalide.', { icon: 'ui:warning', color: '#ff4d6d' });
+              });
+            };
+            inp.click();
+          } }, 'Charger un fichier'),
+          CO.hasBackup() ? h('button.btn.small', { type: 'button', onclick: () => {
+            if (!confirm('Revenir à la sauvegarde de secours (jusqu\'à ~5 min plus ancienne) ?')) return;
+            if (CO.restoreBackup()) { CO.save(); CO.toast('Sauvegarde de secours restaurée.', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+            else CO.toast('Secours illisible.', { icon: 'ui:warning', color: '#ff4d6d' });
+          } }, 'Secours') : null),
         ta, h('div.btnrow', resetBtn)));
   };
 
@@ -10605,6 +10676,15 @@
     CO.on('quests', () => rerender(['quests']));
     CO.on('pets', () => rerender(['pets']));
     CO.on('rebirth', () => render());
+    CO.on('tab:blocked', () => {
+      if (document.getElementById('tab-block')) return;
+      const d = document.createElement('div'); d.id = 'tab-block';
+      d.style.cssText = 'position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(8,4,20,.92);color:#fff;font:600 18px/1.5 Fredoka,sans-serif;text-align:center;padding:24px';
+      d.innerHTML = '<div><div style="font-size:42px">🍪</div>Le jeu est ouvert dans un autre onglet.<br>Ta progression continue là-bas.<br><br><button type="button" style="font:inherit;padding:10px 22px;border-radius:12px;border:0;background:#ff3ea5;color:#fff;cursor:pointer">Jouer ici</button></div>';
+      d.querySelector('button').onclick = () => location.reload();
+      document.body.appendChild(d);
+    });
+    if (CO.restoredBackup) setTimeout(() => CO.toast('Sauvegarde principale abîmée : secours restauré.', { icon: 'ui:warning', color: '#ffb020' }), 1500);
     CO.on('load', () => { if (ui.ready) { applySettings(); updateBakery(); render(); } });
     CO.on('minigame:end', () => rerender(['games']));
     CO.on('minigame:registered', () => rerender(['games']));
@@ -10713,6 +10793,11 @@
       try { if (window.CO.stage && window.CO.stage.init) window.CO.stage.init(document.getElementById('stage')); } catch (e) { console.error(e); }
       try { window.CO.ui.init(); } catch (e) { console.error(e); }
     }
+    // offline play + install when served over http(s) next to sw.js
+    try {
+      if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(window.claude && window.claude.hot))
+        window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    } catch (e) { /* optional */ }
     var hot = window.claude && window.claude.hot;
     if (hot && typeof hot.ready === 'function') hot.ready(start); else start(hot && hot.data ? hot.data : {});
   })();

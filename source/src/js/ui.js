@@ -529,6 +529,33 @@
             p.then(() => CO.toast('Code copié dans le presse-papier.', { icon: 'ui:check', color: '#1ff4ff' }), () => CO.toast('Code prêt : sélectionne-le et copie-le.', { icon: 'ui:save' }));
           } }, 'Exporter'),
           h('button.btn.small', { type: 'button', onclick: () => { if (CO.importSave(ta.value)) { CO.toast('Sauvegarde importée !', { icon: 'ui:check', color: '#2bdc6a' }); render(); } else CO.toast('Code invalide. Il doit commencer par CO1|', { icon: 'ui:warning', color: '#ff4d6d' }); } }, 'Importer')),
+        h('div.btnrow',
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const code = CO.exportSave(); if (!code) return;
+            try {
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' }));
+              a.download = 'cookie-overdrive-' + new Date().toISOString().slice(0, 10) + '.txt';
+              document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+              CO.toast('Fichier de sauvegarde téléchargé.', { icon: 'ui:save', color: '#1ff4ff' });
+            } catch (e) { CO.toast('Téléchargement impossible : utilise Exporter.', { icon: 'ui:warning', color: '#ff4d6d' }); }
+          } }, 'Télécharger'),
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.txt,text/plain';
+            inp.onchange = () => {
+              const f = inp.files && inp.files[0]; if (!f) return;
+              f.text().then((txt) => {
+                if (CO.importSave(txt)) { CO.toast('Sauvegarde chargée depuis le fichier !', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+                else CO.toast('Fichier invalide.', { icon: 'ui:warning', color: '#ff4d6d' });
+              });
+            };
+            inp.click();
+          } }, 'Charger un fichier'),
+          CO.hasBackup() ? h('button.btn.small', { type: 'button', onclick: () => {
+            if (!confirm('Revenir à la sauvegarde de secours (jusqu\'à ~5 min plus ancienne) ?')) return;
+            if (CO.restoreBackup()) { CO.save(); CO.toast('Sauvegarde de secours restaurée.', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+            else CO.toast('Secours illisible.', { icon: 'ui:warning', color: '#ff4d6d' });
+          } }, 'Secours') : null),
         ta, h('div.btnrow', resetBtn)));
   };
 
@@ -680,6 +707,15 @@
     CO.on('quests', () => rerender(['quests']));
     CO.on('pets', () => rerender(['pets']));
     CO.on('rebirth', () => render());
+    CO.on('tab:blocked', () => {
+      if (document.getElementById('tab-block')) return;
+      const d = document.createElement('div'); d.id = 'tab-block';
+      d.style.cssText = 'position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(8,4,20,.92);color:#fff;font:600 18px/1.5 Fredoka,sans-serif;text-align:center;padding:24px';
+      d.innerHTML = '<div><div style="font-size:42px">🍪</div>Le jeu est ouvert dans un autre onglet.<br>Ta progression continue là-bas.<br><br><button type="button" style="font:inherit;padding:10px 22px;border-radius:12px;border:0;background:#ff3ea5;color:#fff;cursor:pointer">Jouer ici</button></div>';
+      d.querySelector('button').onclick = () => location.reload();
+      document.body.appendChild(d);
+    });
+    if (CO.restoredBackup) setTimeout(() => CO.toast('Sauvegarde principale abîmée : secours restauré.', { icon: 'ui:warning', color: '#ffb020' }), 1500);
     CO.on('load', () => { if (ui.ready) { applySettings(); updateBakery(); render(); } });
     CO.on('minigame:end', () => rerender(['games']));
     CO.on('minigame:registered', () => rerender(['games']));

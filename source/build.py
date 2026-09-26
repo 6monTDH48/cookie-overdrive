@@ -28,4 +28,8 @@ html = re.sub(r'<script src="(js/[^"]+)"></script>', inline_js, html)
 
 OUT.parent.mkdir(exist_ok=True)
 OUT.write_text(html, encoding="utf-8")
+import shutil
+for extra in ("sw.js", "manifest.webmanifest", "icon.svg"):
+    shutil.copy(SRC / extra, OUT.parent / extra)
+
 print(f"built {OUT.relative_to(ROOT)}  {len(html.encode('utf-8'))/1024:.0f} KB")
