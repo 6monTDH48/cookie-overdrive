@@ -225,6 +225,11 @@
   const B = (s, id) => s.buildings[id] || 0;
   const totalB = (s) => Object.values(s.buildings).reduce((a, b) => a + b, 0);
   const achievements = [
+    { id: 'a_daily3',    name: 'Habitué', gems: 5,  desc: 'Série de 3 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 3 },
+    { id: 'a_daily7',    name: 'Accro au Cookie', gems: 15, desc: 'Série de 7 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 7 },
+    { id: 'a_skins8',    name: 'Garde-Robe Sucrée', gems: 20, desc: 'Possède 8 skins.',                    check: (s) => Object.values(s.skinsOwned || {}).filter(Boolean).length >= 8 },
+    { id: 'a_dj',        name: 'DJ Cookie', gems: 3,  desc: 'Change de morceau de musique.',            check: (s) => !!s.settings && s.settings.track && s.settings.track !== 'synthwave' },
+    { id: 'a_upg50',     name: 'Collectionneur d\'Upgrades', gems: 25, desc: 'Achète 50 upgrades.',  check: (s) => Object.values(s.upgrades || {}).filter(Boolean).length >= 50 },
     { id: 'a_click1',    name: 'Premier Crunch', gems: 1,  desc: 'Clique sur le cookie.',                check: (s) => s.clicks >= 1 },
     { id: 'a_click100',  name: 'Doigt Chaud', gems: 3,  desc: '100 clics.',                           check: (s) => s.clicks >= 100 },
     { id: 'a_click1k',   name: 'Tendinite Speedrun', gems: 5,  desc: '1 000 clics.',                         check: (s) => s.clicks >= 1000 },

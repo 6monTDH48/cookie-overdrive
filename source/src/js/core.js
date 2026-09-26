@@ -799,8 +799,40 @@
         mel: [].concat(...[0, 1].map(() => [[76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4],
           [64, 2], [68, 2], [71, 2], [72, 6], [64, 2], [76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4], [64, 2], [72, 2], [71, 2], [69, 10]])) },
     };
+    /* ─ Ma musique : fichiers audio perso stockés dans IndexedDB, joués en playlist ─ */
+    const custom = { el: null, src: null, list: [], idx: 0, url: null };
+    const idb = () => new Promise((res, rej) => { const r = indexedDB.open('cookie-overdrive-music', 1); r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'id', autoIncrement: true }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const idbTx = (mode, fn) => idb().then((db) => new Promise((res, rej) => { const tx = db.transaction('files', mode); const out = fn(tx.objectStore('files')); tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error); }));
+    CO.customMusic = {
+      list: () => idbTx('readonly', (st) => st.getAll()).then((a) => a || []).catch(() => []),
+      add: (files) => Promise.all([...files].map((f) => idbTx('readwrite', (st) => st.add({ name: f.name, blob: f })))).then(() => { if (CO.settings.track === 'custom' && m.playing) { m.stop(); m.start(); } }),
+      remove: (id) => idbTx('readwrite', (st) => st.delete(id)),
+      clear: () => idbTx('readwrite', (st) => st.clear()),
+      next: () => { if (custom.list.length) { custom.idx = (custom.idx + 1) % custom.list.length; playCustom(); } },
+      current: () => (custom.list[custom.idx] || {}).name || '',
+    };
+    function playCustom() {
+      if (!m.playing || CO.settings.track !== 'custom' || !custom.list.length) return;
+      if (!custom.el) {
+        custom.el = new Audio();
+        custom.el.addEventListener('ended', () => CO.customMusic.next());
+        try { custom.src = actx.createMediaElementSource(custom.el); custom.src.connect(musicBus); } catch (e) { custom.src = null; }
+      }
+      if (custom.url) URL.revokeObjectURL(custom.url);
+      const item = custom.list[custom.idx]; custom.url = URL.createObjectURL(item.blob);
+      custom.el.src = custom.url; custom.el.play().catch(() => {});
+      CO.emit('music:track', { name: item.name });
+    }
+    function startCustom() {
+      CO.customMusic.list().then((a) => {
+        custom.list = a; if (custom.idx >= a.length) custom.idx = 0;
+        if (!a.length) { CO.toast('Aucun fichier : ajoute tes musiques dans Options.', { icon: 'ui:music' }); return; }
+        playCustom();
+      });
+    }
+    function stopCustom() { if (custom.el) custom.el.pause(); }
     Object.values(TRACKS).forEach((tr) => { tr.at = []; let i = 0; tr.mel.forEach(([n, l]) => { if (n) tr.at[i] = [n, l]; i += l; }); tr.len = Math.max(i, tr.ch.length * 16); });
-    CO.musicTracks = [['synthwave', 'Synthwave (originale)'], ['korobeiniki', 'Korobeïniki (thème Tetris)'], ['ode', 'Hymne à la Joie — Beethoven'], ['montagne', 'Antre du Roi de la Montagne — Grieg'], ['elise', 'Lettre à Élise — Beethoven']];
+    CO.musicTracks = [['synthwave', 'Synthwave (originale)'], ['korobeiniki', 'Korobeïniki (thème Tetris)'], ['ode', 'Hymne à la Joie — Beethoven'], ['montagne', 'Antre du Roi de la Montagne — Grieg'], ['elise', 'Lettre à Élise — Beethoven'], ['custom', '🎧 Ma musique (mes fichiers)']];
     function kick(t) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14); g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.32); }
     function snare(t) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.7; const g = actx.createGain(); g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.2); const o = actx.createOscillator(), g2 = actx.createGain(); o.frequency.value = 190; g2.gain.setValueAtTime(0.25, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); g2.connect(musicBus); o.start(t); o.stop(t + 0.12); }
     function hat(t, v) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 8000; const g = actx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.06); }
@@ -810,10 +842,11 @@
       while (nextT < actx.currentTime + 0.15) {
         const t = nextT, s = step % 16, chord = (bar >> 1) % 4, hot = m.level > 0;
         if (s % 4 === 0) {
-          kick(t);
+          if (CO.settings.track !== 'custom') kick(t);
           const n = beatN++; const delay = Math.max(0, (t - actx.currentTime) * 1000);
           setTimeout(() => { beatOrigin = CO.now(); CO.emit('beat', { n }); }, delay);
         }
+        if (CO.settings.track === 'custom') { nextT += stepDur(); step++; if (step % 16 === 0) bar++; continue; }
         if (s === 4 || s === 12) snare(t);
         if (s % 2 === 1 || hot) hat(t, s % 2 === 1 ? 0.12 : 0.05);
         const tr = TRACKS[CO.settings.track];
@@ -834,9 +867,10 @@
       if (!ensureAudio() || m.playing) return;
       m.playing = true; step = 0; bar = 0; nextT = actx.currentTime + 0.08;
       timer = setInterval(schedule, 30); schedule();
+      if (CO.settings.track === 'custom') startCustom();
       CO.applyVolumes();
     };
-    m.stop = () => { m.playing = false; clearInterval(timer); timer = null; CO.applyVolumes(); };
+    m.stop = () => { stopCustom(); m.playing = false; clearInterval(timer); timer = null; CO.applyVolumes(); };
     m.duck = (on) => { m.ducked = on; CO.applyVolumes(); };
     m.intensity = (l) => { m.level = l; };
     return m;

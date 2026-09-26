@@ -507,6 +507,22 @@
         range('sfx', 'Effets sonores', 0, 1, 0.05),
         sw('musicOn', 'Musique', 'Générée en direct, elle s\'emballe en Fièvre'),
         select('track', 'Morceau', CO.musicTracks || [['synthwave', 'Synthwave']]),
+        (() => {
+          const box = h('div.opt', h('label', 'Ma musique', h('span.d', 'MP3/OGG/WAV depuis ton appareil, gardés dans le navigateur')));
+          const listEl = h('div', { style: { fontSize: '13px', opacity: 0.85, margin: '4px 0' } });
+          const refresh = () => CO.customMusic.list().then((a) => {
+            listEl.replaceChildren(...(a.length ? a.map((f) => h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } }, '🎵 ' + f.name,
+              h('button.btn.small', { type: 'button', onclick: () => CO.customMusic.remove(f.id).then(refresh) }, '✕'))) : ['Aucun fichier.']));
+          });
+          const add = h('button.btn.cyan.small', { type: 'button', onclick: () => {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'audio/*'; inp.multiple = true;
+            inp.onchange = () => { if (!inp.files.length) return; CO.customMusic.add(inp.files).then(() => { refresh(); CO.toast(inp.files.length + ' musique(s) ajoutée(s) !', { icon: 'ui:music', color: '#1ff4ff' }); }).catch(() => CO.toast('Stockage plein ou bloqué.', { icon: 'ui:warning', color: '#ff4d6d' })); };
+            inp.click();
+          } }, '+ Ajouter');
+          const skip = h('button.btn.small', { type: 'button', onclick: () => CO.customMusic.next() }, '⏭ Suivante');
+          refresh();
+          return h('div', box, h('div.btnrow', add, skip), listEl);
+        })(),
         range('music', 'Volume musique', 0, 1, 0.05),
         select('clickSound', 'Son du clic', D.clickSounds.map((c) => [c.id, c.name]))),
       subTitle('ui:sparkle', 'Visuel'),
@@ -708,6 +724,7 @@
     CO.on('quests', () => rerender(['quests']));
     CO.on('pets', () => rerender(['pets']));
     CO.on('rebirth', () => render());
+    CO.on('music:track', (e) => CO.toast('♪ ' + String(e.name || '').replace(/\.[a-z0-9]+$/i, ''), { icon: 'ui:music' }));
     CO.on('tab:blocked', () => {
       if (document.getElementById('tab-block')) return;
       const d = document.createElement('div'); d.id = 'tab-block';
