@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harness mini-jeux B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--f-body); }
+  .hb { max-width: 760px; margin: 0 auto; padding: 18px 16px 40px; box-sizing: border-box; }
+  .hb h1 { font-size: 34px; margin: 4px 0 2px; font-weight: 400; }
+  .hb p { color: var(--muted); margin: 0 0 12px; font-size: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; }
+  .card { background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px; margin: 12px 0; }
+  .card h2 { font-family: var(--f-mono); font-size: 12px; letter-spacing: .2em; color: var(--muted); margin: 2px 0 6px; font-weight: 700; }
+  label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  select { font: inherit; background: var(--panel-solid); color: var(--ink); border: 2px solid var(--line); border-radius: 10px; padding: 4px 8px; }
+  input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--hot); }
+  #stats { font-family: var(--f-mono); font-size: 13px; color: var(--cyan); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+  body { overflow-x: hidden; }
+  #preview { width: 150px; height: 150px; background: var(--bg2); border-radius: 14px; border: 2px solid var(--line); }
+  .mg-ov { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: var(--bg); }
+  .mg-head { height: 56px; flex: 0 0 56px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 10px 0 14px; background: rgba(10,5,30,.9); border-bottom: 3px solid var(--stroke); }
+  .mg-head .t { font-size: 22px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mg-root { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+</style>
+</head>
+<body>
+<div class="hb">
+  <h1 class="stroke-text">Harness mini-jeux B</h1>
+  <p>Cookie Ninja + Flappy Cookie · stub core · Échap ferme l'overlay.</p>
+  <div class="row">
+    <button class="btn big pink" type="button" data-open="ninja">Cookie Ninja</button>
+    <button class="btn big cyan" type="button" data-open="flappy">Flappy Cookie</button>
+  </div>
+
+  <div class="card">
+    <h2>COOKIE DU JOUEUR</h2>
+    <div class="row">
+      <canvas id="preview" width="300" height="300"></canvas>
+      <div>
+        <div class="row"><label>Skin <select id="skin"></select></label></div>
+        <div class="row" id="vis"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>RÉGLAGES</h2>
+    <div class="row">
+      <label><input type="checkbox" id="rm"> reducedMotion</label>
+      <label><input type="checkbox" id="shake" checked> shake</label>
+      <label>particles <select id="parts"><option value="0">0 low</option><option value="1">1 med</option><option value="2" selected>2 ultra</option></select></label>
+      <label>rgbSpeed <select id="rgb"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label>
+      <label>sfx <select id="sfx"><option value="0">off</option><option value="0.3">0.3</option><option value="0.6" selected>0.6</option></select></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>ÉTAT / FUITES</h2>
+    <div id="stats"></div>
+  </div>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/art.js" onerror=""></script>
+<script src="./stub-core.js"></script>
+<script src="../js/stage.js" onerror=""></script>
+<script>
+  /* Leak tracking (dev only): window/document listeners, pending rAF, live ResizeObservers.
+     Installed before the minigame files so every mount/destroy is counted. */
+  (function () {
+    const T = (window.__leak = { win: new Map(), doc: new Map(), raf: new Set(), ro: 0 });
+    function wrap(obj, map) {
+      const add = obj.addEventListener.bind(obj), rem = obj.removeEventListener.bind(obj);
+      obj.addEventListener = function (t, f, o) { if (!map.has(t)) map.set(t, new Set()); map.get(t).add(f); return add(t, f, o); };
+      obj.removeEventListener = function (t, f, o) { const s = map.get(t); if (s) s.delete(f); return rem(t, f, o); };
+    }
+    wrap(window, T.win); wrap(document, T.doc);
+    const rAF = window.requestAnimationFrame.bind(window), cAF = window.cancelAnimationFrame.bind(window);
+    window.requestAnimationFrame = function (cb) { let id = 0; id = rAF(function (t) { T.raf.delete(id); cb(t); }); T.raf.add(id); return id; };
+    window.cancelAnimationFrame = function (id) { T.raf.delete(id); return cAF(id); };
+    const RO = window.ResizeObserver;
+    if (RO) window.ResizeObserver = class extends RO {
+      observe(t, o) { if (!this.__on) { this.__on = true; T.ro++; } return super.observe(t, o); }
+      disconnect() { if (this.__on) { this.__on = false; T.ro--; } return super.disconnect(); }
+    };
+    T.count = (m) => { let n = 0; m.forEach((s) => (n += s.size)); return n; };
+  })();
+</script>
+<script src="../js/mg-ninja.js"></script>
+<script src="../js/mg-flappy.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CO = window.CO, D = CO.data, L = window.__leak;
+  const $ = (s) => document.querySelector(s);
+  let cur = null, lastEnd = null;
+
+  /* ── overlay mimicking ui.js ── */
+  function open(id) {
+    if (cur) close();
+    const def = CO.minigames[id];
+    if (!def) { console.warn('minigame non enregistré', id); return; }
+    const ov = document.createElement('div');
+    ov.className = 'mg-ov';
+    ov.innerHTML = '<div class="mg-head"><span class="t stroke-text"></span><button class="btn red small mg-x" type="button">X Quitter</button></div><div class="mg-root"></div>';
+    ov.querySelector('.t').textContent = def.name;
+    document.body.appendChild(ov);
+    const root = ov.querySelector('.mg-root');
+    const api = CO.minigameApi(id, close);
+    const end = api.end;
+    api.end = (o) => { const r = end(o); lastEnd = { id, ...o, ...r }; return r; };
+    CO.emit('minigame:open', { id });
+    const inst = def.mount(root, api);
+    cur = { id, ov, root, inst };
+    ov.querySelector('.mg-x').addEventListener('click', close);
+  }
+  function close() {
+    if (!cur) return;
+    const c = cur; cur = null;
+    try { c.inst && c.inst.destroy && c.inst.destroy(); } catch (e) { console.error(e); }
+    const left = c.root.childElementCount;
+    if (left) console.warn('[harness] root non vidé après destroy():', left, 'enfant(s)');
+    c.ov.remove();
+    CO.emit('minigame:close', { id: c.id });
+  }
+  window.__mg = { open, close, cur: () => cur };
+  document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => open(b.dataset.open)));
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cur) { e.preventDefault(); close(); } }, true);
+
+  /* ── skin + visuals ── */
+  const sel = $('#skin');
+  D.skins.forEach((s) => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); });
+  sel.value = CO.state.skin;
+  sel.addEventListener('change', () => { CO.state.skin = sel.value; CO.state.skinsOwned[sel.value] = true; CO.emit('skin', { id: sel.value }); });
+  const visBox = $('#vis');
+  ['shades', 'crown', 'glaze', 'sprinkles', 'face', 'headphones', 'rgb_rim', 'chips_xl', 'wings', 'halo'].forEach((k) => {
+    const l = document.createElement('label');
+    const c = document.createElement('input'); c.type = 'checkbox'; c.checked = !!CO.vis[k];
+    c.addEventListener('change', () => { if (c.checked) CO.vis[k] = 1; else delete CO.vis[k]; CO.emit('visuals', { vis: CO.vis, added: c.checked ? [k] : [] }); });
+    l.append(c, k); visBox.appendChild(l);
+  });
+
+  /* ── settings ── */
+  const S = CO.settings;
+  $('#rm').addEventListener('change', (e) => { S.reducedMotion = e.target.checked; CO.emit('settings', { settings: S }); });
+  $('#shake').addEventListener('change', (e) => { S.shake = e.target.checked; CO.emit('settings', { settings: S }); });
+  $('#parts').addEventListener('change', (e) => { S.particles = +e.target.value; CO.emit('settings', { settings: S }); });
+  $('#rgb').addEventListener('change', (e) => { S.rgbSpeed = +e.target.value; CO.emit('settings', { settings: S }); });
+  $('#sfx').addEventListener('change', (e) => { S.sfx = +e.target.value; const a = CO.audio(); if (a) a.out.gain.value = S.sfx; });
+
+  /* ── preview + stats (setInterval, not rAF, to keep the rAF counter clean) ── */
+  const pv = $('#preview'), pg = pv.getContext('2d');
+  setInterval(() => {
+    if (!cur) {
+      pg.setTransform(1, 0, 0, 1, 0, 0); pg.clearRect(0, 0, 300, 300);
+      try { CO.drawCookie(pg, 150, 150, 100, { accessories: true, rot: Math.sin(performance.now() / 700) * 0.3 }); } catch (e) { console.error(e); }
+    }
+    const mg = CO.state.mg;
+    $('#stats').textContent =
+      'drawCookie : ' + (CO.stage && CO.stage.drawCookie ? 'stage.js' : 'fallback stub') + ' · art.js : ' + (CO.art ? 'chargé' : 'absent') + '\n' +
+      'cookies ' + CO.fmt(CO.state.cookies) + ' · gemmes ' + CO.state.gems + '\n' +
+      'ninja ' + JSON.stringify(mg.ninja || {}) + ' · flappy ' + JSON.stringify(mg.flappy || {}) + '\n' +
+      'dernier end() : ' + (lastEnd ? JSON.stringify(lastEnd) : '-') + '\n' +
+      'listeners window ' + L.count(L.win) + ' · document ' + L.count(L.doc) + ' · rAF en attente ' + L.raf.size + ' · ResizeObserver actifs ' + L.ro +
+      (cur ? '  (jeu ouvert : ' + cur.id + ')' : '');
+  }, 250);
+})();
+</script>
+</body>
+</html>

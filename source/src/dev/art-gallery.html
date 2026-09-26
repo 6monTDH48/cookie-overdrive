@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Art gallery</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;600&display=swap">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); padding: 16px; }
+  h2 { font-family: var(--f-display); font-weight: 400; margin: 18px 0 8px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+  .cell { background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.08); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .cell .row { display: flex; align-items: flex-end; gap: 6px; }
+  .cell img.l { width: 72px; height: 72px; } .cell img.s { width: 28px; height: 28px; } .cell img.xs { width: 18px; height: 18px; }
+  .cell code { font-size: 11px; color: var(--muted); }
+  .light { background: #f4eefc; }
+  .missing { color: var(--red); font-size: 13px; }
+  canvas { background: #120a2e; border-radius: 12px; }
+</style>
+<body>
+<p>Filter: <input id="f" placeholder="prefix e.g. pet:"> <label><input type="checkbox" id="lb"> light cells</label></p>
+<div id="out"></div>
+<h2>Canvas draw test (CO.art.draw)</h2>
+<canvas id="cv" width="900" height="160"></canvas>
+<script src="../js/data.js"></script>
+<script src="../js/art.js"></script>
+<script src="../js/art-world.js"></script>
+<script src="../js/art-pets.js"></script>
+<script>
+  const EXPECT = [
+    ...CO.data.buildings.map(b => 'b:' + b.id), ...CO.data.pets.map(p => 'pet:' + p.id), ...CO.data.bosses.map(b => 'boss:' + b.id),
+    ...CO.data.eggs.map(e => 'egg:' + e.id), ...Object.keys(CO.data.visuals).map(k => 'vis:' + k),
+    'item:choco', 'item:milk', 'item:donut', 'item:cupcake', 'item:seven', 'item:broccoli', 'mg:ninja', 'mg:flappy', 'mg:rhythm', 'mg:slots'];
+  function render() {
+    const f = document.getElementById('f').value.trim(), light = document.getElementById('lb').checked;
+    const out = document.getElementById('out'); out.innerHTML = '';
+    const names = CO.art.names().filter(n => !f || n.startsWith(f));
+    const groups = {};
+    names.forEach(n => (groups[n.split(':')[0]] = groups[n.split(':')[0]] || []).push(n));
+    Object.entries(groups).forEach(([g, list]) => {
+      const h = document.createElement('h2'); h.textContent = g + ' (' + list.length + ')'; out.append(h);
+      const grid = document.createElement('div'); grid.className = 'grid';
+      list.forEach(n => {
+        const c = document.createElement('div'); c.className = 'cell' + (light ? ' light' : '');
+        const row = document.createElement('div'); row.className = 'row';
+        row.append(CO.art.el(n, 'l'), CO.art.el(n, 's'), CO.art.el(n, 'xs'));
+        const code = document.createElement('code'); code.textContent = n;
+        c.append(row, code); grid.append(c);
+      });
+      out.append(grid);
+    });
+    const miss = EXPECT.filter(n => !CO.art.has(n));
+    const m = document.createElement('p'); m.className = 'missing'; m.textContent = miss.length ? 'MISSING (' + miss.length + '): ' + miss.join(', ') : 'All expected art present ✔';
+    out.prepend(m);
+  }
+  document.getElementById('f').oninput = render; document.getElementById('lb').onchange = render;
+  render();
+  CO.art.preload();
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  (function loop(t) {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const list = CO.art.names().filter(n => !document.getElementById('f').value || n.startsWith(document.getElementById('f').value)).slice(0, 14);
+    list.forEach((n, i) => CO.art.draw(ctx, n, 40 + i * 62, 80 + Math.sin(t / 400 + i) * 12, 52, { rot: Math.sin(t / 700 + i) * 0.2 }));
+    requestAnimationFrame(loop);
+  })(0);
+</script>
+</body>

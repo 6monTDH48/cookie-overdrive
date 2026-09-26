@@ -1,0 +1,81 @@
+/* COOKIE OVERDRIVE — base tokens + shared components.
+ * Single dark "neon arcade" world on purpose (no light theme).
+ * Fonts are loaded in index.html:
+ * <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+ */
+:root {
+  color-scheme: dark;
+  --bg: #0b0620;          /* deep indigo night */
+  --bg2: #140a33;
+  --panel: rgba(22, 11, 52, 0.78);
+  --panel-solid: #1a0d3d;
+  --panel2: rgba(40, 20, 90, 0.72);
+  --line: rgba(190, 150, 255, 0.22);
+  --ink: #fff6fe;
+  --muted: #b3a6dd;
+  --dim: #7d6fae;
+  --stroke: #1a0b33;      /* Roblox-style dark outline */
+  --hot: #ff2bd6;         /* magenta */
+  --cyan: #1ff4ff;
+  --lime: #b6ff3b;
+  --gold: #ffc93c;
+  --red: #ff4d6d;
+  --violet: #8a5cff;
+  --green: #2bdc6a;
+  --orange: #ff8a1f;
+  --h: 300;               /* global RGB hue, animated by JS */
+  --rgb: linear-gradient(90deg, #ff004c, #ff8a00, #ffe600, #2bff88, #00d5ff, #7a5cff, #ff2bd6, #ff004c);
+  --f-display: 'Lilita One', 'Arial Rounded MT Bold', 'Trebuchet MS', system-ui, sans-serif;
+  --f-body: 'Fredoka', 'Nunito', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'Chakra Petch', ui-monospace, 'SF Mono', Menlo, monospace;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+}
+
+/* Outlined chunky text, Roblox-simulator style */
+.stroke-text {
+  font-family: var(--f-display);
+  color: #fff;
+  letter-spacing: 0.02em;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 0.14em var(--stroke);
+  text-shadow: 0 0.08em 0 var(--stroke), 0 0.14em 0.3em rgba(0, 0, 0, 0.45);
+}
+
+/* Chunky 3D button */
+.btn {
+  --c1: #7a5cff; --c2: #5a3de0; --c3: #3a22a8;
+  appearance: none; border: 3px solid var(--stroke); cursor: pointer;
+  font-family: var(--f-display); font-size: 17px; letter-spacing: 0.03em; color: #fff;
+  padding: 9px 16px 11px; border-radius: 14px; line-height: 1;
+  background: linear-gradient(180deg, var(--c1) 0%, var(--c2) 100%);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.35), inset 0 -4px 0 var(--c3), 0 4px 0 var(--stroke);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  transition: transform 0.08s ease, filter 0.15s ease, box-shadow 0.08s ease;
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:hover { filter: brightness(1.12) saturate(1.1); transform: translateY(-1px); }
+.btn:active { transform: translateY(3px); box-shadow: inset 0 3px 0 rgba(255,255,255,.3), inset 0 -2px 0 var(--c3), 0 1px 0 var(--stroke); }
+.btn:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+.btn[disabled], .btn.off { filter: grayscale(0.85) brightness(0.7); cursor: not-allowed; transform: none; }
+.btn.green  { --c1: #4dff8a; --c2: #1fc85a; --c3: #0f8a3a; color: #fff; }
+.btn.pink   { --c1: #ff6be6; --c2: #ff2bd6; --c3: #b0108f; }
+.btn.gold   { --c1: #ffe066; --c2: #ffb800; --c3: #c07a00; }
+.btn.cyan   { --c1: #7ffaff; --c2: #1fd6ff; --c3: #0a8fb8; }
+.btn.red    { --c1: #ff8095; --c2: #ff3d5e; --c3: #b3142f; }
+.btn.dark   { --c1: #3a2a70; --c2: #2a1b58; --c3: #170d38; }
+.btn.big    { font-size: 24px; padding: 13px 26px 15px; border-radius: 18px; }
+.btn.small  { font-size: 14px; padding: 6px 10px 8px; border-radius: 11px; border-width: 2px; }
+
+/* Animated RGB border helper: wrap an element with .rgb-border */
+.rgb-border { position: relative; isolation: isolate; }
+.rgb-border::before {
+  content: ''; position: absolute; inset: -3px; border-radius: inherit; z-index: -1;
+  background: conic-gradient(from calc(var(--h) * 1deg), #ff004c, #ff8a00, #ffe600, #2bff88, #00d5ff, #7a5cff, #ff2bd6, #ff004c);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+}

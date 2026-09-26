@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stage Harness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--f-body); overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: block; }
+  #play { position: fixed; left: 0; top: 0; bottom: 0; right: 420px; pointer-events: none; }
+  #play.outline { outline: 2px dashed rgba(255,255,255,.35); outline-offset: -2px; }
+  #play .band { position: absolute; left: 0; right: 0; pointer-events: none; display: none; }
+  #play.outline .band { display: block; }
+  #play .top { top: 0; height: 22%; background: rgba(255,255,255,.05); }
+  #play .bot { bottom: 0; height: 12%; background: rgba(255,255,255,.05); }
+  #counter { position: fixed; left: 0; right: 420px; top: 3%; text-align: center; font-size: 44px; pointer-events: none; }
+  #panel { position: fixed; right: 0; top: 0; bottom: 0; width: 420px; box-sizing: border-box; padding: 12px; overflow: auto;
+    background: var(--panel); border-left: 1px solid var(--line); font-size: 13px; backdrop-filter: blur(6px); }
+  #panel h3 { font-family: var(--f-display); font-weight: 400; margin: 10px 0 6px; font-size: 16px; letter-spacing: .03em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: rgba(255,255,255,.04); border-radius: 8px; padding: 3px 6px; }
+  .row label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--f-mono); font-size: 12px; }
+  .row.on { background: rgba(255,43,214,.18); }
+  select, input[type=range] { font: inherit; background: #1a0d3d; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ctrl { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  @media (max-width: 700px) {
+    #play { right: 0; bottom: auto; height: 58%; }
+    #counter { right: 0; font-size: 30px; }
+    #panel { top: 58%; width: 100%; border-left: 0; border-top: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="play"><div class="band top"></div><div class="band bot"></div></div>
+<div id="counter" class="stroke-text">12 345 cookies</div>
+<div id="panel">
+  <div class="btns">
+    <button class="btn small gold" id="bGolden">golden</button>
+    <button class="btn small red" id="bBoss">boss</button>
+    <button class="btn small pink" id="bFeverOn">fever on</button>
+    <button class="btn small dark" id="bFeverOff">fever off</button>
+    <button class="btn small green" id="bAll">all visuals on</button>
+    <button class="btn small dark" id="bNone">all off</button>
+    <button class="btn small cyan" id="bPets">pets on/off</button>
+    <button class="btn small" id="bAuto">auto-click</button>
+    <button class="btn small" id="bConf">fx:confetti</button>
+    <button class="btn small" id="bAch">achievement</button>
+    <button class="btn small" id="bReb">rebirth +1</button>
+    <button class="btn small" id="bCur">cursors +10</button>
+    <button class="btn small" id="bBld">buildings</button>
+    <button class="btn small dark" id="bMg">minigame open/close</button>
+    <button class="btn small dark" id="bOutline">#play outline</button>
+  </div>
+  <h3>Style</h3>
+  <div class="ctrl">
+    <label>skin <select id="skin"></select></label>
+    <label>theme <select id="theme"></select></label>
+    <label>particles <select id="particles"><option>0</option><option>1</option><option selected>2</option></select></label>
+  </div>
+  <div class="ctrl" style="margin-top:6px">
+    <label><input type="checkbox" id="shake" checked> shake</label>
+    <label><input type="checkbox" id="trail" checked> trail</label>
+    <label><input type="checkbox" id="reducedMotion"> reducedMotion</label>
+    <label><input type="checkbox" id="showFps" checked> fps</label>
+    <label>rgbSpeed <input type="range" id="rgbSpeed" min="0" max="3" step="0.1" value="1"></label>
+  </div>
+  <h3>Visuals</h3>
+  <div class="grid" id="vis"></div>
+</div>
+<script src="../js/data.js"></script>
+<script src="../js/art.js"></script>
+<script src="../js/art-world.js"></script>
+<script src="../js/art-pets.js"></script>
+<script src="./stub-core.js"></script>
+<script src="../js/stage.js"></script>
+<script>
+(function () {
+  'use strict';
+  const D = CO.data, $ = (id) => document.getElementById(id);
+  const visKeys = Object.keys(D.visuals);
+  const visBox = $('vis');
+  function setVis(k, lvl, emit = true) {
+    const prev = CO.vis[k] || 0;
+    if (lvl > 0) CO.vis[k] = lvl; else delete CO.vis[k];
+    if (emit) CO.emit('visuals', { vis: CO.vis, added: lvl > prev ? [k] : [] });
+    syncVis();
+  }
+  function syncVis() {
+    visKeys.forEach((k) => { const s = $('v_' + k); s.value = String(CO.vis[k] || 0); s.parentNode.classList.toggle('on', !!CO.vis[k]); });
+  }
+  visKeys.forEach((k) => {
+    const d = D.visuals[k], max = d.max || 1, row = document.createElement('div');
+    row.className = 'row'; row.title = d.name + ' (' + d.zone + ')';
+    const lab = document.createElement('label'); lab.textContent = k; lab.htmlFor = 'v_' + k;
+    const sel = document.createElement('select'); sel.id = 'v_' + k;
+    for (let i = 0; i <= max; i++) { const o = document.createElement('option'); o.value = o.textContent = String(i); sel.appendChild(o); }
+    sel.onchange = () => setVis(k, +sel.value);
+    row.append(lab, sel); visBox.appendChild(row);
+  });
+  syncVis();
+  const skinSel = $('skin'); D.skins.forEach((s) => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name + ' (' + s.style + ')'; skinSel.appendChild(o); });
+  skinSel.value = CO.state.skin; skinSel.onchange = () => { CO.state.skin = skinSel.value; CO.emit('skin', { id: skinSel.value }); };
+  const thSel = $('theme'); D.themes.forEach((t) => { const o = document.createElement('option'); o.value = t.id; o.textContent = t.name; thSel.appendChild(o); });
+  thSel.value = CO.state.theme; thSel.onchange = () => { CO.state.theme = thSel.value; CO.emit('theme', { id: thSel.value }); };
+  const setS = (k, v) => { CO.settings[k] = v; CO.emit('settings', { settings: CO.settings, key: k }); };
+  $('particles').onchange = (e) => setS('particles', +e.target.value);
+  ['shake', 'trail', 'reducedMotion', 'showFps'].forEach((k) => { $(k).onchange = (e) => setS(k, e.target.checked); });
+  $('rgbSpeed').oninput = (e) => setS('rgbSpeed', +e.target.value);
+  $('bGolden').onclick = () => CO._spawnGolden();
+  $('bBoss').onclick = () => CO._spawnBoss();
+  $('bFeverOn').onclick = () => CO._fever(true);
+  $('bFeverOff').onclick = () => CO._fever(false);
+  $('bAll').onclick = () => { const added = []; visKeys.forEach((k) => { CO.vis[k] = D.visuals[k].max || 1; added.push(k); }); CO.emit('visuals', { vis: CO.vis, added }); syncVis(); };
+  $('bNone').onclick = () => { visKeys.forEach((k) => delete CO.vis[k]); CO.emit('visuals', { vis: CO.vis, added: [] }); syncVis(); };
+  let petsOn = true;
+  $('bPets').onclick = () => { petsOn = !petsOn; CO.state.equipped = petsOn ? [1, 2, 3] : []; CO.emit('pets', {}); };
+  let auto = null;
+  $('bAuto').onclick = () => {
+    if (auto) { clearInterval(auto); auto = null; return; }
+    auto = setInterval(() => { const r = document.getElementById('play').getBoundingClientRect(); CO.clickCookie(r.left + r.width / 2 + (Math.random() - 0.5) * 60, r.top + r.height * 0.56 + (Math.random() - 0.5) * 60); }, 80);
+  };
+  $('bConf').onclick = () => CO.emit('fx:confetti', {});
+  $('bAch').onclick = () => CO.emit('achievement', { a: D.achievements[0] });
+  $('bReb').onclick = () => { CO.state.rebirths++; CO.emit('rebirth', { stars: 1 }); };
+  $('bCur').onclick = () => { CO.state.buildings.cursor = (CO.state.buildings.cursor + 10) % 70; CO.emit('buy', { kind: 'building', id: 'cursor', n: 10 }); };
+  let bAll = false;
+  $('bBld').onclick = () => { bAll = !bAll; D.buildings.forEach((b, i) => { if (b.id !== 'cursor') CO.state.buildings[b.id] = bAll ? 1 + i * 3 : Math.max(0, 8 - i * 2); }); CO.emit('buy', { kind: 'building', id: 'granny', n: 1 }); };
+  let mg = false;
+  $('bMg').onclick = () => { mg = !mg; CO.emit(mg ? 'minigame:open' : 'minigame:close', { id: 'ninja' }); };
+  $('bOutline').onclick = () => $('play').classList.toggle('outline');
+  CO.stage.init(document.getElementById('stage'));
+  window.addEventListener('resize', () => CO.emit('layout', {}));
+})();
+</script>
+</body>
+</html>

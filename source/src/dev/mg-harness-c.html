@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Harness C — Crunch Rythme &amp; Casino Crumble</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); }
+  body { min-height: 100vh; }
+  .wrap { padding: 18px 16px 40px; max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 34px; margin: 4px 0 2px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 14px 0; }
+  .card { background: var(--panel); border: 2px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; }
+  label { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; }
+  select, input[type=number] { font: inherit; background: var(--panel-solid); color: var(--ink); border: 2px solid var(--line); border-radius: 10px; padding: 5px 8px; }
+  #stats { font-family: var(--f-mono); font-size: 13px; white-space: pre-wrap; color: var(--muted); }
+  /* overlay mimicking the real UI host */
+  .mg-ov { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; background: var(--bg); }
+  .mg-head { height: 56px; flex: 0 0 56px; display: flex; align-items: center; gap: 10px; padding: 0 10px 0 14px; box-sizing: border-box;
+             background: var(--panel-solid); border-bottom: 3px solid var(--stroke); }
+  .mg-head .t { font-family: var(--f-display); font-size: 22px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mg-root { position: relative; overflow: hidden; flex: 1 1 auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="stroke-text">Harness C</h1>
+  <div class="muted">Crunch Rythme &amp; Casino Crumble — overlay identique à l'UI réelle (Échap ou ✕ pour fermer). <code>?bg</code> = test dans un onglet caché.</div>
+
+  <div class="row" id="games"></div>
+
+  <div class="card">
+    <div class="row">
+      <label>Skin <select id="skin"></select></label>
+      <label>Particules <select id="parts"><option value="0">low</option><option value="1">med</option><option value="2" selected>ultra</option></select></label>
+      <label><input type="checkbox" id="rm"> reducedMotion</label>
+      <label><input type="checkbox" id="shake" checked> shake</label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" class="vis" value="shades"> lunettes</label>
+      <label><input type="checkbox" class="vis" value="crown"> couronne</label>
+      <label><input type="checkbox" class="vis" value="headphones"> casque</label>
+      <label><input type="checkbox" class="vis" value="glaze"> glaçage</label>
+      <label><input type="checkbox" class="vis" value="rgb_rim"> rim RGB</label>
+    </div>
+    <div class="row">
+      <span>Banque : <b id="bank"></b> cookies · <b id="gems"></b> gemmes</span>
+      <button class="btn small gold" id="add">+100 K</button>
+      <button class="btn small red" id="zero">= 5</button>
+      <button class="btn small cyan" id="stress">stress open/close ×15</button>
+    </div>
+    <div id="stats"></div>
+  </div>
+</div>
+
+<script>
+/* ── leak instrumentation (harness only) ── */
+(function () {
+  const L = (window.__leak = { listeners: new Map(), intervals: new Set(), raf: new Set(), sources: 0 });
+  const add = window.addEventListener.bind(window), rem = window.removeEventListener.bind(window);
+  window.addEventListener = function (t, fn, o) { const k = t; L.listeners.set(k, (L.listeners.get(k) || new Set()).add(fn)); return add(t, fn, o); };
+  window.removeEventListener = function (t, fn, o) { const s = L.listeners.get(t); if (s) s.delete(fn); return rem(t, fn, o); };
+  const si = window.setInterval.bind(window), ci = window.clearInterval.bind(window);
+  window.setInterval = function (fn, ms, ...a) { const id = si(fn, ms, ...a); L.intervals.add(id); return id; };
+  window.clearInterval = function (id) { L.intervals.delete(id); return ci(id); };
+  // ?bg → automated testing in a hidden browser pane: fake visibility + timer-driven rAF
+  if (/[?&]bg\b/.test(location.search)) {
+    Object.defineProperty(document, 'hidden', { get: () => false });
+    Object.defineProperty(document, 'visibilityState', { get: () => 'visible' });
+    const timers = new Map(); let n = 0;
+    window.requestAnimationFrame = (fn) => { const id = ++n; timers.set(id, setTimeout(() => { timers.delete(id); fn(performance.now()); }, 16)); return id; };
+    window.cancelAnimationFrame = (id) => { clearTimeout(timers.get(id)); timers.delete(id); };
+  }
+  const rq = window.requestAnimationFrame.bind(window), cq = window.cancelAnimationFrame.bind(window);
+  window.requestAnimationFrame = function (fn) { const id = rq((t) => { L.raf.delete(id); fn(t); }); L.raf.add(id); return id; };
+  window.cancelAnimationFrame = function (id) { L.raf.delete(id); return cq(id); };
+  if (window.AudioScheduledSourceNode) {
+    const st = AudioScheduledSourceNode.prototype.start;
+    AudioScheduledSourceNode.prototype.start = function (...a) { L.sources++; this.addEventListener('ended', () => L.sources--); return st.apply(this, a); };
+  }
+})();
+</script>
+<script src="../js/data.js"></script>
+<script src="../js/art.js"></script>
+<script src="./stub-core.js"></script>
+<script src="../js/mg-rhythm.js"></script>
+<script src="../js/mg-slots.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CO = window.CO;
+  // optional: stage.js (real drawCookie) — loaded dynamically so the harness works without it
+  if (!/[?&]nostage/.test(location.search)) {
+    const s = document.createElement('script'); s.src = '../js/stage.js';
+    s.onload = () => { console.log('[harness] stage.js loaded → real drawCookie'); };
+    s.onerror = () => { console.log('[harness] stage.js absent → fallback drawCookie'); s.remove(); };
+    document.head.appendChild(s);
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const skinSel = $('skin');
+  CO.data.skins.forEach((sk) => { const o = document.createElement('option'); o.value = sk.id; o.textContent = sk.name; skinSel.appendChild(o); });
+  skinSel.value = CO.state.skin;
+  skinSel.onchange = () => { CO.state.skin = skinSel.value; CO.state.skinsOwned[skinSel.value] = true; CO.emit('skin', { id: skinSel.value }); };
+  $('parts').onchange = (e) => { CO.settings.particles = +e.target.value; };
+  $('rm').onchange = (e) => { CO.settings.reducedMotion = e.target.checked; };
+  $('shake').onchange = (e) => { CO.settings.shake = e.target.checked; };
+  document.querySelectorAll('.vis').forEach((c) => { c.onchange = () => { if (c.checked) CO.vis[c.value] = 1; else delete CO.vis[c.value]; CO.emit('visuals', { vis: CO.vis, added: c.checked ? [c.value] : [] }); }; });
+  $('add').onclick = () => { CO.state.cookies += 100000; };
+  $('zero').onclick = () => { CO.state.cookies = 5; };
+
+  function artEl(name) {
+    if (!CO.art || typeof CO.art.el !== 'function') return null;
+    try { const e = CO.art.el(name); if (e) { e.style.width = e.style.height = '30px'; } return e; } catch (e) { return null; }
+  }
+  let cur = null; // {id, ov, inst}
+  function open(id) {
+    if (cur) close();
+    const def = CO.minigames[id];
+    const ov = document.createElement('div'); ov.className = 'mg-ov';
+    ov.innerHTML = `<div class="mg-head"><span class="ic"></span><span class="t stroke-text">${def.name}</span><button class="btn small dark" type="button" aria-label="Fermer">✕</button></div><div class="mg-root"></div>`;
+    const img = artEl('mg:' + id); if (img) ov.querySelector('.ic').appendChild(img);
+    document.body.appendChild(ov);
+    const root = ov.querySelector('.mg-root');
+    ov.querySelector('button').onclick = close;
+    cur = { id, ov, inst: null };
+    CO.emit('minigame:open', { id });
+    cur.inst = def.mount(root, CO.minigameApi(id, close));
+  }
+  function close() {
+    if (!cur) return;
+    const c = cur; cur = null;
+    try { c.inst && c.inst.destroy(); } catch (e) { console.error(e); }
+    c.ov.remove();
+    CO.emit('minigame:close', { id: c.id });
+  }
+  window.__harness = { open, close, get cur() { return cur; } };
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cur) { e.preventDefault(); close(); } });
+
+  function renderButtons() {
+    const box = $('games'); box.innerHTML = '';
+    Object.values(CO.minigames).forEach((d) => {
+      const b = document.createElement('button'); b.className = 'btn big ' + (d.id === 'slots' ? 'gold' : 'green');
+      const img = artEl('mg:' + d.id); if (img) b.appendChild(img);
+      b.appendChild(document.createTextNode(d.name)); b.title = d.tagline; b.onclick = () => open(d.id);
+      box.appendChild(b);
+    });
+  }
+  renderButtons();
+  CO.on('minigame:registered', renderButtons);
+
+  $('stress').onclick = async () => {
+    const ids = Object.keys(CO.minigames);
+    for (let i = 0; i < 15; i++) { open(ids[i % ids.length]); await new Promise((r) => setTimeout(r, 120)); close(); }
+  };
+
+  setInterval(() => {
+    $('bank').textContent = CO.fmt(CO.state.cookies);
+    $('gems').textContent = CO.state.gems;
+    const L = window.__leak;
+    const lis = [...L.listeners.entries()].map(([k, s]) => `${k}:${s.size}`).join(' ');
+    $('stats').textContent = `window listeners → ${lis}\nintervals actifs: ${L.intervals.size} · rAF en attente: ${L.raf.size} · sources audio actives: ${L.sources}\nmg: ${JSON.stringify(CO.state.mg)}`;
+  }, 300);
+})();
+</script>
+</body>
+</html>
