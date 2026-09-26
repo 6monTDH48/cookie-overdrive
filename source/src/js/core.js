@@ -83,13 +83,13 @@
   /* ═════════════════════════ STATE ═════════════════════════ */
   const reduced = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
   function defaultSettings() {
-    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1 };
+    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1, track: 'synthwave' };
   }
   function defaultState() {
     return {
       v: 1,
       cookies: 0, totalBaked: 0, allTimeBaked: 0, clicks: 0, clickBaked: 0,
-      gems: 0, rebirths: 0, stars: 0,
+      gems: 0, rebirths: 0, stars: 0, lastDaily: '', dailyStreak: 0,
       buildings: Object.fromEntries(D.buildings.map((b) => [b.id, 0])),
       upgrades: {},
       skin: 'classic', skinsOwned: { classic: true },
@@ -116,7 +116,7 @@
 
   function recalc(silent) {
     const s = CO.state;
-    M.click = 1; M.clickCps = 0; M.cps = 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
+    M.click = 1; M.clickCps = 0; M.cps = CO.state && CO.state.gameWon ? 2 : 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
     D.buildings.forEach((b) => (M.bld[b.id] = 1));
     const vis = {};
     for (const u of D.upgrades) {
@@ -362,6 +362,10 @@
       addBuff(eff.buff);
     } else if (eff.kind === 'rgbstorm') {
       if (!CO.fever.active) { CO.fever.cooldownUntil = 0; startFever(); } else CO.fever.until += 5;
+    } else if (eff.buff) {
+      addBuff(eff.buff);
+    } else if (eff.kind === 'bossbait') {
+      if (!CO.boss && CO.bossUnlocked() && !mgOpen) spawnBoss(); else { const n = 5; s.gems += n; label = 'PLUIE DE GEMMES +' + n; }
     } else if (eff.kind === 'gems') {
       const n = 3 + Math.floor(Math.random() * 6); s.gems += n; label = 'PLUIE DE GEMMES +' + n;
     }
@@ -376,21 +380,43 @@
   const BOSS_UNLOCK = 5000;
   CO.bossUnlocked = () => CO.state.allTimeBaked >= BOSS_UNLOCK;
   let nextBossAt = null;
-  function spawnBoss() {
-    const d = pick(D.bosses), k = CO.state.stats.bossKills;
-    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)));
-    const t = CO.now();
-    CO.boss = { ...d, hp, maxHp: hp, born: t, until: t + 30 };
+  function spawnBoss(forceFinal) {
+    const k = CO.state.stats.bossKills, t = CO.now();
+    let d, hpMul = 1, dur = 30, kind = 'normal';
+    if (forceFinal) { d = D.finalBoss; hpMul = 25; dur = 120; kind = 'final'; }
+    else if (k > 0 && (k + 1) % 10 === 0) { d = D.megaBoss; hpMul = 4; dur = 50; kind = 'mega'; }
+    else {
+      d = pick(D.bosses.filter((b) => (b.minKills || 0) <= k));
+      if (k >= 5 && Math.random() < 0.18) { hpMul = 2.2; dur = 35; kind = 'elite'; }
+    }
+    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)) * hpMul);
+    CO.boss = { ...d, name: kind === 'elite' ? d.name + ' ÉLITE' : d.name, kind, hp, maxHp: hp, born: t, until: t + dur };
     CO.sfx.play('boss');
     CO.emit('boss:spawn', { boss: CO.boss });
   }
   CO.spawnBoss = spawnBoss;
+  /* ─ Objectif final : conditions pour affronter le boss de fin (≥ 2 h de jeu garanties) ─ */
+  CO.finalGoal = () => {
+    const s = CO.state;
+    return [
+      { label: 'Jouer 2 heures', cur: s.stats.playTime, need: 7200, time: true },
+      { label: 'Faire 3 Rebirths', cur: s.rebirths, need: 3 },
+      { label: 'Battre 15 boss', cur: s.stats.bossKills, need: 15 },
+      { label: 'Produire 10 000 milliards de cookies (au total)', cur: s.allTimeBaked, need: 1e13 },
+    ];
+  };
+  CO.finalReady = () => CO.finalGoal().every((g) => g.cur >= g.need);
+  CO.fightFinal = () => { if (CO.boss || !CO.finalReady()) return false; spawnBoss(true); return true; };
   function defeatBoss() {
     const b = CO.boss, s = CO.state; if (!b) return;
     CO.boss = null;
     s.stats.bossKills++;
-    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100);
-    const gems = Math.min(20, 8 + s.stats.bossKills);
+    const rm = { elite: 2.5, mega: 5, final: 20 }[b.kind] || 1;
+    if (b.kind === 'elite') s.stats.eliteKills = (s.stats.eliteKills || 0) + 1;
+    if (b.kind === 'mega') s.stats.megaKills = (s.stats.megaKills || 0) + 1;
+    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100) * rm;
+    const gems = Math.round(Math.min(20, 8 + s.stats.bossKills) * rm);
+    if (b.kind === 'final' && !s.gameWon) { s.gameWon = true; s.stats.wonAt = s.stats.playTime; recalc(); setTimeout(() => CO.emit('game:won', {}), 1200); }
     earn(cookies); s.gems += gems;
     addBuff({ id: 'victory', name: 'Victoire', icon: 'ui:trophy', dur: 60, cps: 2 });
     questProgress('boss', 1);
@@ -782,6 +808,57 @@
     const CH = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]; // Am F C G
     const BASS = [45, 41, 36, 43];
     const stepDur = () => 60 / CO.bpm / 4;
+    // Classical melodies (public domain) over the same drum engine. mel: [midi|0 (rest), length in 16th steps]
+    const TRI = { Am: [57, 60, 64], E: [56, 59, 64], Dm: [57, 62, 65], C: [55, 60, 64], G: [55, 59, 62], F: [57, 60, 65] };
+    const ROOT = { Am: 45, E: 40, Dm: 38, C: 36, G: 43, F: 41 };
+    const TRACKS = {
+      korobeiniki: { ch: ['E', 'Am', 'E', 'Am', 'Dm', 'C', 'E', 'Am'], wave: 'square',
+        mel: [[76, 4], [71, 2], [72, 2], [74, 4], [72, 2], [71, 2], [69, 4], [69, 2], [72, 2], [76, 4], [74, 2], [72, 2], [71, 6], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8],
+          [0, 2], [74, 4], [77, 2], [81, 4], [79, 2], [77, 2], [76, 6], [72, 2], [76, 4], [74, 2], [72, 2], [71, 4], [71, 2], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8]] },
+      ode: { ch: ['C', 'G', 'C', 'G', 'C', 'G', 'C', 'C'], wave: 'triangle',
+        mel: [[76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [76, 6], [74, 2], [74, 8],
+          [76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [74, 6], [72, 2], [72, 8]] },
+      montagne: { ch: ['Am', 'E', 'Am', 'E', 'Am', 'E', 'Am', 'E'], wave: 'sawtooth',
+        mel: [].concat(...[0, 1].map(() => [[69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 4], [75, 2], [71, 2], [75, 4], [74, 2], [70, 2], [74, 4],
+          [69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 2], [81, 2], [79, 2], [76, 2], [72, 2], [76, 2], [79, 8]])) },
+      elise: { ch: ['E', 'Am', 'E', 'E', 'Am', 'Am', 'E', 'Am', 'E', 'E', 'Am', 'Am'], wave: 'triangle',
+        mel: [].concat(...[0, 1].map(() => [[76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4],
+          [64, 2], [68, 2], [71, 2], [72, 6], [64, 2], [76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4], [64, 2], [72, 2], [71, 2], [69, 10]])) },
+    };
+    /* ─ Ma musique : fichiers audio perso stockés dans IndexedDB, joués en playlist ─ */
+    const custom = { el: null, src: null, list: [], idx: 0, url: null };
+    const idb = () => new Promise((res, rej) => { const r = indexedDB.open('cookie-overdrive-music', 1); r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'id', autoIncrement: true }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const idbTx = (mode, fn) => idb().then((db) => new Promise((res, rej) => { const tx = db.transaction('files', mode); const out = fn(tx.objectStore('files')); tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error); }));
+    CO.customMusic = {
+      list: () => idbTx('readonly', (st) => st.getAll()).then((a) => a || []).catch(() => []),
+      add: (files) => Promise.all([...files].map((f) => idbTx('readwrite', (st) => st.add({ name: f.name, blob: f })))).then(() => { if (CO.settings.track === 'custom' && m.playing) { m.stop(); m.start(); } }),
+      remove: (id) => idbTx('readwrite', (st) => st.delete(id)),
+      clear: () => idbTx('readwrite', (st) => st.clear()),
+      next: () => { if (custom.list.length) { custom.idx = (custom.idx + 1) % custom.list.length; playCustom(); } },
+      current: () => (custom.list[custom.idx] || {}).name || '',
+    };
+    function playCustom() {
+      if (!m.playing || CO.settings.track !== 'custom' || !custom.list.length) return;
+      if (!custom.el) {
+        custom.el = new Audio();
+        custom.el.addEventListener('ended', () => CO.customMusic.next());
+        try { custom.src = actx.createMediaElementSource(custom.el); custom.src.connect(musicBus); } catch (e) { custom.src = null; }
+      }
+      if (custom.url) URL.revokeObjectURL(custom.url);
+      const item = custom.list[custom.idx]; custom.url = URL.createObjectURL(item.blob);
+      custom.el.src = custom.url; custom.el.play().catch(() => {});
+      CO.emit('music:track', { name: item.name });
+    }
+    function startCustom() {
+      CO.customMusic.list().then((a) => {
+        custom.list = a; if (custom.idx >= a.length) custom.idx = 0;
+        if (!a.length) { CO.toast('Aucun fichier : ajoute tes musiques dans Options.', { icon: 'ui:music' }); return; }
+        playCustom();
+      });
+    }
+    function stopCustom() { if (custom.el) custom.el.pause(); }
+    Object.values(TRACKS).forEach((tr) => { tr.at = []; let i = 0; tr.mel.forEach(([n, l]) => { if (n) tr.at[i] = [n, l]; i += l; }); tr.len = Math.max(i, tr.ch.length * 16); });
+    CO.musicTracks = [['synthwave', 'Synthwave (originale)'], ['korobeiniki', 'Korobeïniki (thème Tetris)'], ['ode', 'Hymne à la Joie — Beethoven'], ['montagne', 'Antre du Roi de la Montagne — Grieg'], ['elise', 'Lettre à Élise — Beethoven'], ['custom', '🎧 Ma musique (mes fichiers)']];
     function kick(t) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14); g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.32); }
     function snare(t) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.7; const g = actx.createGain(); g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.2); const o = actx.createOscillator(), g2 = actx.createGain(); o.frequency.value = 190; g2.gain.setValueAtTime(0.25, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); g2.connect(musicBus); o.start(t); o.stop(t + 0.12); }
     function hat(t, v) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 8000; const g = actx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.06); }
@@ -791,15 +868,24 @@
       while (nextT < actx.currentTime + 0.15) {
         const t = nextT, s = step % 16, chord = (bar >> 1) % 4, hot = m.level > 0;
         if (s % 4 === 0) {
-          kick(t);
+          if (CO.settings.track !== 'custom') kick(t);
           const n = beatN++; const delay = Math.max(0, (t - actx.currentTime) * 1000);
           setTimeout(() => { beatOrigin = CO.now(); CO.emit('beat', { n }); }, delay);
         }
+        if (CO.settings.track === 'custom') { nextT += stepDur(); step++; if (step % 16 === 0) bar++; continue; }
         if (s === 4 || s === 12) snare(t);
         if (s % 2 === 1 || hot) hat(t, s % 2 === 1 ? 0.12 : 0.05);
+        const tr = TRACKS[CO.settings.track];
+        if (tr) {
+          const pos = step % tr.len, cn = tr.ch[Math.floor(pos / 16) % tr.ch.length];
+          if (s % 2 === 0) synth(NOTE(ROOT[cn] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.14, hot ? 1400 : 700);
+          if (s === 0) TRI[cn].forEach((n) => synth(NOTE(n), t, stepDur() * 15, 'sawtooth', 0.025, 1400));
+          const nt = tr.at[pos]; if (nt) synth(NOTE(nt[0]), t, stepDur() * nt[1] * 0.95, tr.wave, hot ? 0.075 : 0.06, hot ? 5000 : 3200);
+        } else {
         if (s % 2 === 0) synth(NOTE(BASS[chord] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.16, hot ? 1400 : 700);
         if (s === 0 && bar % 2 === 0) CH[chord].forEach((n) => synth(NOTE(n + 12), t, stepDur() * 30, 'sawtooth', 0.035, 1600));
         if ((hot || bar % 8 >= 4)) { const arp = CH[chord]; synth(NOTE(arp[s % 3] + 24 + (s % 8 >= 6 ? 12 : 0)), t, stepDur() * 0.9, 'square', hot ? 0.05 : 0.03, hot ? 5000 : 2600); }
+        }
         nextT += stepDur(); step++; if (step % 16 === 0) bar++;
       }
     }
@@ -807,9 +893,10 @@
       if (!ensureAudio() || m.playing) return;
       m.playing = true; step = 0; bar = 0; nextT = actx.currentTime + 0.08;
       timer = setInterval(schedule, 30); schedule();
+      if (CO.settings.track === 'custom') startCustom();
       CO.applyVolumes();
     };
-    m.stop = () => { m.playing = false; clearInterval(timer); timer = null; CO.applyVolumes(); };
+    m.stop = () => { stopCustom(); m.playing = false; clearInterval(timer); timer = null; CO.applyVolumes(); };
     m.duck = (on) => { m.ducked = on; CO.applyVolumes(); };
     m.intensity = (l) => { m.level = l; };
     return m;
@@ -825,6 +912,7 @@
   CO.setSetting = (k, v) => {
     CO.settings[k] = v;
     if (k === 'sfx' || k === 'music') CO.applyVolumes();
+    if (k === 'track' && music.playing) { music.stop(); music.start(); }
     if (k === 'musicOn') { if (v) { unlockAudio(); music.start(); } else music.stop(); }
     CO.emit('settings', { settings: CO.settings, key: k });
     saveSoon();
@@ -834,10 +922,36 @@
   CO.toast = (text, opts = {}) => CO.emit('toast', { text, ...opts });
 
   /* ═════════════════════════ SAVE / LOAD ═════════════════════════ */
-  let saveTimer = null;
+  let saveTimer = null, saveBlocked = false;
+  const BACKUP_KEY = SAVE_KEY + '-backup';
+  // other tab took over the save slot → stop writing so we never clobber newer progress
+  const TAB_ID = Math.random().toString(36).slice(2);
+  let tabChan = null;
+  try {
+    tabChan = new BroadcastChannel('cookie-overdrive');
+    tabChan.onmessage = (e) => {
+      const m = e.data || {};
+      if (m.type === 'hello' && m.id !== TAB_ID && !saveBlocked) { save(); tabChan.postMessage({ type: 'yield', to: m.id }); saveBlocked = true; CO.emit('tab:blocked', {}); }
+      else if (m.type === 'yield' && m.to === TAB_ID && load()) { afterLoad(); CO.emit('load', { imported: true }); }
+    };
+  } catch (e) { tabChan = null; }
   function save() {
+    if (saveBlocked) return false;
     CO.state.lastSave = Date.now();
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(CO.state)); return true; } catch (e) { return false; }
+    let raw;
+    try { raw = JSON.stringify(CO.state); } catch (e) { return false; }
+    try {
+      // rotate: keep the previous good save as a backup (≥ 5 min apart) in case the main slot gets corrupted
+      const prev = localStorage.getItem(SAVE_KEY);
+      if (prev && prev !== raw) {
+        const bk = localStorage.getItem(BACKUP_KEY);
+        let bkAge = Infinity;
+        try { bkAge = Date.now() - (JSON.parse(bk || '{}').lastSave || 0); } catch (e) { /* corrupt backup */ }
+        if (bkAge > 5 * 60 * 1000) { try { JSON.parse(prev); localStorage.setItem(BACKUP_KEY, prev); } catch (e) { /* skip bad prev */ } }
+      }
+      localStorage.setItem(SAVE_KEY, raw);
+      return true;
+    } catch (e) { return false; }
   }
   function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
   CO.save = save;
@@ -846,7 +960,8 @@
     st.settings = merge(defaultSettings(), obj && obj.settings);
     // sanity
     D.buildings.forEach((b) => { st.buildings[b.id] = Math.max(0, Math.floor(+st.buildings[b.id] || 0)); });
-    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k] || 0; if (st[k] < 0) st[k] = 0; });
+    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k]; if (!Number.isFinite(st[k]) || st[k] < 0) st[k] = 0; });
+    if (!Number.isFinite(+st.lastSave) || +st.lastSave > Date.now() + 60000) st.lastSave = Date.now();
     st.pets = (st.pets || []).filter((p) => PET[p.id]);
     st.equipped = (st.equipped || []).filter((uid) => st.pets.some((p) => p.uid === uid)).slice(0, CO.maxPetSlots);
     if (!SKIN[st.skin] || !st.skinsOwned[st.skin]) st.skin = 'classic';
@@ -856,9 +971,21 @@
   function load() {
     let raw = null;
     try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
-    if (!raw) return false;
-    try { adopt(JSON.parse(raw)); return true; } catch (e) { return false; }
+    const tryRaw = (r) => { if (!r) return false; try { const o = JSON.parse(r); if (!isObj(o)) return false; adopt(o); return true; } catch (e) { return false; } };
+    if (tryRaw(raw)) return true;
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (tryRaw(bk)) { CO.restoredBackup = true; return true; }
+    return false;
   }
+  CO.hasBackup = () => { try { return !!localStorage.getItem(BACKUP_KEY); } catch (e) { return false; } };
+  CO.restoreBackup = () => {
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (!bk) return false;
+    try { const o = JSON.parse(bk); if (!isObj(o)) return false; adopt(o); afterLoad(); CO.emit('load', { imported: true }); return true; } catch (e) { return false; }
+  };
+  CO.saveBlocked = () => saveBlocked;
   CO.exportSave = () => {
     save();
     try { return 'CO1|' + btoa(unescape(encodeURIComponent(JSON.stringify(CO.state)))); } catch (e) { return ''; }
@@ -953,9 +1080,25 @@
         if (gain > 0) { earn(gain, 'offline'); CO.offline = { away, gain }; }
       }
     }
+    // daily gift: gems for coming back each day, streak bonus up to 7 days
+    try {
+      const day = new Date().toISOString().slice(0, 10), st = CO.state;
+      if (st.lastDaily !== day) {
+        const yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+        st.dailyStreak = st.lastDaily === yest ? Math.min(7, (+st.dailyStreak || 0) + 1) : 1;
+        st.lastDaily = day;
+        const g = 2 + st.dailyStreak;
+        st.gems += g;
+        CO.daily = { gems: g, streak: st.dailyStreak };
+        setTimeout(() => CO.toast('Cadeau du jour : +' + g + ' gemmes (série ' + st.dailyStreak + '/7)', { icon: 'ui:gem', color: '#ffcc33' }), 2500);
+      }
+    } catch (e) { /* optional */ }
     lastT = CO.now();
     setInterval(tick, 50);
     window.addEventListener('pagehide', save);
+    window.addEventListener('beforeunload', save);
+    if (tabChan) tabChan.postMessage({ type: 'hello', id: TAB_ID });
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) { /* optional */ }
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
     // hot-reload snapshot for republishes
     try { if (window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function') window.claude.hot.snapshot(() => ({ state: CO.state })); } catch (e) { /* optional */ }

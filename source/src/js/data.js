@@ -23,6 +23,25 @@
     { id: 'antimatter',  name: 'Condensateur Antimatière', cost: 1.7e14,  cps: 4.3e8,  desc: 'Condense l\'univers en pâte à cookie.' },
     { id: 'prism',       name: 'Prisme RGB', cost: 2.1e15,  cps: 2.9e9,  desc: 'Convertit la lumière pure en cookies. Et en RGB.' },
     { id: 'streamer',    name: 'Stream 24/7', cost: 2.6e16,  cps: 2.1e10, desc: 'Des millions de viewers spamment des cookies.' },
+    { id: 'ai',          name: 'IA Pâtissière', cost: 3.1e17,  cps: 1.5e11, desc: 'Elle a lu toutes les recettes du monde. Elle en invente de meilleures.' },
+    { id: 'dyson',       name: 'Sphère de Dyson Choco', cost: 3.7e18,  cps: 1.1e12, desc: 'Capture toute l\'énergie d\'une étoile pour préchauffer le four.' },
+    { id: 'multiverse',  name: 'Usine Multivers', cost: 4.4e19,  cps: 8e12,   desc: 'Chaque univers parallèle bosse pour toi. Même celui où tu es un brocoli.' },
+    { id: 'bigbang',     name: 'Big Bang Sucré', cost: 5.5e20,  cps: 6e13,   desc: 'Crée des univers entiers faits de pâte à cookie.' },
+    { id: 'quantum', name: 'Ordinateur Quantique Choco', cost: 6.6e+21, cps: 4.5e+14, desc: 'Calcule toutes les recettes possibles en même temps. Et les cuit.' },
+    { id: 'wormhole', name: 'Trou de Ver Express', cost: 7.9e+22, cps: 3.4e+15, desc: 'Livraison instantanée depuis l\'autre bout de l\'univers.' },
+    { id: 'nebula', name: 'Pépinière de Nébuleuses', cost: 9.5e+23, cps: 2.5e+16, desc: 'Fait pousser des nuages de sucre interstellaires.' },
+    { id: 'galaxyfarm', name: 'Ferme Galactique', cost: 1.1e+25, cps: 1.9e+17, desc: 'Des champs de pépites grands comme des systèmes solaires.' },
+    { id: 'chrono', name: 'Chronoboulangerie', cost: 1.4e+26, cps: 1.4e+18, desc: 'Cuit les cookies avant même que tu les commandes.' },
+    { id: 'dream', name: 'Usine à Rêves', cost: 1.6e+27, cps: 1.1e+19, desc: 'Récolte les cookies que tout le monde mange en rêve.' },
+    { id: 'simulation', name: 'Simulation Cookie', cost: 2e+28, cps: 8e+19, desc: 'Et si l\'univers n\'était qu\'un cookie clicker ?' },
+    { id: 'dragon', name: 'Dragon Pâtissier', cost: 2.4e+29, cps: 6e+20, desc: 'Crache du feu à la température parfaite. Toque obligatoire.' },
+    { id: 'godoven', name: 'Four Divin', cost: 2.8e+30, cps: 4.5e+21, desc: 'Un four béni par le Grand Cookie Originel en personne.' },
+    { id: 'milkyway', name: 'Voie Lactée', cost: 3.4e+31, cps: 3.4e+22, desc: 'Le vrai lait cosmique. Parfait pour tremper.' },
+    { id: 'spoon', name: 'Cuillère de l\'Infini', cost: 4.1e+32, cps: 2.5e+23, desc: 'Une cuillerée de pâte = une infinité de cookies.' },
+    { id: 'memes', name: 'Ferme à Mèmes', cost: 4.9e+33, cps: 1.9e+24, desc: 'Tes cookies deviennent viraux. Littéralement.' },
+    { id: 'omniverse', name: 'Omnivers', cost: 5.9e+34, cps: 1.4e+25, desc: 'Tous les multivers de tous les multivers. Tous à toi.' },
+    { id: 'crumbcore', name: 'Noyau de Miette', cost: 7.1e+35, cps: 1.1e+26, desc: 'Le cœur brûlant de toutes les miettes de l\'existence.' },
+    { id: 'absolute', name: 'Cookie Absolu', cost: 8.5e+36, cps: 8e+26, desc: 'Le cookie ultime. Au-delà, il n\'y a que d\'autres cookies.' },
   ];
 
   /* ───────────────────────── VISUAL LAYERS ─────────────────────────
@@ -108,6 +127,61 @@
     { id: 'trou_noir',     name: 'Trou Noir', cost: 1.7e15,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 1] }, vis: ['black_hole', 1] },
     { id: 'prisme',        name: 'Afterimage Prismatique', cost: 2.1e16,  fx: { bld: 'prism', x: 2, cps: 1.2 },   req: { bld: ['prism', 1] },     vis: ['afterimage', 1] },
     { id: 'chat_direct',   name: 'Chat en Direct', cost: 2.6e17,  fx: { bld: 'streamer', x: 2 },          req: { bld: ['streamer', 1] },  vis: ['chat', 1] },
+    { id: 'ai_1',          name: 'Réseau de Neurones Sucré', cost: 3.1e18, fx: { bld: 'ai', x: 2 },          req: { bld: ['ai', 1] },          vis: ['glitch', 1] },
+    { id: 'ai_25',         name: 'Superintelligence Gourmande', cost: 7.8e19, fx: { bld: 'ai', x: 2 },     req: { bld: ['ai', 25] },         vis: ['holo', 1] },
+    { id: 'dyson_1',       name: 'Panneaux Solaires Pépite', cost: 3.7e19, fx: { bld: 'dyson', x: 2 },    req: { bld: ['dyson', 1] },       vis: ['god_rays', 1] },
+    { id: 'dyson_25',      name: 'Étoile Apprivoisée', cost: 9.2e20, fx: { bld: 'dyson', x: 2 },          req: { bld: ['dyson', 25] },      vis: ['halo', 1] },
+    { id: 'multi_1',       name: 'Câbles Interdimensionnels', cost: 4.4e20, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 1] }, vis: ['warp', 1] },
+    { id: 'multi_25',      name: 'Conseil des Toi Alternatifs', cost: 1.1e22, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 25] }, vis: ['afterimage', 1] },
+    { id: 'bang_1',        name: 'Inflation Cosmique', cost: 5.5e21, fx: { bld: 'bigbang', x: 2 },       req: { bld: ['bigbang', 1] },     vis: ['galaxy_core', 1] },
+    { id: 'bang_25',       name: 'Théorie du Tout (Chocolat)', cost: 1.4e23, fx: { bld: 'bigbang', x: 2, cps: 1.2 }, req: { bld: ['bigbang', 25] }, vis: ['black_hole', 1] },
+    { id: 'quantum_1', name: 'Ordinateur Quantique Choco : Turbo', cost: 6.6e+22, fx: { bld: 'quantum', x: 2 }, req: { bld: ['quantum', 1] }, vis: ['holo', 1] },
+    { id: 'quantum_25', name: 'Ordinateur Quantique Choco : Overdrive', cost: 1.6e+24, fx: { bld: 'quantum', x: 2 }, req: { bld: ['quantum', 25] }, vis: ['warp', 1] },
+    { id: 'wormhole_1', name: 'Trou de Ver Express : Turbo', cost: 7.9e+23, fx: { bld: 'wormhole', x: 2 }, req: { bld: ['wormhole', 1] }, vis: ['holo', 1] },
+    { id: 'wormhole_25', name: 'Trou de Ver Express : Overdrive', cost: 2e+25, fx: { bld: 'wormhole', x: 2 }, req: { bld: ['wormhole', 25] }, vis: ['warp', 1] },
+    { id: 'nebula_1', name: 'Pépinière de Nébuleuses : Turbo', cost: 9.5e+24, fx: { bld: 'nebula', x: 2 }, req: { bld: ['nebula', 1] }, vis: ['holo', 1] },
+    { id: 'nebula_25', name: 'Pépinière de Nébuleuses : Overdrive', cost: 2.4e+26, fx: { bld: 'nebula', x: 2 }, req: { bld: ['nebula', 25] }, vis: ['warp', 1] },
+    { id: 'galaxyfarm_1', name: 'Ferme Galactique : Turbo', cost: 1.1e+26, fx: { bld: 'galaxyfarm', x: 2 }, req: { bld: ['galaxyfarm', 1] }, vis: ['holo', 1] },
+    { id: 'galaxyfarm_25', name: 'Ferme Galactique : Overdrive', cost: 2.9e+27, fx: { bld: 'galaxyfarm', x: 2 }, req: { bld: ['galaxyfarm', 25] }, vis: ['warp', 1] },
+    { id: 'chrono_1', name: 'Chronoboulangerie : Turbo', cost: 1.4e+27, fx: { bld: 'chrono', x: 2 }, req: { bld: ['chrono', 1] }, vis: ['holo', 1] },
+    { id: 'chrono_25', name: 'Chronoboulangerie : Overdrive', cost: 3.4e+28, fx: { bld: 'chrono', x: 2 }, req: { bld: ['chrono', 25] }, vis: ['warp', 1] },
+    { id: 'dream_1', name: 'Usine à Rêves : Turbo', cost: 1.6e+28, fx: { bld: 'dream', x: 2 }, req: { bld: ['dream', 1] }, vis: ['holo', 1] },
+    { id: 'dream_25', name: 'Usine à Rêves : Overdrive', cost: 4.1e+29, fx: { bld: 'dream', x: 2 }, req: { bld: ['dream', 25] }, vis: ['warp', 1] },
+    { id: 'simulation_1', name: 'Simulation Cookie : Turbo', cost: 2e+29, fx: { bld: 'simulation', x: 2 }, req: { bld: ['simulation', 1] }, vis: ['holo', 1] },
+    { id: 'simulation_25', name: 'Simulation Cookie : Overdrive', cost: 4.9e+30, fx: { bld: 'simulation', x: 2 }, req: { bld: ['simulation', 25] }, vis: ['warp', 1] },
+    { id: 'dragon_1', name: 'Dragon Pâtissier : Turbo', cost: 2.4e+30, fx: { bld: 'dragon', x: 2 }, req: { bld: ['dragon', 1] }, vis: ['holo', 1] },
+    { id: 'dragon_25', name: 'Dragon Pâtissier : Overdrive', cost: 5.9e+31, fx: { bld: 'dragon', x: 2 }, req: { bld: ['dragon', 25] }, vis: ['warp', 1] },
+    { id: 'godoven_1', name: 'Four Divin : Turbo', cost: 2.8e+31, fx: { bld: 'godoven', x: 2 }, req: { bld: ['godoven', 1] }, vis: ['holo', 1] },
+    { id: 'godoven_25', name: 'Four Divin : Overdrive', cost: 7.1e+32, fx: { bld: 'godoven', x: 2 }, req: { bld: ['godoven', 25] }, vis: ['warp', 1] },
+    { id: 'milkyway_1', name: 'Voie Lactée : Turbo', cost: 3.4e+32, fx: { bld: 'milkyway', x: 2 }, req: { bld: ['milkyway', 1] }, vis: ['holo', 1] },
+    { id: 'milkyway_25', name: 'Voie Lactée : Overdrive', cost: 8.5e+33, fx: { bld: 'milkyway', x: 2 }, req: { bld: ['milkyway', 25] }, vis: ['warp', 1] },
+    { id: 'spoon_1', name: 'Cuillère de l\'Infini : Turbo', cost: 4.1e+33, fx: { bld: 'spoon', x: 2 }, req: { bld: ['spoon', 1] }, vis: ['holo', 1] },
+    { id: 'spoon_25', name: 'Cuillère de l\'Infini : Overdrive', cost: 1e+35, fx: { bld: 'spoon', x: 2 }, req: { bld: ['spoon', 25] }, vis: ['warp', 1] },
+    { id: 'memes_1', name: 'Ferme à Mèmes : Turbo', cost: 4.9e+34, fx: { bld: 'memes', x: 2 }, req: { bld: ['memes', 1] }, vis: ['holo', 1] },
+    { id: 'memes_25', name: 'Ferme à Mèmes : Overdrive', cost: 1.2e+36, fx: { bld: 'memes', x: 2 }, req: { bld: ['memes', 25] }, vis: ['warp', 1] },
+    { id: 'omniverse_1', name: 'Omnivers : Turbo', cost: 5.9e+35, fx: { bld: 'omniverse', x: 2 }, req: { bld: ['omniverse', 1] }, vis: ['holo', 1] },
+    { id: 'omniverse_25', name: 'Omnivers : Overdrive', cost: 1.5e+37, fx: { bld: 'omniverse', x: 2 }, req: { bld: ['omniverse', 25] }, vis: ['warp', 1] },
+    { id: 'crumbcore_1', name: 'Noyau de Miette : Turbo', cost: 7.1e+36, fx: { bld: 'crumbcore', x: 2 }, req: { bld: ['crumbcore', 1] }, vis: ['holo', 1] },
+    { id: 'crumbcore_25', name: 'Noyau de Miette : Overdrive', cost: 1.8e+38, fx: { bld: 'crumbcore', x: 2 }, req: { bld: ['crumbcore', 25] }, vis: ['warp', 1] },
+    { id: 'absolute_1', name: 'Cookie Absolu : Turbo', cost: 8.5e+37, fx: { bld: 'absolute', x: 2 }, req: { bld: ['absolute', 1] }, vis: ['holo', 1] },
+    { id: 'absolute_25', name: 'Cookie Absolu : Overdrive', cost: 2.1e+39, fx: { bld: 'absolute', x: 2 }, req: { bld: ['absolute', 25] }, vis: ['warp', 1] },
+    // ── vague 2 : paliers 25 / 50 et bonus globaux ──
+    { id: 'curseurs_50',   name: 'Curseurs Hyperthreadés', cost: 5e6,     fx: { bld: 'cursor', x: 3 },            req: { bld: ['cursor', 50] },   vis: ['cursor_rgb', 1] },
+    { id: 'mamies_50',     name: 'Mamies Pro League', cost: 4e7,     fx: { bld: 'granny', x: 3 },            req: { bld: ['granny', 50] },   vis: ['headphones', 1] },
+    { id: 'ferme_50',      name: 'Serres Hydroponiques', cost: 4.4e8,   fx: { bld: 'farm', x: 3 },              req: { bld: ['farm', 50] },     vis: ['sprinkles', 1] },
+    { id: 'temple_25',     name: 'Chorale Céleste', cost: 5e9,     fx: { bld: 'temple', x: 2 },            req: { bld: ['temple', 25] },   vis: ['halo', 1] },
+    { id: 'wizard_25',     name: 'Grimoire Interdit', cost: 8e10,    fx: { bld: 'wizard', x: 2 },            req: { bld: ['wizard', 25] },   vis: ['disco', 1] },
+    { id: 'rocket_25',     name: 'Réacteurs Ionique', cost: 1.3e12,  fx: { bld: 'rocket', x: 2 },            req: { bld: ['rocket', 25] },   vis: ['warp', 1] },
+    { id: 'lab_25',        name: 'Pierre Philosophale', cost: 1.9e13,  fx: { bld: 'lab', x: 2 },               req: { bld: ['lab', 25] },      vis: ['crystals', 1] },
+    { id: 'portal_25',     name: 'Multivers Stable', cost: 2.5e14,  fx: { bld: 'portal', x: 2 },            req: { bld: ['portal', 25] },   vis: ['galaxy_core', 1] },
+    { id: 'time_25',       name: 'Paradoxe Maîtrisé', cost: 3.5e15,  fx: { bld: 'timemachine', x: 2 },       req: { bld: ['timemachine', 25] }, vis: ['afterimage', 1] },
+    { id: 'anti_25',       name: 'Singularité Domptée', cost: 4.3e16,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 25] }, vis: ['black_hole', 1] },
+    { id: 'prism_25',      name: 'Spectre Infini', cost: 5.3e17,  fx: { bld: 'prism', x: 2 },             req: { bld: ['prism', 25] },    vis: ['holo', 1] },
+    { id: 'stream_25',     name: 'Raid de 100 000 Viewers', cost: 6.5e18, fx: { bld: 'streamer', x: 2 },     req: { bld: ['streamer', 25] }, vis: ['chat', 1] },
+    { id: 'crit_2',        name: 'Doigt Stroboscopique', cost: 3e10,    fx: { crit: 0.04 },                     req: { crits: 300 },            vis: ['lightning', 1] },
+    { id: 'lucky_2',       name: 'Trèfle à Quatre Pépites', cost: 9e13,    fx: { goldenFreq: 1.25 },               req: { golden: 50 },            vis: ['god_rays', 1] },
+    { id: 'clic_divin',    name: 'Index Divin', cost: 4e14,    fx: { click: 3, clickCps: 0.02 },       req: { clicks: 25000 },         vis: ['laser_eyes', 1] },
+    { id: 'turbo_global',  name: 'Overclock Total', cost: 1e18,    fx: { cps: 1.25 },                      req: { baked: 5e17 },           vis: ['glitch', 1] },
   ];
 
   /* ───────────────────────── SKINS ─────────────────────────
@@ -125,6 +199,12 @@
     { id: 'hologram',     name: 'Hologramme',       style: 'holo',    cost: 150, pal: { base: '#39f0ff', dark: '#0b6d8a', light: '#b7fbff', chip: '#ff4fe1', chipHi: '#ffffff', rim: '#39f0ff' } },
     { id: 'golden',       name: 'Cookie Doré',      style: 'gold',    cost: 0, unlock: { ach: 'a_golden10', text: 'Attrape 10 cookies dorés' }, pal: { base: '#ffcc33', dark: '#c98a00', light: '#fff2a8', chip: '#b36b00', chipHi: '#ffe07a', rim: '#8a5a00' } },
     { id: 'rainbow',      name: 'Arc-en-ciel RGB',  style: 'rainbow', cost: 250, pal: { base: '#ff4fd8', dark: '#7a2cff', light: '#ffffff', chip: '#1a0b33', chipHi: '#5a3a8a', rim: '#ffffff' } },
+    { id: 'mint',         name: 'Menthe Glaciale',  style: 'classic', cost: 30,  pal: { base: '#9fe8d2', dark: '#4fb89a', light: '#d8fff2', chip: '#2b1a12', chipHi: '#5a3a28', rim: '#3a9a80' } },
+    { id: 'blueberry',    name: 'Myrtille',         style: 'classic', cost: 35,  pal: { base: '#5b5bd6', dark: '#2e2e8a', light: '#9a9aff', chip: '#e8e0ff', chipHi: '#ffffff', rim: '#23236a' } },
+    { id: 'retro_gb',     name: 'Game Boy',         style: 'pixel',   cost: 70,  pal: { base: '#8bac0f', dark: '#306230', light: '#9bbc0f', chip: '#0f380f', chipHi: '#306230', rim: '#0f380f' } },
+    { id: 'ice',          name: 'Cristal de Glace', style: 'diamond', cost: 140, pal: { base: '#cfe9ff', dark: '#7aa8d6', light: '#ffffff', chip: '#9ad0ff', chipHi: '#ffffff', rim: '#5b8fc9' } },
+    { id: 'plasma',       name: 'Plasma',           style: 'lava',    cost: 180, pal: { base: '#12062a', dark: '#05010f', light: '#2a1060', chip: '#00e5ff', chipHi: '#e0ffff', rim: '#7a2cff' } },
+    { id: 'nebula_rose',  name: 'Nébuleuse Rose',   style: 'galaxy',  cost: 200, pal: { base: '#5a0f4a', dark: '#2a0522', light: '#b03c8f', chip: '#ffd0f0', chipHi: '#ffffff', rim: '#ff5ec8' } },
     { id: 'void',         name: 'Néant',            style: 'void',    cost: 0, unlock: { rebirths: 3, text: 'Fais 3 Rebirths' }, pal: { base: '#07030f', dark: '#000000', light: '#1d1033', chip: '#b16bff', chipHi: '#ffffff', rim: '#b16bff' } },
   ];
 
@@ -176,6 +256,9 @@
     { kind: 'clickstorm', weight: 14, label: 'CLIC-TEMPÊTE ×77',  color: '#1ff4ff', buff: { id: 'clickstorm', name: 'Clic-Tempête', icon: 'ui:tornado', dur: 10, click: 77 } },
     { kind: 'rgbstorm',   weight: 8,  label: 'RGB STORM',         color: 'rgb' },
     { kind: 'gems',       weight: 8,  label: 'PLUIE DE GEMMES',   color: '#3dffb0' },
+    { kind: 'blessing',   weight: 10, label: 'BÉNÉDICTION ×3 (60 s)', color: '#fff27a', buff: { id: 'blessing', name: 'Bénédiction', icon: 'ui:crown', dur: 60, cps: 3 } },
+    { kind: 'overclock',  weight: 6,  label: 'OVERCLOCK ×15',     color: '#ff2bd6', buff: { id: 'overclock', name: 'Overclock', icon: 'ui:bolt', dur: 15, cps: 15 } },
+    { kind: 'bossbait',   weight: 4,  label: 'APPÂT À BOSS !',    color: '#ff4d6d' },
   ];
 
   /* ───────────────────────── BOSSES ───────────────────────── */
@@ -187,7 +270,17 @@
     { id: 'lemon',    name: 'Citron Acide', color: '#fff23d' },
     { id: 'salt',     name: 'Salière Maléfique', color: '#ffffff' },
     { id: 'ghost',    name: 'Fantôme du Régime', color: '#c9b6ff' },
+    { id: 'celery',     name: 'Céleri Ninja',            color: '#9dff72', minKills: 3 },
+    { id: 'toothbrush', name: 'Brosse à Dents Laser',    color: '#7ff0ff', minKills: 5 },
+    { id: 'raisin',     name: 'Cookie aux Raisins Traître', color: '#c47aff', minKills: 7 },
+    { id: 'kale',       name: 'Chou Kale Hipster',       color: '#b8ff9a', minKills: 9 },
+    { id: 'bottle',     name: 'Bouteille d\'Eau Plate', color: '#d8f6ff', minKills: 11 },
+    { id: 'scale',      name: 'Balance Maudite',         color: '#ffffff', minKills: 13 },
+    { id: 'nutribot',   name: 'Nutribot 3000',           color: '#1ff4ff', minKills: 15 },
   ];
+  // every 10th fight: the mega boss. The final boss ends the game (see CO.finalGoal).
+  const megaBoss = { id: 'king', name: 'Roi Brocoli', color: '#ff5c7a', mega: true };
+  const finalBoss = { id: 'final', name: 'LE GRAND RÉGIME', color: '#b16bff', final: true };
 
   /* ───────────────────────── MINIGAME UNLOCKS ─────────────────────────
    * Minigame modules register themselves; this only says when they unlock. */
@@ -202,6 +295,27 @@
   const B = (s, id) => s.buildings[id] || 0;
   const totalB = (s) => Object.values(s.buildings).reduce((a, b) => a + b, 0);
   const achievements = [
+    { id: 'a_quantum',   name: 'Physique Sucrée', gems: 30, desc: 'Possède un Ordinateur Quantique Choco.', check: (s) => B(s, 'quantum') >= 1 },
+    { id: 'a_dragon',    name: 'Dompteur de Dragon', gems: 40, desc: 'Possède un Dragon Pâtissier.',        check: (s) => B(s, 'dragon') >= 1 },
+    { id: 'a_omni',      name: 'Maître de l\'Omnivers', gems: 60, desc: 'Possède un Omnivers.',            check: (s) => B(s, 'omniverse') >= 1 },
+    { id: 'a_absolute',  name: 'L\'ABSOLU', gems: 150, desc: 'Possède le Cookie Absolu.',                    check: (s) => B(s, 'absolute') >= 1 },
+    { id: 'a_bld1000',   name: 'Galaxie Industrielle', gems: 50, desc: 'Possède 1 000 bâtiments au total.',  check: (s) => totalB(s) >= 1000 },
+    { id: 'a_ai',        name: 'Singularité Sucrée', gems: 20, desc: 'Possède une IA Pâtissière.',        check: (s) => B(s, 'ai') >= 1 },
+    { id: 'a_bigbang',   name: 'Créateur d\'Univers', gems: 50, desc: 'Possède un Big Bang Sucré.',     check: (s) => B(s, 'bigbang') >= 1 },
+    { id: 'a_bld500',    name: 'Empire Industriel', gems: 25, desc: 'Possède 500 bâtiments au total.',    check: (s) => totalB(s) >= 500 },
+    { id: 'a_boss5',     name: 'Chasseur de Légumes', gems: 8,  desc: 'Bats 5 boss.',                          check: (s) => s.stats.bossKills >= 5 },
+    { id: 'a_boss15',    name: 'Terreur du Potager', gems: 15, desc: 'Bats 15 boss.',                         check: (s) => s.stats.bossKills >= 15 },
+    { id: 'a_boss40',    name: 'Végétarien Repenti', gems: 30, desc: 'Bats 40 boss.',                         check: (s) => s.stats.bossKills >= 40 },
+    { id: 'a_elite',     name: 'Élite Écrasée', gems: 10, desc: 'Bats un boss ÉLITE.',                        check: (s) => (s.stats.eliteKills || 0) >= 1 },
+    { id: 'a_king',      name: 'Régicide', gems: 20, desc: 'Bats le Roi Brocoli.',                             check: (s) => (s.stats.megaKills || 0) >= 1 },
+    { id: 'a_final',     name: 'FIN : Le Cookie Suprême', gems: 100, desc: 'Bats LE GRAND RÉGIME.',            check: (s) => !!s.gameWon },
+    { id: 'a_play1h',    name: 'Une Heure de Crunch', gems: 10, desc: 'Joue 1 heure.',                         check: (s) => s.stats.playTime >= 3600 },
+    { id: 'a_play3h',    name: 'Marathon Sucré', gems: 25, desc: 'Joue 3 heures.',                             check: (s) => s.stats.playTime >= 10800 },
+    { id: 'a_daily3',    name: 'Habitué', gems: 5,  desc: 'Série de 3 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 3 },
+    { id: 'a_daily7',    name: 'Accro au Cookie', gems: 15, desc: 'Série de 7 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 7 },
+    { id: 'a_skins8',    name: 'Garde-Robe Sucrée', gems: 20, desc: 'Possède 8 skins.',                    check: (s) => Object.values(s.skinsOwned || {}).filter(Boolean).length >= 8 },
+    { id: 'a_dj',        name: 'DJ Cookie', gems: 3,  desc: 'Change de morceau de musique.',            check: (s) => !!s.settings && s.settings.track && s.settings.track !== 'synthwave' },
+    { id: 'a_upg50',     name: 'Collectionneur d\'Upgrades', gems: 25, desc: 'Achète 50 upgrades.',  check: (s) => Object.values(s.upgrades || {}).filter(Boolean).length >= 50 },
     { id: 'a_click1',    name: 'Premier Crunch', gems: 1,  desc: 'Clique sur le cookie.',                check: (s) => s.clicks >= 1 },
     { id: 'a_click100',  name: 'Doigt Chaud', gems: 3,  desc: '100 clics.',                           check: (s) => s.clicks >= 100 },
     { id: 'a_click1k',   name: 'Tendinite Speedrun', gems: 5,  desc: '1 000 clics.',                         check: (s) => s.clicks >= 1000 },
@@ -298,6 +412,17 @@
     'Sondage : 100 % des cookies votent pour plus de pépites.',
     'Le Stream 24/7 bat un record : 3 millions de « W » dans le chat.',
     'Ta mamie gameuse vient de te carry en ranked. Gênant.',
+    'Beethoven aurait composé l\'Hymne à la Joie en mangeant un cookie. Source : tkt.',
+    'Le Roi de la Montagne réclame des droits d\'auteur. Il est dans le domaine public, frérot.',
+    'Tetris porte plainte : ton cookie empile trop bien les pépites.',
+    'Nouveau skin Game Boy : les parents pleurent de nostalgie.',
+    'Un cookie a été vu en train de faire la queue pour un concert de clavecin.',
+    'Le Roi Brocoli exige un tribut de 10 000 fleurettes. Refusé.',
+    'Un Céleri Ninja a été vu sur les toits. Il est très croquant.',
+    'Le Cookie aux Raisins Traître prétend être aux pépites. Personne n\'est dupe.',
+    'Le Nutribot 3000 a calculé tes calories. Il a planté.',
+    'Rumeur : LE GRAND RÉGIME attend les boulangers les plus acharnés…',
+    'La Balance Maudite affiche « ERREUR ». Victoire morale.',
     'Un Poulpe Glacé aperçu en train de cliquer avec ses 8 bras. Triche ?',
   ];
 
@@ -311,6 +436,7 @@
   ];
 
   CO.data = {
+    megaBoss, finalBoss,
     buildings, visuals, upgrades, skins, themes, rarities, pets, eggs,
     golden, bosses, minigameUnlocks, achievements, quests, news, clickSounds,
   };

@@ -1,5 +1,9 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cookie Overdrive</title>
 <meta name="description" content="Cookie clicker RGB hyperactif : upgrades qui transforment le cookie, pets, boss, mini-jeux.">
+<meta name="theme-color" content="#14062b">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap">
@@ -594,6 +598,25 @@
     { id: 'antimatter',  name: 'Condensateur Antimatière', cost: 1.7e14,  cps: 4.3e8,  desc: 'Condense l\'univers en pâte à cookie.' },
     { id: 'prism',       name: 'Prisme RGB', cost: 2.1e15,  cps: 2.9e9,  desc: 'Convertit la lumière pure en cookies. Et en RGB.' },
     { id: 'streamer',    name: 'Stream 24/7', cost: 2.6e16,  cps: 2.1e10, desc: 'Des millions de viewers spamment des cookies.' },
+    { id: 'ai',          name: 'IA Pâtissière', cost: 3.1e17,  cps: 1.5e11, desc: 'Elle a lu toutes les recettes du monde. Elle en invente de meilleures.' },
+    { id: 'dyson',       name: 'Sphère de Dyson Choco', cost: 3.7e18,  cps: 1.1e12, desc: 'Capture toute l\'énergie d\'une étoile pour préchauffer le four.' },
+    { id: 'multiverse',  name: 'Usine Multivers', cost: 4.4e19,  cps: 8e12,   desc: 'Chaque univers parallèle bosse pour toi. Même celui où tu es un brocoli.' },
+    { id: 'bigbang',     name: 'Big Bang Sucré', cost: 5.5e20,  cps: 6e13,   desc: 'Crée des univers entiers faits de pâte à cookie.' },
+    { id: 'quantum', name: 'Ordinateur Quantique Choco', cost: 6.6e+21, cps: 4.5e+14, desc: 'Calcule toutes les recettes possibles en même temps. Et les cuit.' },
+    { id: 'wormhole', name: 'Trou de Ver Express', cost: 7.9e+22, cps: 3.4e+15, desc: 'Livraison instantanée depuis l\'autre bout de l\'univers.' },
+    { id: 'nebula', name: 'Pépinière de Nébuleuses', cost: 9.5e+23, cps: 2.5e+16, desc: 'Fait pousser des nuages de sucre interstellaires.' },
+    { id: 'galaxyfarm', name: 'Ferme Galactique', cost: 1.1e+25, cps: 1.9e+17, desc: 'Des champs de pépites grands comme des systèmes solaires.' },
+    { id: 'chrono', name: 'Chronoboulangerie', cost: 1.4e+26, cps: 1.4e+18, desc: 'Cuit les cookies avant même que tu les commandes.' },
+    { id: 'dream', name: 'Usine à Rêves', cost: 1.6e+27, cps: 1.1e+19, desc: 'Récolte les cookies que tout le monde mange en rêve.' },
+    { id: 'simulation', name: 'Simulation Cookie', cost: 2e+28, cps: 8e+19, desc: 'Et si l\'univers n\'était qu\'un cookie clicker ?' },
+    { id: 'dragon', name: 'Dragon Pâtissier', cost: 2.4e+29, cps: 6e+20, desc: 'Crache du feu à la température parfaite. Toque obligatoire.' },
+    { id: 'godoven', name: 'Four Divin', cost: 2.8e+30, cps: 4.5e+21, desc: 'Un four béni par le Grand Cookie Originel en personne.' },
+    { id: 'milkyway', name: 'Voie Lactée', cost: 3.4e+31, cps: 3.4e+22, desc: 'Le vrai lait cosmique. Parfait pour tremper.' },
+    { id: 'spoon', name: 'Cuillère de l\'Infini', cost: 4.1e+32, cps: 2.5e+23, desc: 'Une cuillerée de pâte = une infinité de cookies.' },
+    { id: 'memes', name: 'Ferme à Mèmes', cost: 4.9e+33, cps: 1.9e+24, desc: 'Tes cookies deviennent viraux. Littéralement.' },
+    { id: 'omniverse', name: 'Omnivers', cost: 5.9e+34, cps: 1.4e+25, desc: 'Tous les multivers de tous les multivers. Tous à toi.' },
+    { id: 'crumbcore', name: 'Noyau de Miette', cost: 7.1e+35, cps: 1.1e+26, desc: 'Le cœur brûlant de toutes les miettes de l\'existence.' },
+    { id: 'absolute', name: 'Cookie Absolu', cost: 8.5e+36, cps: 8e+26, desc: 'Le cookie ultime. Au-delà, il n\'y a que d\'autres cookies.' },
   ];
 
   /* ───────────────────────── VISUAL LAYERS ─────────────────────────
@@ -679,6 +702,61 @@
     { id: 'trou_noir',     name: 'Trou Noir', cost: 1.7e15,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 1] }, vis: ['black_hole', 1] },
     { id: 'prisme',        name: 'Afterimage Prismatique', cost: 2.1e16,  fx: { bld: 'prism', x: 2, cps: 1.2 },   req: { bld: ['prism', 1] },     vis: ['afterimage', 1] },
     { id: 'chat_direct',   name: 'Chat en Direct', cost: 2.6e17,  fx: { bld: 'streamer', x: 2 },          req: { bld: ['streamer', 1] },  vis: ['chat', 1] },
+    { id: 'ai_1',          name: 'Réseau de Neurones Sucré', cost: 3.1e18, fx: { bld: 'ai', x: 2 },          req: { bld: ['ai', 1] },          vis: ['glitch', 1] },
+    { id: 'ai_25',         name: 'Superintelligence Gourmande', cost: 7.8e19, fx: { bld: 'ai', x: 2 },     req: { bld: ['ai', 25] },         vis: ['holo', 1] },
+    { id: 'dyson_1',       name: 'Panneaux Solaires Pépite', cost: 3.7e19, fx: { bld: 'dyson', x: 2 },    req: { bld: ['dyson', 1] },       vis: ['god_rays', 1] },
+    { id: 'dyson_25',      name: 'Étoile Apprivoisée', cost: 9.2e20, fx: { bld: 'dyson', x: 2 },          req: { bld: ['dyson', 25] },      vis: ['halo', 1] },
+    { id: 'multi_1',       name: 'Câbles Interdimensionnels', cost: 4.4e20, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 1] }, vis: ['warp', 1] },
+    { id: 'multi_25',      name: 'Conseil des Toi Alternatifs', cost: 1.1e22, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 25] }, vis: ['afterimage', 1] },
+    { id: 'bang_1',        name: 'Inflation Cosmique', cost: 5.5e21, fx: { bld: 'bigbang', x: 2 },       req: { bld: ['bigbang', 1] },     vis: ['galaxy_core', 1] },
+    { id: 'bang_25',       name: 'Théorie du Tout (Chocolat)', cost: 1.4e23, fx: { bld: 'bigbang', x: 2, cps: 1.2 }, req: { bld: ['bigbang', 25] }, vis: ['black_hole', 1] },
+    { id: 'quantum_1', name: 'Ordinateur Quantique Choco : Turbo', cost: 6.6e+22, fx: { bld: 'quantum', x: 2 }, req: { bld: ['quantum', 1] }, vis: ['holo', 1] },
+    { id: 'quantum_25', name: 'Ordinateur Quantique Choco : Overdrive', cost: 1.6e+24, fx: { bld: 'quantum', x: 2 }, req: { bld: ['quantum', 25] }, vis: ['warp', 1] },
+    { id: 'wormhole_1', name: 'Trou de Ver Express : Turbo', cost: 7.9e+23, fx: { bld: 'wormhole', x: 2 }, req: { bld: ['wormhole', 1] }, vis: ['holo', 1] },
+    { id: 'wormhole_25', name: 'Trou de Ver Express : Overdrive', cost: 2e+25, fx: { bld: 'wormhole', x: 2 }, req: { bld: ['wormhole', 25] }, vis: ['warp', 1] },
+    { id: 'nebula_1', name: 'Pépinière de Nébuleuses : Turbo', cost: 9.5e+24, fx: { bld: 'nebula', x: 2 }, req: { bld: ['nebula', 1] }, vis: ['holo', 1] },
+    { id: 'nebula_25', name: 'Pépinière de Nébuleuses : Overdrive', cost: 2.4e+26, fx: { bld: 'nebula', x: 2 }, req: { bld: ['nebula', 25] }, vis: ['warp', 1] },
+    { id: 'galaxyfarm_1', name: 'Ferme Galactique : Turbo', cost: 1.1e+26, fx: { bld: 'galaxyfarm', x: 2 }, req: { bld: ['galaxyfarm', 1] }, vis: ['holo', 1] },
+    { id: 'galaxyfarm_25', name: 'Ferme Galactique : Overdrive', cost: 2.9e+27, fx: { bld: 'galaxyfarm', x: 2 }, req: { bld: ['galaxyfarm', 25] }, vis: ['warp', 1] },
+    { id: 'chrono_1', name: 'Chronoboulangerie : Turbo', cost: 1.4e+27, fx: { bld: 'chrono', x: 2 }, req: { bld: ['chrono', 1] }, vis: ['holo', 1] },
+    { id: 'chrono_25', name: 'Chronoboulangerie : Overdrive', cost: 3.4e+28, fx: { bld: 'chrono', x: 2 }, req: { bld: ['chrono', 25] }, vis: ['warp', 1] },
+    { id: 'dream_1', name: 'Usine à Rêves : Turbo', cost: 1.6e+28, fx: { bld: 'dream', x: 2 }, req: { bld: ['dream', 1] }, vis: ['holo', 1] },
+    { id: 'dream_25', name: 'Usine à Rêves : Overdrive', cost: 4.1e+29, fx: { bld: 'dream', x: 2 }, req: { bld: ['dream', 25] }, vis: ['warp', 1] },
+    { id: 'simulation_1', name: 'Simulation Cookie : Turbo', cost: 2e+29, fx: { bld: 'simulation', x: 2 }, req: { bld: ['simulation', 1] }, vis: ['holo', 1] },
+    { id: 'simulation_25', name: 'Simulation Cookie : Overdrive', cost: 4.9e+30, fx: { bld: 'simulation', x: 2 }, req: { bld: ['simulation', 25] }, vis: ['warp', 1] },
+    { id: 'dragon_1', name: 'Dragon Pâtissier : Turbo', cost: 2.4e+30, fx: { bld: 'dragon', x: 2 }, req: { bld: ['dragon', 1] }, vis: ['holo', 1] },
+    { id: 'dragon_25', name: 'Dragon Pâtissier : Overdrive', cost: 5.9e+31, fx: { bld: 'dragon', x: 2 }, req: { bld: ['dragon', 25] }, vis: ['warp', 1] },
+    { id: 'godoven_1', name: 'Four Divin : Turbo', cost: 2.8e+31, fx: { bld: 'godoven', x: 2 }, req: { bld: ['godoven', 1] }, vis: ['holo', 1] },
+    { id: 'godoven_25', name: 'Four Divin : Overdrive', cost: 7.1e+32, fx: { bld: 'godoven', x: 2 }, req: { bld: ['godoven', 25] }, vis: ['warp', 1] },
+    { id: 'milkyway_1', name: 'Voie Lactée : Turbo', cost: 3.4e+32, fx: { bld: 'milkyway', x: 2 }, req: { bld: ['milkyway', 1] }, vis: ['holo', 1] },
+    { id: 'milkyway_25', name: 'Voie Lactée : Overdrive', cost: 8.5e+33, fx: { bld: 'milkyway', x: 2 }, req: { bld: ['milkyway', 25] }, vis: ['warp', 1] },
+    { id: 'spoon_1', name: 'Cuillère de l\'Infini : Turbo', cost: 4.1e+33, fx: { bld: 'spoon', x: 2 }, req: { bld: ['spoon', 1] }, vis: ['holo', 1] },
+    { id: 'spoon_25', name: 'Cuillère de l\'Infini : Overdrive', cost: 1e+35, fx: { bld: 'spoon', x: 2 }, req: { bld: ['spoon', 25] }, vis: ['warp', 1] },
+    { id: 'memes_1', name: 'Ferme à Mèmes : Turbo', cost: 4.9e+34, fx: { bld: 'memes', x: 2 }, req: { bld: ['memes', 1] }, vis: ['holo', 1] },
+    { id: 'memes_25', name: 'Ferme à Mèmes : Overdrive', cost: 1.2e+36, fx: { bld: 'memes', x: 2 }, req: { bld: ['memes', 25] }, vis: ['warp', 1] },
+    { id: 'omniverse_1', name: 'Omnivers : Turbo', cost: 5.9e+35, fx: { bld: 'omniverse', x: 2 }, req: { bld: ['omniverse', 1] }, vis: ['holo', 1] },
+    { id: 'omniverse_25', name: 'Omnivers : Overdrive', cost: 1.5e+37, fx: { bld: 'omniverse', x: 2 }, req: { bld: ['omniverse', 25] }, vis: ['warp', 1] },
+    { id: 'crumbcore_1', name: 'Noyau de Miette : Turbo', cost: 7.1e+36, fx: { bld: 'crumbcore', x: 2 }, req: { bld: ['crumbcore', 1] }, vis: ['holo', 1] },
+    { id: 'crumbcore_25', name: 'Noyau de Miette : Overdrive', cost: 1.8e+38, fx: { bld: 'crumbcore', x: 2 }, req: { bld: ['crumbcore', 25] }, vis: ['warp', 1] },
+    { id: 'absolute_1', name: 'Cookie Absolu : Turbo', cost: 8.5e+37, fx: { bld: 'absolute', x: 2 }, req: { bld: ['absolute', 1] }, vis: ['holo', 1] },
+    { id: 'absolute_25', name: 'Cookie Absolu : Overdrive', cost: 2.1e+39, fx: { bld: 'absolute', x: 2 }, req: { bld: ['absolute', 25] }, vis: ['warp', 1] },
+    // ── vague 2 : paliers 25 / 50 et bonus globaux ──
+    { id: 'curseurs_50',   name: 'Curseurs Hyperthreadés', cost: 5e6,     fx: { bld: 'cursor', x: 3 },            req: { bld: ['cursor', 50] },   vis: ['cursor_rgb', 1] },
+    { id: 'mamies_50',     name: 'Mamies Pro League', cost: 4e7,     fx: { bld: 'granny', x: 3 },            req: { bld: ['granny', 50] },   vis: ['headphones', 1] },
+    { id: 'ferme_50',      name: 'Serres Hydroponiques', cost: 4.4e8,   fx: { bld: 'farm', x: 3 },              req: { bld: ['farm', 50] },     vis: ['sprinkles', 1] },
+    { id: 'temple_25',     name: 'Chorale Céleste', cost: 5e9,     fx: { bld: 'temple', x: 2 },            req: { bld: ['temple', 25] },   vis: ['halo', 1] },
+    { id: 'wizard_25',     name: 'Grimoire Interdit', cost: 8e10,    fx: { bld: 'wizard', x: 2 },            req: { bld: ['wizard', 25] },   vis: ['disco', 1] },
+    { id: 'rocket_25',     name: 'Réacteurs Ionique', cost: 1.3e12,  fx: { bld: 'rocket', x: 2 },            req: { bld: ['rocket', 25] },   vis: ['warp', 1] },
+    { id: 'lab_25',        name: 'Pierre Philosophale', cost: 1.9e13,  fx: { bld: 'lab', x: 2 },               req: { bld: ['lab', 25] },      vis: ['crystals', 1] },
+    { id: 'portal_25',     name: 'Multivers Stable', cost: 2.5e14,  fx: { bld: 'portal', x: 2 },            req: { bld: ['portal', 25] },   vis: ['galaxy_core', 1] },
+    { id: 'time_25',       name: 'Paradoxe Maîtrisé', cost: 3.5e15,  fx: { bld: 'timemachine', x: 2 },       req: { bld: ['timemachine', 25] }, vis: ['afterimage', 1] },
+    { id: 'anti_25',       name: 'Singularité Domptée', cost: 4.3e16,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 25] }, vis: ['black_hole', 1] },
+    { id: 'prism_25',      name: 'Spectre Infini', cost: 5.3e17,  fx: { bld: 'prism', x: 2 },             req: { bld: ['prism', 25] },    vis: ['holo', 1] },
+    { id: 'stream_25',     name: 'Raid de 100 000 Viewers', cost: 6.5e18, fx: { bld: 'streamer', x: 2 },     req: { bld: ['streamer', 25] }, vis: ['chat', 1] },
+    { id: 'crit_2',        name: 'Doigt Stroboscopique', cost: 3e10,    fx: { crit: 0.04 },                     req: { crits: 300 },            vis: ['lightning', 1] },
+    { id: 'lucky_2',       name: 'Trèfle à Quatre Pépites', cost: 9e13,    fx: { goldenFreq: 1.25 },               req: { golden: 50 },            vis: ['god_rays', 1] },
+    { id: 'clic_divin',    name: 'Index Divin', cost: 4e14,    fx: { click: 3, clickCps: 0.02 },       req: { clicks: 25000 },         vis: ['laser_eyes', 1] },
+    { id: 'turbo_global',  name: 'Overclock Total', cost: 1e18,    fx: { cps: 1.25 },                      req: { baked: 5e17 },           vis: ['glitch', 1] },
   ];
 
   /* ───────────────────────── SKINS ─────────────────────────
@@ -696,6 +774,12 @@
     { id: 'hologram',     name: 'Hologramme',       style: 'holo',    cost: 150, pal: { base: '#39f0ff', dark: '#0b6d8a', light: '#b7fbff', chip: '#ff4fe1', chipHi: '#ffffff', rim: '#39f0ff' } },
     { id: 'golden',       name: 'Cookie Doré',      style: 'gold',    cost: 0, unlock: { ach: 'a_golden10', text: 'Attrape 10 cookies dorés' }, pal: { base: '#ffcc33', dark: '#c98a00', light: '#fff2a8', chip: '#b36b00', chipHi: '#ffe07a', rim: '#8a5a00' } },
     { id: 'rainbow',      name: 'Arc-en-ciel RGB',  style: 'rainbow', cost: 250, pal: { base: '#ff4fd8', dark: '#7a2cff', light: '#ffffff', chip: '#1a0b33', chipHi: '#5a3a8a', rim: '#ffffff' } },
+    { id: 'mint',         name: 'Menthe Glaciale',  style: 'classic', cost: 30,  pal: { base: '#9fe8d2', dark: '#4fb89a', light: '#d8fff2', chip: '#2b1a12', chipHi: '#5a3a28', rim: '#3a9a80' } },
+    { id: 'blueberry',    name: 'Myrtille',         style: 'classic', cost: 35,  pal: { base: '#5b5bd6', dark: '#2e2e8a', light: '#9a9aff', chip: '#e8e0ff', chipHi: '#ffffff', rim: '#23236a' } },
+    { id: 'retro_gb',     name: 'Game Boy',         style: 'pixel',   cost: 70,  pal: { base: '#8bac0f', dark: '#306230', light: '#9bbc0f', chip: '#0f380f', chipHi: '#306230', rim: '#0f380f' } },
+    { id: 'ice',          name: 'Cristal de Glace', style: 'diamond', cost: 140, pal: { base: '#cfe9ff', dark: '#7aa8d6', light: '#ffffff', chip: '#9ad0ff', chipHi: '#ffffff', rim: '#5b8fc9' } },
+    { id: 'plasma',       name: 'Plasma',           style: 'lava',    cost: 180, pal: { base: '#12062a', dark: '#05010f', light: '#2a1060', chip: '#00e5ff', chipHi: '#e0ffff', rim: '#7a2cff' } },
+    { id: 'nebula_rose',  name: 'Nébuleuse Rose',   style: 'galaxy',  cost: 200, pal: { base: '#5a0f4a', dark: '#2a0522', light: '#b03c8f', chip: '#ffd0f0', chipHi: '#ffffff', rim: '#ff5ec8' } },
     { id: 'void',         name: 'Néant',            style: 'void',    cost: 0, unlock: { rebirths: 3, text: 'Fais 3 Rebirths' }, pal: { base: '#07030f', dark: '#000000', light: '#1d1033', chip: '#b16bff', chipHi: '#ffffff', rim: '#b16bff' } },
   ];
 
@@ -747,6 +831,9 @@
     { kind: 'clickstorm', weight: 14, label: 'CLIC-TEMPÊTE ×77',  color: '#1ff4ff', buff: { id: 'clickstorm', name: 'Clic-Tempête', icon: 'ui:tornado', dur: 10, click: 77 } },
     { kind: 'rgbstorm',   weight: 8,  label: 'RGB STORM',         color: 'rgb' },
     { kind: 'gems',       weight: 8,  label: 'PLUIE DE GEMMES',   color: '#3dffb0' },
+    { kind: 'blessing',   weight: 10, label: 'BÉNÉDICTION ×3 (60 s)', color: '#fff27a', buff: { id: 'blessing', name: 'Bénédiction', icon: 'ui:crown', dur: 60, cps: 3 } },
+    { kind: 'overclock',  weight: 6,  label: 'OVERCLOCK ×15',     color: '#ff2bd6', buff: { id: 'overclock', name: 'Overclock', icon: 'ui:bolt', dur: 15, cps: 15 } },
+    { kind: 'bossbait',   weight: 4,  label: 'APPÂT À BOSS !',    color: '#ff4d6d' },
   ];
 
   /* ───────────────────────── BOSSES ───────────────────────── */
@@ -758,7 +845,17 @@
     { id: 'lemon',    name: 'Citron Acide', color: '#fff23d' },
     { id: 'salt',     name: 'Salière Maléfique', color: '#ffffff' },
     { id: 'ghost',    name: 'Fantôme du Régime', color: '#c9b6ff' },
+    { id: 'celery',     name: 'Céleri Ninja',            color: '#9dff72', minKills: 3 },
+    { id: 'toothbrush', name: 'Brosse à Dents Laser',    color: '#7ff0ff', minKills: 5 },
+    { id: 'raisin',     name: 'Cookie aux Raisins Traître', color: '#c47aff', minKills: 7 },
+    { id: 'kale',       name: 'Chou Kale Hipster',       color: '#b8ff9a', minKills: 9 },
+    { id: 'bottle',     name: 'Bouteille d\'Eau Plate', color: '#d8f6ff', minKills: 11 },
+    { id: 'scale',      name: 'Balance Maudite',         color: '#ffffff', minKills: 13 },
+    { id: 'nutribot',   name: 'Nutribot 3000',           color: '#1ff4ff', minKills: 15 },
   ];
+  // every 10th fight: the mega boss. The final boss ends the game (see CO.finalGoal).
+  const megaBoss = { id: 'king', name: 'Roi Brocoli', color: '#ff5c7a', mega: true };
+  const finalBoss = { id: 'final', name: 'LE GRAND RÉGIME', color: '#b16bff', final: true };
 
   /* ───────────────────────── MINIGAME UNLOCKS ─────────────────────────
    * Minigame modules register themselves; this only says when they unlock. */
@@ -773,6 +870,27 @@
   const B = (s, id) => s.buildings[id] || 0;
   const totalB = (s) => Object.values(s.buildings).reduce((a, b) => a + b, 0);
   const achievements = [
+    { id: 'a_quantum',   name: 'Physique Sucrée', gems: 30, desc: 'Possède un Ordinateur Quantique Choco.', check: (s) => B(s, 'quantum') >= 1 },
+    { id: 'a_dragon',    name: 'Dompteur de Dragon', gems: 40, desc: 'Possède un Dragon Pâtissier.',        check: (s) => B(s, 'dragon') >= 1 },
+    { id: 'a_omni',      name: 'Maître de l\'Omnivers', gems: 60, desc: 'Possède un Omnivers.',            check: (s) => B(s, 'omniverse') >= 1 },
+    { id: 'a_absolute',  name: 'L\'ABSOLU', gems: 150, desc: 'Possède le Cookie Absolu.',                    check: (s) => B(s, 'absolute') >= 1 },
+    { id: 'a_bld1000',   name: 'Galaxie Industrielle', gems: 50, desc: 'Possède 1 000 bâtiments au total.',  check: (s) => totalB(s) >= 1000 },
+    { id: 'a_ai',        name: 'Singularité Sucrée', gems: 20, desc: 'Possède une IA Pâtissière.',        check: (s) => B(s, 'ai') >= 1 },
+    { id: 'a_bigbang',   name: 'Créateur d\'Univers', gems: 50, desc: 'Possède un Big Bang Sucré.',     check: (s) => B(s, 'bigbang') >= 1 },
+    { id: 'a_bld500',    name: 'Empire Industriel', gems: 25, desc: 'Possède 500 bâtiments au total.',    check: (s) => totalB(s) >= 500 },
+    { id: 'a_boss5',     name: 'Chasseur de Légumes', gems: 8,  desc: 'Bats 5 boss.',                          check: (s) => s.stats.bossKills >= 5 },
+    { id: 'a_boss15',    name: 'Terreur du Potager', gems: 15, desc: 'Bats 15 boss.',                         check: (s) => s.stats.bossKills >= 15 },
+    { id: 'a_boss40',    name: 'Végétarien Repenti', gems: 30, desc: 'Bats 40 boss.',                         check: (s) => s.stats.bossKills >= 40 },
+    { id: 'a_elite',     name: 'Élite Écrasée', gems: 10, desc: 'Bats un boss ÉLITE.',                        check: (s) => (s.stats.eliteKills || 0) >= 1 },
+    { id: 'a_king',      name: 'Régicide', gems: 20, desc: 'Bats le Roi Brocoli.',                             check: (s) => (s.stats.megaKills || 0) >= 1 },
+    { id: 'a_final',     name: 'FIN : Le Cookie Suprême', gems: 100, desc: 'Bats LE GRAND RÉGIME.',            check: (s) => !!s.gameWon },
+    { id: 'a_play1h',    name: 'Une Heure de Crunch', gems: 10, desc: 'Joue 1 heure.',                         check: (s) => s.stats.playTime >= 3600 },
+    { id: 'a_play3h',    name: 'Marathon Sucré', gems: 25, desc: 'Joue 3 heures.',                             check: (s) => s.stats.playTime >= 10800 },
+    { id: 'a_daily3',    name: 'Habitué', gems: 5,  desc: 'Série de 3 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 3 },
+    { id: 'a_daily7',    name: 'Accro au Cookie', gems: 15, desc: 'Série de 7 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 7 },
+    { id: 'a_skins8',    name: 'Garde-Robe Sucrée', gems: 20, desc: 'Possède 8 skins.',                    check: (s) => Object.values(s.skinsOwned || {}).filter(Boolean).length >= 8 },
+    { id: 'a_dj',        name: 'DJ Cookie', gems: 3,  desc: 'Change de morceau de musique.',            check: (s) => !!s.settings && s.settings.track && s.settings.track !== 'synthwave' },
+    { id: 'a_upg50',     name: 'Collectionneur d\'Upgrades', gems: 25, desc: 'Achète 50 upgrades.',  check: (s) => Object.values(s.upgrades || {}).filter(Boolean).length >= 50 },
     { id: 'a_click1',    name: 'Premier Crunch', gems: 1,  desc: 'Clique sur le cookie.',                check: (s) => s.clicks >= 1 },
     { id: 'a_click100',  name: 'Doigt Chaud', gems: 3,  desc: '100 clics.',                           check: (s) => s.clicks >= 100 },
     { id: 'a_click1k',   name: 'Tendinite Speedrun', gems: 5,  desc: '1 000 clics.',                         check: (s) => s.clicks >= 1000 },
@@ -869,6 +987,17 @@
     'Sondage : 100 % des cookies votent pour plus de pépites.',
     'Le Stream 24/7 bat un record : 3 millions de « W » dans le chat.',
     'Ta mamie gameuse vient de te carry en ranked. Gênant.',
+    'Beethoven aurait composé l\'Hymne à la Joie en mangeant un cookie. Source : tkt.',
+    'Le Roi de la Montagne réclame des droits d\'auteur. Il est dans le domaine public, frérot.',
+    'Tetris porte plainte : ton cookie empile trop bien les pépites.',
+    'Nouveau skin Game Boy : les parents pleurent de nostalgie.',
+    'Un cookie a été vu en train de faire la queue pour un concert de clavecin.',
+    'Le Roi Brocoli exige un tribut de 10 000 fleurettes. Refusé.',
+    'Un Céleri Ninja a été vu sur les toits. Il est très croquant.',
+    'Le Cookie aux Raisins Traître prétend être aux pépites. Personne n\'est dupe.',
+    'Le Nutribot 3000 a calculé tes calories. Il a planté.',
+    'Rumeur : LE GRAND RÉGIME attend les boulangers les plus acharnés…',
+    'La Balance Maudite affiche « ERREUR ». Victoire morale.',
     'Un Poulpe Glacé aperçu en train de cliquer avec ses 8 bras. Triche ?',
   ];
 
@@ -882,6 +1011,7 @@
   ];
 
   CO.data = {
+    megaBoss, finalBoss,
     buildings, visuals, upgrades, skins, themes, rarities, pets, eggs,
     golden, bosses, minigameUnlocks, achievements, quests, news, clickSounds,
   };
@@ -1238,7 +1368,8 @@
   const eye = (x, y, rx, ry, c = OL, pr = 1.9, dx = 0.4, dy = 0.5) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" ${st(2)}/><circle cx="${P(x + dx)}" cy="${P(y + dy)}" r="${pr}" fill="${c}"/><circle cx="${P(x + dx - pr * 0.35)}" cy="${P(y + dy - pr * 0.4)}" r="${P(pr * 0.36)}" fill="#fff"/>`;
   const EGG = 'M24 3.5C14.5 3.5 7.5 17.5 7.5 28.5C7.5 38 14.5 44.5 24 44.5S40.5 38 40.5 28.5C40.5 17.5 33.5 3.5 24 3.5Z';
 
-  A.register({
+  const WORLD_BROC = () => WORLD['boss:_broc_src']();
+  const WORLD = {
     /* ═════════════════════════ BUILDINGS ═════════════════════════ */
     'b:granny': () => `<defs>${lg('s', '#ffe8d6', '#f2a883')}${lg('h', '#ffffff', '#a79fc6')}${lg('c', '#ff2bd6', '#1ff4ff')}</defs>
       <circle cx="24" cy="8.6" r="5.6" fill="url(#h)" ${st(3)}/>${shine('M20.6 7.4a3.6 3.6 0 0 1 2.4-2.4', 1.6, 0.85)}
@@ -1427,6 +1558,97 @@
       ${spark(8.5, 10, 3.6, '#fff', 1.3)}`;
     },
 
+    /* ── bâtiments vague 3 ── */
+    'b:quantum': () => `<defs>${lg('a', '#b8a0ff', '#3a2766')}${lg('c', '#1ff4ff', '#7a2cff')}</defs>
+      <rect x="7" y="7" width="34" height="34" rx="6" fill="url(#a)" ${st(3.2)}/>
+      <g stroke="${OL}" stroke-width="2.4" stroke-linecap="round"><path d="M13 3v4M24 3v4M35 3v4M13 41v4M24 41v4M35 41v4M3 13h4M3 24h4M3 35h4M41 13h4M41 24h4M41 35h4"/></g>
+      <g fill="none" stroke="url(#c)" stroke-width="2"><ellipse cx="24" cy="24" rx="12" ry="4.6"/><ellipse cx="24" cy="24" rx="12" ry="4.6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="12" ry="4.6" transform="rotate(-60 24 24)"/></g>
+      <circle cx="24" cy="24" r="3.6" fill="#d99a4e" ${st(1.8)}/>${shine('M11 12h8', 1.6, 0.7)}`,
+    'b:wormhole': () => `<defs>${rg('w', '#07030f', '#7a2cff', 0.5, 0.5, 0.6)}${ckDef('k')}</defs>
+      <circle cx="24" cy="24" r="20" fill="url(#w)" ${st(3.2)}/>
+      <g fill="none" stroke-width="2" stroke-linecap="round"><path d="M24 6a18 18 0 0 1 17 20" stroke="#ff5ec8"/><path d="M24 11a13 13 0 0 1 12 15" stroke="#1ff4ff"/><path d="M24 16a8 8 0 0 1 7 10" stroke="#fff27a"/><path d="M24 42a18 18 0 0 1-17-20" stroke="#ff5ec8"/><path d="M24 37a13 13 0 0 1-12-15" stroke="#1ff4ff"/></g>
+      <circle cx="24" cy="24" r="4" fill="#000" ${st(1.8)}/>${cookie('k', 40, 9, 5.4, 1.8, false)}`,
+    'b:nebula': () => `<defs>${rg('n', '#ffd0f0', '#b03c8f', 0.4, 0.4, 0.8)}${rg('m', '#c4fff8', '#12b8c9', 0.4, 0.4, 0.8)}</defs>
+      <path d="${blob(19, 22, 14, 2.4, 10)}" fill="url(#n)" ${st(3)}/><path d="${blob(31, 28, 12, 2.2, 10, 0.4)}" fill="url(#m)" ${st(3)}/>
+      <path d="M12 44h24" ${st(3)}/><path d="M24 44V36" ${st(3)}/><path d="M24 38q-5-3-7 1M24 39q5-3 7 1" fill="#3dff7a" ${st(1.8)}/>
+      ${spark(10, 9, 3, '#fff', 1.2)}${spark(40, 12, 2.6, '#fff27a', 1.1)}${spark(26, 22, 2.2, '#fff', 1)}`,
+    'b:galaxyfarm': () => `<defs>${lg('g', '#7ae07a', '#1f7a3a')}${rg('s', '#ff9ef0', '#5a0f8a', 0.5, 0.5, 0.7)}</defs>
+      <circle cx="24" cy="18" r="14" fill="url(#s)" ${st(3)}/>
+      <ellipse cx="24" cy="18" rx="9" ry="4" fill="none" stroke="#fff27a" stroke-width="1.8"/>
+      <path d="M3 34Q24 26 45 34V44H3Z" fill="url(#g)" ${st(3)}/>
+      <g fill="#d99a4e" ${st(1.4)}><circle cx="12" cy="37" r="2.6"/><circle cx="24" cy="36" r="2.6"/><circle cx="36" cy="37" r="2.6"/></g>${shine('M14 10q3-3 7-4', 1.8, 0.8)}`,
+    'b:chrono': () => `<defs>${lg('f', '#ffe0a8', '#b86f2c')}${lg('c', '#ffffff', '#c8e8ff')}</defs>
+      <rect x="6" y="18" width="36" height="26" rx="5" fill="url(#f)" ${st(3.2)}/><rect x="11" y="27" width="26" height="12" rx="3" fill="#3a1c0c" ${st(2)}/>
+      <path d="M14 33h20" stroke="#ff8a00" stroke-width="2" stroke-dasharray="3 2"/>
+      <circle cx="24" cy="11" r="9" fill="url(#c)" ${st(2.8)}/><path d="M24 6v5l3.6 2.4" fill="none" ${st(2.2)}/>${shine('M9 22h8', 1.6, 0.7)}`,
+    'b:dream': () => `<defs>${lg('c', '#ffffff', '#c9b6ff')}${lg('m', '#fff27a', '#ffb000')}</defs>
+      <path d="M8 34Q2 34 3 27Q4 21 11 22Q12 13 21 14Q27 7 34 13Q43 12 43 21Q47 26 43 31Q41 35 35 34Z" fill="url(#c)" ${st(3)}/>
+      <path d="M30 18a6 6 0 1 0 6 8a5 5 0 1 1-6-8Z" fill="url(#m)" ${st(2)}/>
+      <g font-family="sans-serif" font-weight="700" fill="#7a2cff"><text x="12" y="30" font-size="7">z</text><text x="17" y="26" font-size="5">z</text></g>
+      <path d="M14 40l2 4M24 40v5M34 40l-2 4" stroke="#b16bff" stroke-width="2" stroke-linecap="round"/>`,
+    'b:simulation': () => `<defs>${lg('s', '#3a2766', '#0b0620')}${ckDef('k')}</defs>
+      <rect x="4" y="7" width="40" height="30" rx="4" fill="url(#s)" ${st(3.2)}/><path d="M18 37l-2 7h16l-2-7" fill="#8d7ad0" ${st(2.4)}/>
+      <g font-family="monospace" font-size="5" fill="#3dff7a"><text x="8" y="15">01101</text><text x="8" y="21">10110</text><text x="8" y="27">01011</text><text x="8" y="33">11010</text></g>
+      ${cookie('k', 33, 22, 8, 2, true)}`,
+    'b:dragon': () => `<defs>${lg('d', '#ff9a8a', '#c0102f')}${lg('b', '#fff27a', '#ff8a00')}</defs>
+      <path d="M8 40Q6 22 18 14L16 6 22 11Q28 8 34 12L38 5 38 15Q44 22 40 34Q36 44 24 44Q12 44 8 40Z" fill="url(#d)" ${st(3.2)}/>
+      <ellipse cx="24" cy="34" rx="9" ry="7" fill="url(#b)" ${st(2)}/>
+      ${eye(19, 22, 2.8, 3, '#1a0b33', 1.5, 0.4, 0.4)}${eye(30, 22, 2.8, 3, '#1a0b33', 1.5, -0.4, 0.4)}
+      <path d="M17 8q0-6 6-6t6 6Z" fill="#fff" ${st(2)}/><rect x="16" y="6" width="14" height="4" rx="1.5" fill="#fff" ${st(2)}/>
+      <path d="M40 30q6-2 7-7" stroke="#ff8a00" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+    'b:godoven': () => `<defs>${lg('g', '#fff27a', '#e59a00')}${lg('w', '#ffffff', '#fff2c4')}</defs>
+      <ellipse cx="24" cy="8" rx="9" ry="3.4" fill="none" stroke="${OL}" stroke-width="5"/><ellipse cx="24" cy="8" rx="9" ry="3.4" fill="none" stroke="#fff27a" stroke-width="2.4"/>
+      <rect x="7" y="16" width="34" height="28" rx="5" fill="url(#w)" ${st(3.2)}/><rect x="12" y="24" width="24" height="14" rx="4" fill="url(#g)" ${st(2.2)}/>
+      <circle cx="24" cy="31" r="4.4" fill="#d99a4e" ${st(1.6)}/><path d="M3 22l4 2M45 22l-4 2M5 32h3M43 32h-3" stroke="#ffcc33" stroke-width="2" stroke-linecap="round"/>`,
+    'b:milkyway': () => `<defs>${lg('m', '#ffffff', '#b8d2f5')}${rg('s', '#3a2766', '#07030f', 0.5, 0.5, 0.7)}</defs>
+      <circle cx="24" cy="24" r="21" fill="url(#s)" ${st(3)}/>
+      <path d="M6 30Q16 18 24 24T42 16" fill="none" stroke="url(#m)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M17 32h14l-2 12h-10Z" fill="url(#m)" ${st(2.4)}/><path d="M17 36h14" stroke="#1ff4ff" stroke-width="1.6"/>
+      ${spark(12, 12, 2.6, '#fff', 1)}${spark(36, 32, 2.2, '#fff27a', 1)}`,
+    'b:spoon': () => `<defs>${lg('s', '#ffffff', '#8a85b0')}</defs>
+      <rect x="21" y="24" width="6" height="21" rx="3" fill="url(#s)" ${st(2.6)}/><path d="M24 26C14 26 10 18 10 12S16 2 24 2 38 6 38 12 34 26 24 26Z" fill="url(#s)" ${st(3)}/>
+      <path d="M17 12q7 6 14 0q-7-6-14 0Z" fill="none" stroke="#7a2cff" stroke-width="2"/><ellipse cx="24" cy="12" rx="3" ry="2" fill="none" stroke="#ff2bd6" stroke-width="1.6"/>
+      ${shine('M15 8q2-3 5-4', 1.8, 0.8)}`,
+    'b:memes': () => `<defs>${ckDef('k')}</defs>
+      <rect x="5" y="5" width="38" height="38" rx="6" fill="#fff" ${st(3.2)}/>
+      <rect x="9" y="13" width="30" height="22" rx="3" fill="#ffe8d6" ${st(2)}/>
+      ${cookie('k', 24, 24, 7.4, 1.8, false)}<path d="M19.5 22h4M24.5 22h4" stroke="${OL}" stroke-width="2.6"/>
+      <g font-family="Impact,sans-serif" font-weight="900" font-size="6" text-anchor="middle" fill="#fff" stroke="${OL}" stroke-width=".8"><text x="24" y="11.4">MUCH COOKIE</text><text x="24" y="41">WOW</text></g>`,
+    'b:omniverse': () => `<defs>${rg('o', '#ffffff', '#7a2cff', 0.5, 0.5, 0.6)}</defs>
+      <circle cx="24" cy="24" r="21" fill="url(#o)" ${st(3.2)}/>
+      <g fill="none" stroke="${OL}" stroke-width="1.6" opacity=".7">${[0, 30, 60, 90, 120, 150].map((a) => `<ellipse cx="24" cy="24" rx="19" ry="6" transform="rotate(${a} 24 24)"/>`).join('')}</g>
+      <circle cx="24" cy="24" r="5" fill="#d99a4e" ${st(2)}/>`,
+    'b:crumbcore': () => `<defs>${rg('c', '#fff27a', '#ff3d00', 0.5, 0.5, 0.6)}${lg('r', '#ffe0a8', '#6b3a1f')}</defs>
+      <path d="${blob(24, 24, 20, 2, 9)}" fill="url(#r)" ${st(3.2)}/><circle cx="24" cy="24" r="9" fill="url(#c)" ${st(2.4)}/>
+      <g fill="#4a2511" ${st(1.2)}><path d="M9 14l3-1 1 3-3 1z"/><path d="M36 10l3 1-1 3-3-1z"/><path d="M38 34l2 2-2 2-2-2z"/><path d="M10 34l3 1-1 3-3-1z"/></g>
+      ${spark(24, 24, 4, '#fff', 1.2)}`,
+    'b:absolute': () => `<defs>${rg('a', '#ffffff', '#ffcc33', 0.4, 0.35, 0.8)}${lg('r', '#ff2bd6', '#1ff4ff', 1, 1)}</defs>
+      <circle cx="24" cy="24" r="22" fill="none" stroke="url(#r)" stroke-width="3"/>
+      <path d="${blob(24, 24, 17, 1.2, 18)}" fill="url(#a)" ${st(3)}/>
+      <g fill="#7a2cff" ${st(1.2)}><path d="${star(17, 18, 3.4, 1.4, 5, 0)}"/><path d="${star(30, 16, 3, 1.2, 5, 0)}"/><path d="${star(28, 30, 3.6, 1.4, 5, 0)}"/><path d="${star(16, 30, 2.6, 1, 5, 0)}"/></g>
+      ${shine('M12 15q3-5 8-6', 2.2, 0.9)}`,
+    'b:ai': () => `<defs>${lg('h', '#e8e6f5', '#8d7ad0')}${lg('v', '#1ff4ff', '#0b6d8a')}${lg('t', '#ffffff', '#d4c4ff')}</defs>
+      <path d="M12 12Q12 4 18 5Q20 1 24 3Q28 1 30 5Q36 4 36 12Z" fill="url(#t)" ${st(2.6)}/>
+      <rect x="8" y="12" width="32" height="26" rx="8" fill="url(#h)" ${st(3.2)}/>
+      <rect x="12" y="17" width="24" height="12" rx="5" fill="url(#v)" ${st(2.2)}/>
+      <circle cx="19" cy="23" r="2.4" fill="#fff"/><circle cx="29" cy="23" r="2.4" fill="#fff"/>
+      <path d="M19 33Q24 36 29 33" fill="none" ${st(2.2)}/>
+      <path d="M17 38v6M31 38v6" ${st(3)}/><circle cx="41" cy="9" r="4.6" fill="#d99a4e" ${st(2)}/><circle cx="40" cy="8" r="1" fill="#4a2511"/><circle cx="42.4" cy="10.4" r=".9" fill="#4a2511"/>
+      ${shine('M11.5 17v10', 1.8, 0.7)}`,
+    'b:dyson': () => `<defs>${rg('s', '#fff6c4', '#ff8a00', 0.5, 0.5, 0.6)}${lg('r', '#b8a0ff', '#3a2766')}</defs>
+      <circle cx="24" cy="24" r="10" fill="url(#s)" ${st(2.4)}/>
+      <g fill="none" stroke="${OL}" stroke-width="5.4"><ellipse cx="24" cy="24" rx="20" ry="8"/><ellipse cx="24" cy="24" rx="8" ry="20" transform="rotate(35 24 24)"/></g>
+      <g fill="none" stroke="url(#r)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="20" ry="8"/><ellipse cx="24" cy="24" rx="8" ry="20" transform="rotate(35 24 24)"/></g>
+      <g fill="#4a2511"><circle cx="21" cy="21" r="1.4"/><circle cx="27" cy="25" r="1.6"/><circle cx="22" cy="28" r="1.1"/></g>
+      ${spark(40, 7, 3, '#fff27a', 1.2)}`,
+    'b:multiverse': () => `<defs>${lg('a', '#ff5ec8', '#7a2cff')}${lg('b', '#1ff4ff', '#1b5fd6')}${lg('c', '#fff27a', '#ff8a00')}</defs>
+      <circle cx="16" cy="18" r="11" fill="url(#a)" ${st(3)}/><circle cx="32" cy="18" r="11" fill="url(#b)" ${st(3)}/><circle cx="24" cy="31" r="11" fill="url(#c)" ${st(3)}/>
+      <g fill="#4a2511" stroke="${OL}" stroke-width="1"><circle cx="13" cy="16" r="1.6"/><circle cx="34" cy="15" r="1.6"/><circle cx="22" cy="33" r="1.8"/><circle cx="27" cy="29" r="1.3"/></g>
+      ${shine('M9 14q2-4 6-5', 1.8, 0.8)}${spark(42, 40, 3, '#fff', 1.2)}`,
+    'b:bigbang': () => `<defs>${rg('x', '#ffffff', '#ff2bd6', 0.5, 0.5, 0.55)}</defs>
+      <path d="${star(24, 24, 21, 9, 12, 0)}" fill="url(#x)" ${st(3)}/>
+      <circle cx="24" cy="24" r="7.6" fill="#d99a4e" ${st(2.4)}/><g fill="#4a2511"><circle cx="22" cy="22" r="1.4"/><circle cx="26.4" cy="25.6" r="1.5"/><circle cx="21.6" cy="26.6" r="1"/></g>
+      ${spark(8, 8, 3.2, '#1ff4ff', 1.2)}${spark(41, 40, 3.2, '#fff27a', 1.2)}${spark(40, 9, 2.4, '#fff', 1)}`,
     'b:streamer': () => `<defs>${lg('f', '#9b86f0', '#3f2a8f')}${lg('s', '#ff2bd6', '#1ff4ff', 1, 1)}${lg('r', '#ff7a8a', '#d0102f')}${lg('m', '#efe8ff', '#8d7ad0')}</defs>
       <path d="M20 34.5L18 41H30L28 34.5Z" fill="url(#m)" ${st(2.6)}/>
       <rect x="12.5" y="40" width="23" height="4.6" rx="2.3" fill="url(#m)" ${st(2.8)}/>
@@ -1440,7 +1662,84 @@
       <path d="M9 30v3.6h1.9M12.3 30v3.6M13.7 30l1.1 3.6 1.1-3.6M18.4 30h-1.6v3.6h1.6M16.8 31.8h1.3" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>`,
 
     /* ═════════════════════════ BOSSES ═════════════════════════ */
-    'boss:broccoli': () => {
+
+    /* ── vague 2 de boss ── */
+    'boss:celery': () => `<defs>${lg('c', '#e8ffb0', '#5fbf3a')}${lg('h', '#ff5c7a', '#b0102f')}</defs>
+      <path d="M14 44L16 12Q18 6 24 6T32 12L34 44Z" fill="url(#c)" ${st(3.2)}/>
+      <path d="M19 42L20 14M24 42V12M29 42L28 14" fill="none" stroke="#3a9a2a" stroke-width="1.4" opacity=".6"/>
+      <path d="M17 6Q12 1 8 4M31 6Q36 1 40 4M24 6V1" fill="none" stroke="#3a9a2a" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="13" y="16" width="22" height="5" rx="1.5" fill="url(#h)" ${st(2.2)}/><path d="M35 18L43 14M35 19L42 22" stroke="#e0102f" stroke-width="2.4" stroke-linecap="round"/>
+      ${eye(19.5, 26.5, 3, 2.4, '#1a0b33', 1.5, 0.5, 0.4)}${eye(28.5, 26.5, 3, 2.4, '#1a0b33', 1.5, -0.5, 0.4)}
+      ${brows(19.4, 28.6, 23, 6.4, 3, 3)}
+      <path d="M20 35Q24 32.5 28 35" fill="none" ${st(2.4)}/>${shine('M18 14q.4-4 3-6', 1.8, 0.7)}`,
+
+    'boss:toothbrush': () => `<defs>${lg('b', '#7ff0ff', '#1b7fd6')}${lg('w', '#ffffff', '#c8e8ff')}</defs>
+      <rect x="18" y="16" width="12" height="30" rx="5" fill="url(#b)" ${st(3)}/>
+      <rect x="14" y="3" width="20" height="14" rx="3" fill="url(#w)" ${st(3)}/>
+      <g stroke="#1b7fd6" stroke-width="1.5" stroke-linecap="round"><path d="M17 5v10M20.5 5v10M24 5v10M27.5 5v10M31 5v10"/></g>
+      ${eye(21, 25, 2.4, 2.8, '#ff1f3d', 1.4, 0.4, 0.4)}${eye(27, 25, 2.4, 2.8, '#ff1f3d', 1.4, -0.4, 0.4)}
+      ${brows(21, 27, 21.4, 5, 2.6, 2.6)}
+      <path d="M26 25L46 20M26 25L46 28" stroke="#ff1f3d" stroke-width="1.6" opacity=".85"/>
+      <path d="M20.5 33Q24 31 27.5 33" fill="none" ${st(2.2)}/>${shine('M20.5 19v10', 1.6, 0.7)}`,
+
+    'boss:raisin': () => `<defs>${rg('k', '#ffe0a8', '#b86f2c', 0.35, 0.3, 0.85)}${rg('r', '#c47aff', '#4a0f6a', 0.35, 0.3, 0.8)}</defs>
+      <path d="${blob(24, 25, 19, 1.3, 18)}" fill="url(#k)" ${st(3)}/>
+      <g fill="url(#r)" ${st(1.8)}><ellipse cx="14" cy="16" rx="3.4" ry="2.6"/><ellipse cx="34" cy="15" rx="3" ry="2.4"/><ellipse cx="12" cy="31" rx="3" ry="2.6"/><ellipse cx="36" cy="33" rx="3.4" ry="2.6"/><ellipse cx="25" cy="40" rx="3" ry="2.2"/></g>
+      ${eye(18.5, 23, 3.4, 3.6, '#7a1fbf', 1.9, 0.6, 0.5)}${eye(29.5, 23, 3.4, 3.6, '#7a1fbf', 1.9, -0.6, 0.5)}
+      ${brows(18.3, 29.7, 18.6, 7.4, 3.4, 3.4)}
+      <path d="M17 31Q24 36 31 30" fill="none" ${st(2.6)}/><path d="M28 30.6l1.6 2 1.2-2.6z" fill="#fff" ${st(1)}/>
+      ${shine('M11 15c1.8-2.6 4.4-4.2 7-4.8', 2.2, 0.8)}`,
+
+    'boss:kale': () => `<defs>${lg('l', '#b8ff9a', '#1f7a3a')}${lg('g', '#3a2766', '#0b0620')}</defs>
+      <path d="${blob(24, 24, 19, 2.4, 14)}" fill="url(#l)" ${st(3.2)}/>
+      <path d="${blob(24, 22, 11, 1.6, 12, 0.5)}" fill="none" stroke="#1f7a3a" stroke-width="1.6" opacity=".6"/>
+      <path d="M24 44V30M24 36l-5-4M24 38l5-4" fill="none" stroke="#e8ffd0" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+      <path d="M11 20H37V22Q37 28 31 28Q26 28 25 23H23Q22 28 17 28Q11 28 11 22Z" fill="url(#g)" ${st(2.4)}/>
+      <path d="M14 22.4l3-1.6M27 22.4l3-1.6" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>
+      <path d="M19 33Q24 35 29 32" fill="none" ${st(2.4)}/>${spark(40, 8, 3.2, '#fff', 1.2)}`,
+
+    'boss:bottle': () => `<defs>${lg('w', '#d8f6ff', '#5ab8ff')}${lg('c', '#8a5cff', '#3a2766')}</defs>
+      <rect x="19" y="2.5" width="10" height="6" rx="1.6" fill="url(#c)" ${st(2.6)}/>
+      <path d="M19 9H29Q30 12 34 14Q36 15.5 36 19V42Q36 45 33 45H15Q12 45 12 42V19Q12 15.5 14 14Q18 12 19 9Z" fill="url(#w)" ${st(3)}/>
+      <rect x="12" y="22" width="24" height="9" fill="#ff5ec8" ${st(2)}/><path d="M15 26.5h18" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 1.6"/>
+      ${eye(19.5, 36, 2.8, 3, '#1b7fd6', 1.6, 0.4, 0.4)}${eye(28.5, 36, 2.8, 3, '#1b7fd6', 1.6, -0.4, 0.4)}
+      ${brows(19.4, 28.6, 32.4, 6, 2.6, 2.8)}<path d="M21.5 42h5" ${st(2.2)}/>
+      ${shine('M15 17v22', 2, 0.6)}`,
+
+    'boss:scale': () => `<defs>${lg('b', '#ffffff', '#b3a6dd')}${lg('d', '#9fffc8', '#1f9a6a')}</defs>
+      <rect x="5" y="10" width="38" height="34" rx="7" fill="url(#b)" ${st(3.2)}/>
+      <rect x="11" y="14" width="26" height="9" rx="2" fill="#0b2a1f" ${st(2)}/>
+      <text x="24" y="21.6" text-anchor="middle" font-family="monospace" font-weight="700" font-size="7" fill="#3dff7a">+999</text>
+      ${eye(17.5, 31, 3.2, 3.4, '#d0102f', 1.8, 0.5, 0.5)}${eye(30.5, 31, 3.2, 3.4, '#d0102f', 1.8, -0.5, 0.5)}
+      ${brows(17.3, 30.7, 27, 7, 3, 3.2)}<path d="M19 40Q24 37 29 40" fill="none" ${st(2.4)}/>
+      <path d="M13 4l3 5M35 4l-3 5" ${st(2.6)}/>${shine('M8.5 16v14', 2, 0.6)}`,
+
+    'boss:nutribot': () => `<defs>${lg('m', '#e8e6f5', '#7a7896')}${lg('v', '#1ff4ff', '#0b6d8a')}</defs>
+      <path d="M24 3v6" ${st(2.4)}/><circle cx="24" cy="3.4" r="2.6" fill="#ff1f3d" ${st(1.8)}/>
+      <rect x="7" y="9" width="34" height="30" rx="6" fill="url(#m)" ${st(3.2)}/>
+      <rect x="3" y="18" width="4" height="12" rx="1.6" fill="url(#m)" ${st(2.2)}/><rect x="41" y="18" width="4" height="12" rx="1.6" fill="url(#m)" ${st(2.2)}/>
+      <rect x="11" y="14" width="26" height="11" rx="4" fill="url(#v)" ${st(2.4)}/>
+      <path d="M14 20.5L20 18.5M34 20.5L28 18.5" stroke="#ff1f3d" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="13" y="29" width="22" height="6" rx="1.6" fill="#1a0b33"/><path d="M15 32h3l1.5-2.4 2 4.4 2-4.4 1.5 2.4h8" fill="none" stroke="#3dff7a" stroke-width="1.3"/>
+      <rect x="15" y="39" width="18" height="6" rx="2" fill="url(#m)" ${st(2.4)}/>${shine('M10 13v8', 1.8, 0.7)}`,
+
+    'boss:king': () => `<defs>${lg('cp', '#ff5c7a', '#7a0f22')}</defs>
+      <path d="M6 22Q2 40 8 46H40Q46 40 42 22Z" fill="url(#cp)" ${st(3)}/>
+      <path d="M8 44Q24 40 40 44" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="1.4 1.8" opacity=".85"/>
+      ${WORLD_BROC()}
+      <g transform="translate(24 4.4)"><path d="M-10 4L-11 -5-5 -1 0 -7 5 -1 11 -5 10 4Z" fill="#ffcc33" ${st(2.4)}/><circle cx="0" cy="1" r="1.6" fill="#1ff4ff"/><circle cx="-6" cy="2" r="1" fill="#ff2bd6"/><circle cx="6" cy="2" r="1" fill="#ff2bd6"/></g>`,
+
+    'boss:final': () => `<defs>${rg('v', '#7a2cff', '#07030f', 0.5, 0.45, 0.7)}${lg('g', '#fff27a', '#e59a00')}</defs>
+      <circle cx="24" cy="25" r="21" fill="url(#v)" ${st(3.2)}/>
+      <g fill="none" stroke="#b16bff" stroke-width="1.4" opacity=".7"><circle cx="24" cy="25" r="16"/><circle cx="24" cy="25" r="11"/></g>
+      <path d="M14 20L21 23M34 20L27 23" stroke="#ff1f3d" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="17.5" cy="25" rx="3.6" ry="2.4" fill="#ff1f3d" ${st(1.6)}/><ellipse cx="30.5" cy="25" rx="3.6" ry="2.4" fill="#ff1f3d" ${st(1.6)}/>
+      <circle cx="17.5" cy="25" r="1" fill="#fff"/><circle cx="30.5" cy="25" r="1" fill="#fff"/>
+      <path d="M14 34Q24 29 34 34L31 37 28 34.5 24 37.5 20 34.5 17 37Z" fill="#fff" ${st(2)}/>
+      <g transform="translate(24 5)"><path d="M-12 4L-13 -4-6 0 0 -6 6 0 13 -4 12 4Z" fill="url(#g)" ${st(2.4)}/></g>
+      ${spark(6, 8, 3, '#ff2bd6', 1.2)}${spark(42, 40, 3, '#1ff4ff', 1.2)}`,
+    'boss:broccoli': () => WORLD_BROC(),
+    'boss:_broc_src': () => {
       const fl = [[12.5, 20, 7.6], [24, 15.5, 8.8], [35.5, 20, 7.6], [9.8, 27.6, 5], [38.2, 27.6, 5], [18, 25, 7], [30, 25, 7]];
       return `<defs>${lg('f', '#9dff72', '#1c9438')}${lg('s', '#ecffb8', '#7cd648')}${lg('g', '#fff27a', '#e59a00')}</defs>
       <path d="M13.2 27Q13.8 37.5 10.6 42.4Q9.8 45 12.8 45H35.2Q38.2 45 37.4 42.4Q34.2 37.5 34.8 27Z" fill="url(#s)" ${st(3.2)}/>
@@ -1728,7 +2027,8 @@
       <rect x="12" y="36.2" width="19" height="4.6" rx="2.3" fill="#3a2766" ${st(2.2)}/>
       <rect x="18" y="37.8" width="7" height="1.4" rx=".7" fill="#ffc93c"/>`;
     },
-  });
+  };
+  A.register(WORLD);
 })();
 
 </script>
@@ -2542,13 +2842,13 @@
   /* ═════════════════════════ STATE ═════════════════════════ */
   const reduced = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
   function defaultSettings() {
-    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1 };
+    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1, track: 'synthwave' };
   }
   function defaultState() {
     return {
       v: 1,
       cookies: 0, totalBaked: 0, allTimeBaked: 0, clicks: 0, clickBaked: 0,
-      gems: 0, rebirths: 0, stars: 0,
+      gems: 0, rebirths: 0, stars: 0, lastDaily: '', dailyStreak: 0,
       buildings: Object.fromEntries(D.buildings.map((b) => [b.id, 0])),
       upgrades: {},
       skin: 'classic', skinsOwned: { classic: true },
@@ -2575,7 +2875,7 @@
 
   function recalc(silent) {
     const s = CO.state;
-    M.click = 1; M.clickCps = 0; M.cps = 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
+    M.click = 1; M.clickCps = 0; M.cps = CO.state && CO.state.gameWon ? 2 : 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
     D.buildings.forEach((b) => (M.bld[b.id] = 1));
     const vis = {};
     for (const u of D.upgrades) {
@@ -2821,6 +3121,10 @@
       addBuff(eff.buff);
     } else if (eff.kind === 'rgbstorm') {
       if (!CO.fever.active) { CO.fever.cooldownUntil = 0; startFever(); } else CO.fever.until += 5;
+    } else if (eff.buff) {
+      addBuff(eff.buff);
+    } else if (eff.kind === 'bossbait') {
+      if (!CO.boss && CO.bossUnlocked() && !mgOpen) spawnBoss(); else { const n = 5; s.gems += n; label = 'PLUIE DE GEMMES +' + n; }
     } else if (eff.kind === 'gems') {
       const n = 3 + Math.floor(Math.random() * 6); s.gems += n; label = 'PLUIE DE GEMMES +' + n;
     }
@@ -2835,21 +3139,43 @@
   const BOSS_UNLOCK = 5000;
   CO.bossUnlocked = () => CO.state.allTimeBaked >= BOSS_UNLOCK;
   let nextBossAt = null;
-  function spawnBoss() {
-    const d = pick(D.bosses), k = CO.state.stats.bossKills;
-    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)));
-    const t = CO.now();
-    CO.boss = { ...d, hp, maxHp: hp, born: t, until: t + 30 };
+  function spawnBoss(forceFinal) {
+    const k = CO.state.stats.bossKills, t = CO.now();
+    let d, hpMul = 1, dur = 30, kind = 'normal';
+    if (forceFinal) { d = D.finalBoss; hpMul = 25; dur = 120; kind = 'final'; }
+    else if (k > 0 && (k + 1) % 10 === 0) { d = D.megaBoss; hpMul = 4; dur = 50; kind = 'mega'; }
+    else {
+      d = pick(D.bosses.filter((b) => (b.minKills || 0) <= k));
+      if (k >= 5 && Math.random() < 0.18) { hpMul = 2.2; dur = 35; kind = 'elite'; }
+    }
+    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)) * hpMul);
+    CO.boss = { ...d, name: kind === 'elite' ? d.name + ' ÉLITE' : d.name, kind, hp, maxHp: hp, born: t, until: t + dur };
     CO.sfx.play('boss');
     CO.emit('boss:spawn', { boss: CO.boss });
   }
   CO.spawnBoss = spawnBoss;
+  /* ─ Objectif final : conditions pour affronter le boss de fin (≥ 2 h de jeu garanties) ─ */
+  CO.finalGoal = () => {
+    const s = CO.state;
+    return [
+      { label: 'Jouer 2 heures', cur: s.stats.playTime, need: 7200, time: true },
+      { label: 'Faire 3 Rebirths', cur: s.rebirths, need: 3 },
+      { label: 'Battre 15 boss', cur: s.stats.bossKills, need: 15 },
+      { label: 'Produire 10 000 milliards de cookies (au total)', cur: s.allTimeBaked, need: 1e13 },
+    ];
+  };
+  CO.finalReady = () => CO.finalGoal().every((g) => g.cur >= g.need);
+  CO.fightFinal = () => { if (CO.boss || !CO.finalReady()) return false; spawnBoss(true); return true; };
   function defeatBoss() {
     const b = CO.boss, s = CO.state; if (!b) return;
     CO.boss = null;
     s.stats.bossKills++;
-    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100);
-    const gems = Math.min(20, 8 + s.stats.bossKills);
+    const rm = { elite: 2.5, mega: 5, final: 20 }[b.kind] || 1;
+    if (b.kind === 'elite') s.stats.eliteKills = (s.stats.eliteKills || 0) + 1;
+    if (b.kind === 'mega') s.stats.megaKills = (s.stats.megaKills || 0) + 1;
+    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100) * rm;
+    const gems = Math.round(Math.min(20, 8 + s.stats.bossKills) * rm);
+    if (b.kind === 'final' && !s.gameWon) { s.gameWon = true; s.stats.wonAt = s.stats.playTime; recalc(); setTimeout(() => CO.emit('game:won', {}), 1200); }
     earn(cookies); s.gems += gems;
     addBuff({ id: 'victory', name: 'Victoire', icon: 'ui:trophy', dur: 60, cps: 2 });
     questProgress('boss', 1);
@@ -3241,6 +3567,57 @@
     const CH = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]; // Am F C G
     const BASS = [45, 41, 36, 43];
     const stepDur = () => 60 / CO.bpm / 4;
+    // Classical melodies (public domain) over the same drum engine. mel: [midi|0 (rest), length in 16th steps]
+    const TRI = { Am: [57, 60, 64], E: [56, 59, 64], Dm: [57, 62, 65], C: [55, 60, 64], G: [55, 59, 62], F: [57, 60, 65] };
+    const ROOT = { Am: 45, E: 40, Dm: 38, C: 36, G: 43, F: 41 };
+    const TRACKS = {
+      korobeiniki: { ch: ['E', 'Am', 'E', 'Am', 'Dm', 'C', 'E', 'Am'], wave: 'square',
+        mel: [[76, 4], [71, 2], [72, 2], [74, 4], [72, 2], [71, 2], [69, 4], [69, 2], [72, 2], [76, 4], [74, 2], [72, 2], [71, 6], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8],
+          [0, 2], [74, 4], [77, 2], [81, 4], [79, 2], [77, 2], [76, 6], [72, 2], [76, 4], [74, 2], [72, 2], [71, 4], [71, 2], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8]] },
+      ode: { ch: ['C', 'G', 'C', 'G', 'C', 'G', 'C', 'C'], wave: 'triangle',
+        mel: [[76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [76, 6], [74, 2], [74, 8],
+          [76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [74, 6], [72, 2], [72, 8]] },
+      montagne: { ch: ['Am', 'E', 'Am', 'E', 'Am', 'E', 'Am', 'E'], wave: 'sawtooth',
+        mel: [].concat(...[0, 1].map(() => [[69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 4], [75, 2], [71, 2], [75, 4], [74, 2], [70, 2], [74, 4],
+          [69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 2], [81, 2], [79, 2], [76, 2], [72, 2], [76, 2], [79, 8]])) },
+      elise: { ch: ['E', 'Am', 'E', 'E', 'Am', 'Am', 'E', 'Am', 'E', 'E', 'Am', 'Am'], wave: 'triangle',
+        mel: [].concat(...[0, 1].map(() => [[76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4],
+          [64, 2], [68, 2], [71, 2], [72, 6], [64, 2], [76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4], [64, 2], [72, 2], [71, 2], [69, 10]])) },
+    };
+    /* ─ Ma musique : fichiers audio perso stockés dans IndexedDB, joués en playlist ─ */
+    const custom = { el: null, src: null, list: [], idx: 0, url: null };
+    const idb = () => new Promise((res, rej) => { const r = indexedDB.open('cookie-overdrive-music', 1); r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'id', autoIncrement: true }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const idbTx = (mode, fn) => idb().then((db) => new Promise((res, rej) => { const tx = db.transaction('files', mode); const out = fn(tx.objectStore('files')); tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error); }));
+    CO.customMusic = {
+      list: () => idbTx('readonly', (st) => st.getAll()).then((a) => a || []).catch(() => []),
+      add: (files) => Promise.all([...files].map((f) => idbTx('readwrite', (st) => st.add({ name: f.name, blob: f })))).then(() => { if (CO.settings.track === 'custom' && m.playing) { m.stop(); m.start(); } }),
+      remove: (id) => idbTx('readwrite', (st) => st.delete(id)),
+      clear: () => idbTx('readwrite', (st) => st.clear()),
+      next: () => { if (custom.list.length) { custom.idx = (custom.idx + 1) % custom.list.length; playCustom(); } },
+      current: () => (custom.list[custom.idx] || {}).name || '',
+    };
+    function playCustom() {
+      if (!m.playing || CO.settings.track !== 'custom' || !custom.list.length) return;
+      if (!custom.el) {
+        custom.el = new Audio();
+        custom.el.addEventListener('ended', () => CO.customMusic.next());
+        try { custom.src = actx.createMediaElementSource(custom.el); custom.src.connect(musicBus); } catch (e) { custom.src = null; }
+      }
+      if (custom.url) URL.revokeObjectURL(custom.url);
+      const item = custom.list[custom.idx]; custom.url = URL.createObjectURL(item.blob);
+      custom.el.src = custom.url; custom.el.play().catch(() => {});
+      CO.emit('music:track', { name: item.name });
+    }
+    function startCustom() {
+      CO.customMusic.list().then((a) => {
+        custom.list = a; if (custom.idx >= a.length) custom.idx = 0;
+        if (!a.length) { CO.toast('Aucun fichier : ajoute tes musiques dans Options.', { icon: 'ui:music' }); return; }
+        playCustom();
+      });
+    }
+    function stopCustom() { if (custom.el) custom.el.pause(); }
+    Object.values(TRACKS).forEach((tr) => { tr.at = []; let i = 0; tr.mel.forEach(([n, l]) => { if (n) tr.at[i] = [n, l]; i += l; }); tr.len = Math.max(i, tr.ch.length * 16); });
+    CO.musicTracks = [['synthwave', 'Synthwave (originale)'], ['korobeiniki', 'Korobeïniki (thème Tetris)'], ['ode', 'Hymne à la Joie — Beethoven'], ['montagne', 'Antre du Roi de la Montagne — Grieg'], ['elise', 'Lettre à Élise — Beethoven'], ['custom', '🎧 Ma musique (mes fichiers)']];
     function kick(t) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14); g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.32); }
     function snare(t) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.7; const g = actx.createGain(); g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.2); const o = actx.createOscillator(), g2 = actx.createGain(); o.frequency.value = 190; g2.gain.setValueAtTime(0.25, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); g2.connect(musicBus); o.start(t); o.stop(t + 0.12); }
     function hat(t, v) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 8000; const g = actx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.06); }
@@ -3250,15 +3627,24 @@
       while (nextT < actx.currentTime + 0.15) {
         const t = nextT, s = step % 16, chord = (bar >> 1) % 4, hot = m.level > 0;
         if (s % 4 === 0) {
-          kick(t);
+          if (CO.settings.track !== 'custom') kick(t);
           const n = beatN++; const delay = Math.max(0, (t - actx.currentTime) * 1000);
           setTimeout(() => { beatOrigin = CO.now(); CO.emit('beat', { n }); }, delay);
         }
+        if (CO.settings.track === 'custom') { nextT += stepDur(); step++; if (step % 16 === 0) bar++; continue; }
         if (s === 4 || s === 12) snare(t);
         if (s % 2 === 1 || hot) hat(t, s % 2 === 1 ? 0.12 : 0.05);
+        const tr = TRACKS[CO.settings.track];
+        if (tr) {
+          const pos = step % tr.len, cn = tr.ch[Math.floor(pos / 16) % tr.ch.length];
+          if (s % 2 === 0) synth(NOTE(ROOT[cn] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.14, hot ? 1400 : 700);
+          if (s === 0) TRI[cn].forEach((n) => synth(NOTE(n), t, stepDur() * 15, 'sawtooth', 0.025, 1400));
+          const nt = tr.at[pos]; if (nt) synth(NOTE(nt[0]), t, stepDur() * nt[1] * 0.95, tr.wave, hot ? 0.075 : 0.06, hot ? 5000 : 3200);
+        } else {
         if (s % 2 === 0) synth(NOTE(BASS[chord] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.16, hot ? 1400 : 700);
         if (s === 0 && bar % 2 === 0) CH[chord].forEach((n) => synth(NOTE(n + 12), t, stepDur() * 30, 'sawtooth', 0.035, 1600));
         if ((hot || bar % 8 >= 4)) { const arp = CH[chord]; synth(NOTE(arp[s % 3] + 24 + (s % 8 >= 6 ? 12 : 0)), t, stepDur() * 0.9, 'square', hot ? 0.05 : 0.03, hot ? 5000 : 2600); }
+        }
         nextT += stepDur(); step++; if (step % 16 === 0) bar++;
       }
     }
@@ -3266,9 +3652,10 @@
       if (!ensureAudio() || m.playing) return;
       m.playing = true; step = 0; bar = 0; nextT = actx.currentTime + 0.08;
       timer = setInterval(schedule, 30); schedule();
+      if (CO.settings.track === 'custom') startCustom();
       CO.applyVolumes();
     };
-    m.stop = () => { m.playing = false; clearInterval(timer); timer = null; CO.applyVolumes(); };
+    m.stop = () => { stopCustom(); m.playing = false; clearInterval(timer); timer = null; CO.applyVolumes(); };
     m.duck = (on) => { m.ducked = on; CO.applyVolumes(); };
     m.intensity = (l) => { m.level = l; };
     return m;
@@ -3284,6 +3671,7 @@
   CO.setSetting = (k, v) => {
     CO.settings[k] = v;
     if (k === 'sfx' || k === 'music') CO.applyVolumes();
+    if (k === 'track' && music.playing) { music.stop(); music.start(); }
     if (k === 'musicOn') { if (v) { unlockAudio(); music.start(); } else music.stop(); }
     CO.emit('settings', { settings: CO.settings, key: k });
     saveSoon();
@@ -3293,10 +3681,36 @@
   CO.toast = (text, opts = {}) => CO.emit('toast', { text, ...opts });
 
   /* ═════════════════════════ SAVE / LOAD ═════════════════════════ */
-  let saveTimer = null;
+  let saveTimer = null, saveBlocked = false;
+  const BACKUP_KEY = SAVE_KEY + '-backup';
+  // other tab took over the save slot → stop writing so we never clobber newer progress
+  const TAB_ID = Math.random().toString(36).slice(2);
+  let tabChan = null;
+  try {
+    tabChan = new BroadcastChannel('cookie-overdrive');
+    tabChan.onmessage = (e) => {
+      const m = e.data || {};
+      if (m.type === 'hello' && m.id !== TAB_ID && !saveBlocked) { save(); tabChan.postMessage({ type: 'yield', to: m.id }); saveBlocked = true; CO.emit('tab:blocked', {}); }
+      else if (m.type === 'yield' && m.to === TAB_ID && load()) { afterLoad(); CO.emit('load', { imported: true }); }
+    };
+  } catch (e) { tabChan = null; }
   function save() {
+    if (saveBlocked) return false;
     CO.state.lastSave = Date.now();
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(CO.state)); return true; } catch (e) { return false; }
+    let raw;
+    try { raw = JSON.stringify(CO.state); } catch (e) { return false; }
+    try {
+      // rotate: keep the previous good save as a backup (≥ 5 min apart) in case the main slot gets corrupted
+      const prev = localStorage.getItem(SAVE_KEY);
+      if (prev && prev !== raw) {
+        const bk = localStorage.getItem(BACKUP_KEY);
+        let bkAge = Infinity;
+        try { bkAge = Date.now() - (JSON.parse(bk || '{}').lastSave || 0); } catch (e) { /* corrupt backup */ }
+        if (bkAge > 5 * 60 * 1000) { try { JSON.parse(prev); localStorage.setItem(BACKUP_KEY, prev); } catch (e) { /* skip bad prev */ } }
+      }
+      localStorage.setItem(SAVE_KEY, raw);
+      return true;
+    } catch (e) { return false; }
   }
   function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); }
   CO.save = save;
@@ -3305,7 +3719,8 @@
     st.settings = merge(defaultSettings(), obj && obj.settings);
     // sanity
     D.buildings.forEach((b) => { st.buildings[b.id] = Math.max(0, Math.floor(+st.buildings[b.id] || 0)); });
-    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k] || 0; if (st[k] < 0) st[k] = 0; });
+    ['cookies', 'totalBaked', 'allTimeBaked', 'gems', 'stars', 'rebirths', 'clicks'].forEach((k) => { st[k] = +st[k]; if (!Number.isFinite(st[k]) || st[k] < 0) st[k] = 0; });
+    if (!Number.isFinite(+st.lastSave) || +st.lastSave > Date.now() + 60000) st.lastSave = Date.now();
     st.pets = (st.pets || []).filter((p) => PET[p.id]);
     st.equipped = (st.equipped || []).filter((uid) => st.pets.some((p) => p.uid === uid)).slice(0, CO.maxPetSlots);
     if (!SKIN[st.skin] || !st.skinsOwned[st.skin]) st.skin = 'classic';
@@ -3315,9 +3730,21 @@
   function load() {
     let raw = null;
     try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
-    if (!raw) return false;
-    try { adopt(JSON.parse(raw)); return true; } catch (e) { return false; }
+    const tryRaw = (r) => { if (!r) return false; try { const o = JSON.parse(r); if (!isObj(o)) return false; adopt(o); return true; } catch (e) { return false; } };
+    if (tryRaw(raw)) return true;
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (tryRaw(bk)) { CO.restoredBackup = true; return true; }
+    return false;
   }
+  CO.hasBackup = () => { try { return !!localStorage.getItem(BACKUP_KEY); } catch (e) { return false; } };
+  CO.restoreBackup = () => {
+    let bk = null;
+    try { bk = localStorage.getItem(BACKUP_KEY); } catch (e) { bk = null; }
+    if (!bk) return false;
+    try { const o = JSON.parse(bk); if (!isObj(o)) return false; adopt(o); afterLoad(); CO.emit('load', { imported: true }); return true; } catch (e) { return false; }
+  };
+  CO.saveBlocked = () => saveBlocked;
   CO.exportSave = () => {
     save();
     try { return 'CO1|' + btoa(unescape(encodeURIComponent(JSON.stringify(CO.state)))); } catch (e) { return ''; }
@@ -3412,9 +3839,25 @@
         if (gain > 0) { earn(gain, 'offline'); CO.offline = { away, gain }; }
       }
     }
+    // daily gift: gems for coming back each day, streak bonus up to 7 days
+    try {
+      const day = new Date().toISOString().slice(0, 10), st = CO.state;
+      if (st.lastDaily !== day) {
+        const yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+        st.dailyStreak = st.lastDaily === yest ? Math.min(7, (+st.dailyStreak || 0) + 1) : 1;
+        st.lastDaily = day;
+        const g = 2 + st.dailyStreak;
+        st.gems += g;
+        CO.daily = { gems: g, streak: st.dailyStreak };
+        setTimeout(() => CO.toast('Cadeau du jour : +' + g + ' gemmes (série ' + st.dailyStreak + '/7)', { icon: 'ui:gem', color: '#ffcc33' }), 2500);
+      }
+    } catch (e) { /* optional */ }
     lastT = CO.now();
     setInterval(tick, 50);
     window.addEventListener('pagehide', save);
+    window.addEventListener('beforeunload', save);
+    if (tabChan) tabChan.postMessage({ type: 'hello', id: TAB_ID });
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) { /* optional */ }
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
     // hot-reload snapshot for republishes
     try { if (window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function') window.claude.hot.snapshot(() => ({ state: CO.state })); } catch (e) { /* optional */ }
@@ -10375,8 +10818,24 @@
         h('div.rb-box', h('h4', I('ui:skull'), ' Tu perds'), 'Cookies', h('br'), 'Bâtiments', h('br'), 'Upgrades (et leurs effets sur le cookie)'),
         h('div.rb-box', h('h4', I('ui:gem'), ' Tu gardes'), 'Gemmes, pets, skins, thèmes', h('br'), 'Succès et records', h('br'),
           h('b', { style: { color: 'var(--gold)' } }, '+10 % par étoile, pour toujours'), h('br'), h('b', { style: { color: 'var(--cyan)' } }, '+10 gemmes par étoile gagnée'))),
+      finalBox(),
       h('p.muted.tip', 'Le skin Néant se débloque au 3ᵉ rebirth.'));
   };
+  function finalBox() {
+    const s = S(), goals = CO.finalGoal(), ready = CO.finalReady();
+    const fmtT = (sec) => Math.floor(sec / 3600) + ' h ' + String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    return h('div.rb-box', { style: { marginTop: '14px', border: '2px solid #b16bff' } },
+      h('h4', I('boss:final'), s.gameWon ? ' Jeu terminé ! Production ×2 pour toujours' : ' Objectif final : LE GRAND RÉGIME'),
+      goals.map((g) => {
+        const pct = clampN((g.cur / g.need) * 100, 0, 100), ok = g.cur >= g.need;
+        return h('div', { style: { margin: '6px 0', fontSize: '13px' } },
+          (ok ? '✅ ' : '⬜ ') + g.label + ' — ' + (g.time ? fmtT(Math.min(g.cur, g.need)) + ' / ' + fmtT(g.need) : fmt(Math.min(g.cur, g.need), { int: 1 }) + ' / ' + fmt(g.need, { int: 1 })),
+          h('div.mprog', h('i', { style: { width: pct + '%' } })));
+      }),
+      h('button.btn.big' + (ready ? '.red' : ''), { type: 'button', disabled: !ready || !!CO.boss, style: { width: '100%', marginTop: '8px' },
+        onclick: () => { if (CO.fightFinal()) { CO.toast('LE GRAND RÉGIME arrive ! 2 minutes pour le vaincre !', { icon: 'boss:final', color: '#b16bff' }); render(true); } } },
+        s.gameWon ? 'Revanche contre LE GRAND RÉGIME' : ready ? 'AFFRONTER LE BOSS FINAL' : 'Verrouillé'));
+  }
   function rebirthFx(g) {
     const fx = h('div.rbflash', h('div.ol.ol-lg', 'REBIRTH ! +' + g + ' ', I('ui:star', 'xl')));
     document.body.append(fx);
@@ -10391,7 +10850,7 @@
     shop: () => D.buildings.filter((b) => CO.buildingUnlocked(b.id)).length,
     upgrades: () => D.upgrades.filter((u) => !S().upgrades[u.id] && CO.reqMet(u)).length + '|' + Object.keys(S().upgrades).length,
     games: () => MG_ORDER.map((id) => (CO.minigameUnlocked(id) ? (CO.minigames[id] ? 'u' : 'l') : Math.floor(clampN(S().allTimeBaked / D.minigameUnlocks[id].baked, 0, 1) * 40))).join(','),
-    rebirth: () => CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
+    rebirth: () => CO.finalGoal().map((g) => Math.floor(clampN(g.cur / g.need, 0, 1) * 20)).join(',') + '|' + !!CO.boss + '|' + CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
     quests: () => S().quests.map((q) => q.id + (q.done ? 'd' : '')).join(','),
     style: () => S().gems,
     pets: () => S().pets.length + '|' + S().equipped.join(','),
@@ -10430,7 +10889,24 @@
       subTitle('ui:sound', 'Son'),
       h('div.opts',
         range('sfx', 'Effets sonores', 0, 1, 0.05),
-        sw('musicOn', 'Musique synthwave', 'Générée en direct, elle s\'emballe en Fièvre'),
+        sw('musicOn', 'Musique', 'Générée en direct, elle s\'emballe en Fièvre'),
+        select('track', 'Morceau', CO.musicTracks || [['synthwave', 'Synthwave']]),
+        (() => {
+          const box = h('div.opt', h('label', 'Ma musique', h('span.d', 'MP3/OGG/WAV depuis ton appareil, gardés dans le navigateur')));
+          const listEl = h('div', { style: { fontSize: '13px', opacity: 0.85, margin: '4px 0' } });
+          const refresh = () => CO.customMusic.list().then((a) => {
+            listEl.replaceChildren(...(a.length ? a.map((f) => h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } }, '🎵 ' + f.name,
+              h('button.btn.small', { type: 'button', onclick: () => CO.customMusic.remove(f.id).then(refresh) }, '✕'))) : ['Aucun fichier.']));
+          });
+          const add = h('button.btn.cyan.small', { type: 'button', onclick: () => {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'audio/*'; inp.multiple = true;
+            inp.onchange = () => { if (!inp.files.length) return; CO.customMusic.add(inp.files).then(() => { refresh(); CO.toast(inp.files.length + ' musique(s) ajoutée(s) !', { icon: 'ui:music', color: '#1ff4ff' }); }).catch(() => CO.toast('Stockage plein ou bloqué.', { icon: 'ui:warning', color: '#ff4d6d' })); };
+            inp.click();
+          } }, '+ Ajouter');
+          const skip = h('button.btn.small', { type: 'button', onclick: () => CO.customMusic.next() }, '⏭ Suivante');
+          refresh();
+          return h('div', box, h('div.btnrow', add, skip), listEl);
+        })(),
         range('music', 'Volume musique', 0, 1, 0.05),
         select('clickSound', 'Son du clic', D.clickSounds.map((c) => [c.id, c.name]))),
       subTitle('ui:sparkle', 'Visuel'),
@@ -10454,6 +10930,33 @@
             p.then(() => CO.toast('Code copié dans le presse-papier.', { icon: 'ui:check', color: '#1ff4ff' }), () => CO.toast('Code prêt : sélectionne-le et copie-le.', { icon: 'ui:save' }));
           } }, 'Exporter'),
           h('button.btn.small', { type: 'button', onclick: () => { if (CO.importSave(ta.value)) { CO.toast('Sauvegarde importée !', { icon: 'ui:check', color: '#2bdc6a' }); render(); } else CO.toast('Code invalide. Il doit commencer par CO1|', { icon: 'ui:warning', color: '#ff4d6d' }); } }, 'Importer')),
+        h('div.btnrow',
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const code = CO.exportSave(); if (!code) return;
+            try {
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' }));
+              a.download = 'cookie-overdrive-' + new Date().toISOString().slice(0, 10) + '.txt';
+              document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+              CO.toast('Fichier de sauvegarde téléchargé.', { icon: 'ui:save', color: '#1ff4ff' });
+            } catch (e) { CO.toast('Téléchargement impossible : utilise Exporter.', { icon: 'ui:warning', color: '#ff4d6d' }); }
+          } }, 'Télécharger'),
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.txt,text/plain';
+            inp.onchange = () => {
+              const f = inp.files && inp.files[0]; if (!f) return;
+              f.text().then((txt) => {
+                if (CO.importSave(txt)) { CO.toast('Sauvegarde chargée depuis le fichier !', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+                else CO.toast('Fichier invalide.', { icon: 'ui:warning', color: '#ff4d6d' });
+              });
+            };
+            inp.click();
+          } }, 'Charger un fichier'),
+          CO.hasBackup() ? h('button.btn.small', { type: 'button', onclick: () => {
+            if (!confirm('Revenir à la sauvegarde de secours (jusqu\'à ~5 min plus ancienne) ?')) return;
+            if (CO.restoreBackup()) { CO.save(); CO.toast('Sauvegarde de secours restaurée.', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+            else CO.toast('Secours illisible.', { icon: 'ui:warning', color: '#ff4d6d' });
+          } }, 'Secours') : null),
         ta, h('div.btnrow', resetBtn)));
   };
 
@@ -10605,6 +11108,22 @@
     CO.on('quests', () => rerender(['quests']));
     CO.on('pets', () => rerender(['pets']));
     CO.on('rebirth', () => render());
+    CO.on('music:track', (e) => CO.toast('♪ ' + String(e.name || '').replace(/\.[a-z0-9]+$/i, ''), { icon: 'ui:music' }));
+    CO.on('game:won', () => {
+      CO.emit('fx:confetti', {});
+      const st = S().stats, m = Math.floor((st.wonAt || st.playTime) / 60);
+      modal('TU AS GAGNÉ !', 'LE GRAND RÉGIME est vaincu. Le cookie règne sur l\'univers. Temps de jeu : ' + Math.floor(m / 60) + ' h ' + (m % 60) + ' min, ' + st.bossKills + ' boss battus. Bonus permanent : production ×2. Tu peux continuer à jouer !',
+        [{ label: 'Continuer à crunch', cls: 'gold' }], 'boss:final');
+    });
+    CO.on('tab:blocked', () => {
+      if (document.getElementById('tab-block')) return;
+      const d = document.createElement('div'); d.id = 'tab-block';
+      d.style.cssText = 'position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(8,4,20,.92);color:#fff;font:600 18px/1.5 Fredoka,sans-serif;text-align:center;padding:24px';
+      d.innerHTML = '<div><div style="font-size:42px">🍪</div>Le jeu est ouvert dans un autre onglet.<br>Ta progression continue là-bas.<br><br><button type="button" style="font:inherit;padding:10px 22px;border-radius:12px;border:0;background:#ff3ea5;color:#fff;cursor:pointer">Jouer ici</button></div>';
+      d.querySelector('button').onclick = () => location.reload();
+      document.body.appendChild(d);
+    });
+    if (CO.restoredBackup) setTimeout(() => CO.toast('Sauvegarde principale abîmée : secours restauré.', { icon: 'ui:warning', color: '#ffb020' }), 1500);
     CO.on('load', () => { if (ui.ready) { applySettings(); updateBakery(); render(); } });
     CO.on('minigame:end', () => rerender(['games']));
     CO.on('minigame:registered', () => rerender(['games']));
@@ -10612,7 +11131,7 @@
       const txt = { frenzy: 'Production ×7 pendant ' + Math.round(30 * CO.mult.goldenDur) + ' s !', clickstorm: 'Chaque clic ×77 pendant ' + Math.round(10 * CO.mult.goldenDur) + ' s. SPAM !', rgbstorm: 'Fièvre RGB instantanée !' }[kind];
       if (txt) toast({ text: txt, icon: 'ui:golden', color: '#ffc93c' });
     });
-    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (30 s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
+    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (' + Math.round(boss.until - boss.born) + ' s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
     CO.on('fever:start', () => document.body.classList.add('fever'));
     CO.on('fever:end', () => document.body.classList.remove('fever'));
     CO.on('settings', ({ key }) => { if (key === 'numFormat') { hud.lastStr = ''; hud.lastCps = ''; hud.lastGems = -1; hud.lastStars = -1; } });
@@ -10713,6 +11232,11 @@
       try { if (window.CO.stage && window.CO.stage.init) window.CO.stage.init(document.getElementById('stage')); } catch (e) { console.error(e); }
       try { window.CO.ui.init(); } catch (e) { console.error(e); }
     }
+    // offline play + install when served over http(s) next to sw.js
+    try {
+      if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(window.claude && window.claude.hot))
+        window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    } catch (e) { /* optional */ }
     var hot = window.claude && window.claude.hot;
     if (hot && typeof hot.ready === 'function') hot.ready(start); else start(hot && hot.data ? hot.data : {});
   })();

@@ -1,0 +1,9 @@
+{
+  "name": "Cookie Overdrive",
+  "short_name": "Cookie",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#14062b",
+  "theme_color": "#14062b",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

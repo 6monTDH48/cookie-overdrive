@@ -450,8 +450,24 @@
         h('div.rb-box', h('h4', I('ui:skull'), ' Tu perds'), 'Cookies', h('br'), 'Bâtiments', h('br'), 'Upgrades (et leurs effets sur le cookie)'),
         h('div.rb-box', h('h4', I('ui:gem'), ' Tu gardes'), 'Gemmes, pets, skins, thèmes', h('br'), 'Succès et records', h('br'),
           h('b', { style: { color: 'var(--gold)' } }, '+10 % par étoile, pour toujours'), h('br'), h('b', { style: { color: 'var(--cyan)' } }, '+10 gemmes par étoile gagnée'))),
+      finalBox(),
       h('p.muted.tip', 'Le skin Néant se débloque au 3ᵉ rebirth.'));
   };
+  function finalBox() {
+    const s = S(), goals = CO.finalGoal(), ready = CO.finalReady();
+    const fmtT = (sec) => Math.floor(sec / 3600) + ' h ' + String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    return h('div.rb-box', { style: { marginTop: '14px', border: '2px solid #b16bff' } },
+      h('h4', I('boss:final'), s.gameWon ? ' Jeu terminé ! Production ×2 pour toujours' : ' Objectif final : LE GRAND RÉGIME'),
+      goals.map((g) => {
+        const pct = clampN((g.cur / g.need) * 100, 0, 100), ok = g.cur >= g.need;
+        return h('div', { style: { margin: '6px 0', fontSize: '13px' } },
+          (ok ? '✅ ' : '⬜ ') + g.label + ' — ' + (g.time ? fmtT(Math.min(g.cur, g.need)) + ' / ' + fmtT(g.need) : fmt(Math.min(g.cur, g.need), { int: 1 }) + ' / ' + fmt(g.need, { int: 1 })),
+          h('div.mprog', h('i', { style: { width: pct + '%' } })));
+      }),
+      h('button.btn.big' + (ready ? '.red' : ''), { type: 'button', disabled: !ready || !!CO.boss, style: { width: '100%', marginTop: '8px' },
+        onclick: () => { if (CO.fightFinal()) { CO.toast('LE GRAND RÉGIME arrive ! 2 minutes pour le vaincre !', { icon: 'boss:final', color: '#b16bff' }); render(true); } } },
+        s.gameWon ? 'Revanche contre LE GRAND RÉGIME' : ready ? 'AFFRONTER LE BOSS FINAL' : 'Verrouillé'));
+  }
   function rebirthFx(g) {
     const fx = h('div.rbflash', h('div.ol.ol-lg', 'REBIRTH ! +' + g + ' ', I('ui:star', 'xl')));
     document.body.append(fx);
@@ -466,7 +482,7 @@
     shop: () => D.buildings.filter((b) => CO.buildingUnlocked(b.id)).length,
     upgrades: () => D.upgrades.filter((u) => !S().upgrades[u.id] && CO.reqMet(u)).length + '|' + Object.keys(S().upgrades).length,
     games: () => MG_ORDER.map((id) => (CO.minigameUnlocked(id) ? (CO.minigames[id] ? 'u' : 'l') : Math.floor(clampN(S().allTimeBaked / D.minigameUnlocks[id].baked, 0, 1) * 40))).join(','),
-    rebirth: () => CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
+    rebirth: () => CO.finalGoal().map((g) => Math.floor(clampN(g.cur / g.need, 0, 1) * 20)).join(',') + '|' + !!CO.boss + '|' + CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
     quests: () => S().quests.map((q) => q.id + (q.done ? 'd' : '')).join(','),
     style: () => S().gems,
     pets: () => S().pets.length + '|' + S().equipped.join(','),
@@ -505,7 +521,24 @@
       subTitle('ui:sound', 'Son'),
       h('div.opts',
         range('sfx', 'Effets sonores', 0, 1, 0.05),
-        sw('musicOn', 'Musique synthwave', 'Générée en direct, elle s\'emballe en Fièvre'),
+        sw('musicOn', 'Musique', 'Générée en direct, elle s\'emballe en Fièvre'),
+        select('track', 'Morceau', CO.musicTracks || [['synthwave', 'Synthwave']]),
+        (() => {
+          const box = h('div.opt', h('label', 'Ma musique', h('span.d', 'MP3/OGG/WAV depuis ton appareil, gardés dans le navigateur')));
+          const listEl = h('div', { style: { fontSize: '13px', opacity: 0.85, margin: '4px 0' } });
+          const refresh = () => CO.customMusic.list().then((a) => {
+            listEl.replaceChildren(...(a.length ? a.map((f) => h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } }, '🎵 ' + f.name,
+              h('button.btn.small', { type: 'button', onclick: () => CO.customMusic.remove(f.id).then(refresh) }, '✕'))) : ['Aucun fichier.']));
+          });
+          const add = h('button.btn.cyan.small', { type: 'button', onclick: () => {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'audio/*'; inp.multiple = true;
+            inp.onchange = () => { if (!inp.files.length) return; CO.customMusic.add(inp.files).then(() => { refresh(); CO.toast(inp.files.length + ' musique(s) ajoutée(s) !', { icon: 'ui:music', color: '#1ff4ff' }); }).catch(() => CO.toast('Stockage plein ou bloqué.', { icon: 'ui:warning', color: '#ff4d6d' })); };
+            inp.click();
+          } }, '+ Ajouter');
+          const skip = h('button.btn.small', { type: 'button', onclick: () => CO.customMusic.next() }, '⏭ Suivante');
+          refresh();
+          return h('div', box, h('div.btnrow', add, skip), listEl);
+        })(),
         range('music', 'Volume musique', 0, 1, 0.05),
         select('clickSound', 'Son du clic', D.clickSounds.map((c) => [c.id, c.name]))),
       subTitle('ui:sparkle', 'Visuel'),
@@ -529,6 +562,33 @@
             p.then(() => CO.toast('Code copié dans le presse-papier.', { icon: 'ui:check', color: '#1ff4ff' }), () => CO.toast('Code prêt : sélectionne-le et copie-le.', { icon: 'ui:save' }));
           } }, 'Exporter'),
           h('button.btn.small', { type: 'button', onclick: () => { if (CO.importSave(ta.value)) { CO.toast('Sauvegarde importée !', { icon: 'ui:check', color: '#2bdc6a' }); render(); } else CO.toast('Code invalide. Il doit commencer par CO1|', { icon: 'ui:warning', color: '#ff4d6d' }); } }, 'Importer')),
+        h('div.btnrow',
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const code = CO.exportSave(); if (!code) return;
+            try {
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' }));
+              a.download = 'cookie-overdrive-' + new Date().toISOString().slice(0, 10) + '.txt';
+              document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+              CO.toast('Fichier de sauvegarde téléchargé.', { icon: 'ui:save', color: '#1ff4ff' });
+            } catch (e) { CO.toast('Téléchargement impossible : utilise Exporter.', { icon: 'ui:warning', color: '#ff4d6d' }); }
+          } }, 'Télécharger'),
+          h('button.btn.small', { type: 'button', onclick: () => {
+            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.txt,text/plain';
+            inp.onchange = () => {
+              const f = inp.files && inp.files[0]; if (!f) return;
+              f.text().then((txt) => {
+                if (CO.importSave(txt)) { CO.toast('Sauvegarde chargée depuis le fichier !', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+                else CO.toast('Fichier invalide.', { icon: 'ui:warning', color: '#ff4d6d' });
+              });
+            };
+            inp.click();
+          } }, 'Charger un fichier'),
+          CO.hasBackup() ? h('button.btn.small', { type: 'button', onclick: () => {
+            if (!confirm('Revenir à la sauvegarde de secours (jusqu\'à ~5 min plus ancienne) ?')) return;
+            if (CO.restoreBackup()) { CO.save(); CO.toast('Sauvegarde de secours restaurée.', { icon: 'ui:check', color: '#2bdc6a' }); render(); }
+            else CO.toast('Secours illisible.', { icon: 'ui:warning', color: '#ff4d6d' });
+          } }, 'Secours') : null),
         ta, h('div.btnrow', resetBtn)));
   };
 
@@ -680,6 +740,22 @@
     CO.on('quests', () => rerender(['quests']));
     CO.on('pets', () => rerender(['pets']));
     CO.on('rebirth', () => render());
+    CO.on('music:track', (e) => CO.toast('♪ ' + String(e.name || '').replace(/\.[a-z0-9]+$/i, ''), { icon: 'ui:music' }));
+    CO.on('game:won', () => {
+      CO.emit('fx:confetti', {});
+      const st = S().stats, m = Math.floor((st.wonAt || st.playTime) / 60);
+      modal('TU AS GAGNÉ !', 'LE GRAND RÉGIME est vaincu. Le cookie règne sur l\'univers. Temps de jeu : ' + Math.floor(m / 60) + ' h ' + (m % 60) + ' min, ' + st.bossKills + ' boss battus. Bonus permanent : production ×2. Tu peux continuer à jouer !',
+        [{ label: 'Continuer à crunch', cls: 'gold' }], 'boss:final');
+    });
+    CO.on('tab:blocked', () => {
+      if (document.getElementById('tab-block')) return;
+      const d = document.createElement('div'); d.id = 'tab-block';
+      d.style.cssText = 'position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(8,4,20,.92);color:#fff;font:600 18px/1.5 Fredoka,sans-serif;text-align:center;padding:24px';
+      d.innerHTML = '<div><div style="font-size:42px">🍪</div>Le jeu est ouvert dans un autre onglet.<br>Ta progression continue là-bas.<br><br><button type="button" style="font:inherit;padding:10px 22px;border-radius:12px;border:0;background:#ff3ea5;color:#fff;cursor:pointer">Jouer ici</button></div>';
+      d.querySelector('button').onclick = () => location.reload();
+      document.body.appendChild(d);
+    });
+    if (CO.restoredBackup) setTimeout(() => CO.toast('Sauvegarde principale abîmée : secours restauré.', { icon: 'ui:warning', color: '#ffb020' }), 1500);
     CO.on('load', () => { if (ui.ready) { applySettings(); updateBakery(); render(); } });
     CO.on('minigame:end', () => rerender(['games']));
     CO.on('minigame:registered', () => rerender(['games']));
@@ -687,7 +763,7 @@
       const txt = { frenzy: 'Production ×7 pendant ' + Math.round(30 * CO.mult.goldenDur) + ' s !', clickstorm: 'Chaque clic ×77 pendant ' + Math.round(10 * CO.mult.goldenDur) + ' s. SPAM !', rgbstorm: 'Fièvre RGB instantanée !' }[kind];
       if (txt) toast({ text: txt, icon: 'ui:golden', color: '#ffc93c' });
     });
-    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (30 s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
+    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (' + Math.round(boss.until - boss.born) + ' s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
     CO.on('fever:start', () => document.body.classList.add('fever'));
     CO.on('fever:end', () => document.body.classList.remove('fever'));
     CO.on('settings', ({ key }) => { if (key === 'numFormat') { hud.lastStr = ''; hud.lastCps = ''; hud.lastGems = -1; hud.lastStars = -1; } });

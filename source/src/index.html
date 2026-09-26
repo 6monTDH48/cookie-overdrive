@@ -1,7 +1,9 @@
-<meta charset="utf-8"><!-- dev only: stripped by build.py -->
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!-- dev only -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cookie Overdrive</title>
 <meta name="description" content="Cookie clicker RGB hyperactif : upgrades qui transforment le cookie, pets, boss, mini-jeux.">
+<meta name="theme-color" content="#14062b">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap">
@@ -504,6 +506,11 @@
       try { if (window.CO.stage && window.CO.stage.init) window.CO.stage.init(document.getElementById('stage')); } catch (e) { console.error(e); }
       try { window.CO.ui.init(); } catch (e) { console.error(e); }
     }
+    // offline play + install when served over http(s) next to sw.js
+    try {
+      if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(window.claude && window.claude.hot))
+        window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    } catch (e) { /* optional */ }
     var hot = window.claude && window.claude.hot;
     if (hot && typeof hot.ready === 'function') hot.ready(start); else start(hot && hot.data ? hot.data : {});
   })();
