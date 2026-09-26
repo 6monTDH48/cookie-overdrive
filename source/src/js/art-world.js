@@ -227,6 +227,75 @@
       ${spark(8.5, 10, 3.6, '#fff', 1.3)}`;
     },
 
+    /* ── bâtiments vague 3 ── */
+    'b:quantum': () => `<defs>${lg('a', '#b8a0ff', '#3a2766')}${lg('c', '#1ff4ff', '#7a2cff')}</defs>
+      <rect x="7" y="7" width="34" height="34" rx="6" fill="url(#a)" ${st(3.2)}/>
+      <g stroke="${OL}" stroke-width="2.4" stroke-linecap="round"><path d="M13 3v4M24 3v4M35 3v4M13 41v4M24 41v4M35 41v4M3 13h4M3 24h4M3 35h4M41 13h4M41 24h4M41 35h4"/></g>
+      <g fill="none" stroke="url(#c)" stroke-width="2"><ellipse cx="24" cy="24" rx="12" ry="4.6"/><ellipse cx="24" cy="24" rx="12" ry="4.6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="12" ry="4.6" transform="rotate(-60 24 24)"/></g>
+      <circle cx="24" cy="24" r="3.6" fill="#d99a4e" ${st(1.8)}/>${shine('M11 12h8', 1.6, 0.7)}`,
+    'b:wormhole': () => `<defs>${rg('w', '#07030f', '#7a2cff', 0.5, 0.5, 0.6)}${ckDef('k')}</defs>
+      <circle cx="24" cy="24" r="20" fill="url(#w)" ${st(3.2)}/>
+      <g fill="none" stroke-width="2" stroke-linecap="round"><path d="M24 6a18 18 0 0 1 17 20" stroke="#ff5ec8"/><path d="M24 11a13 13 0 0 1 12 15" stroke="#1ff4ff"/><path d="M24 16a8 8 0 0 1 7 10" stroke="#fff27a"/><path d="M24 42a18 18 0 0 1-17-20" stroke="#ff5ec8"/><path d="M24 37a13 13 0 0 1-12-15" stroke="#1ff4ff"/></g>
+      <circle cx="24" cy="24" r="4" fill="#000" ${st(1.8)}/>${cookie('k', 40, 9, 5.4, 1.8, false)}`,
+    'b:nebula': () => `<defs>${rg('n', '#ffd0f0', '#b03c8f', 0.4, 0.4, 0.8)}${rg('m', '#c4fff8', '#12b8c9', 0.4, 0.4, 0.8)}</defs>
+      <path d="${blob(19, 22, 14, 2.4, 10)}" fill="url(#n)" ${st(3)}/><path d="${blob(31, 28, 12, 2.2, 10, 0.4)}" fill="url(#m)" ${st(3)}/>
+      <path d="M12 44h24" ${st(3)}/><path d="M24 44V36" ${st(3)}/><path d="M24 38q-5-3-7 1M24 39q5-3 7 1" fill="#3dff7a" ${st(1.8)}/>
+      ${spark(10, 9, 3, '#fff', 1.2)}${spark(40, 12, 2.6, '#fff27a', 1.1)}${spark(26, 22, 2.2, '#fff', 1)}`,
+    'b:galaxyfarm': () => `<defs>${lg('g', '#7ae07a', '#1f7a3a')}${rg('s', '#ff9ef0', '#5a0f8a', 0.5, 0.5, 0.7)}</defs>
+      <circle cx="24" cy="18" r="14" fill="url(#s)" ${st(3)}/>
+      <ellipse cx="24" cy="18" rx="9" ry="4" fill="none" stroke="#fff27a" stroke-width="1.8"/>
+      <path d="M3 34Q24 26 45 34V44H3Z" fill="url(#g)" ${st(3)}/>
+      <g fill="#d99a4e" ${st(1.4)}><circle cx="12" cy="37" r="2.6"/><circle cx="24" cy="36" r="2.6"/><circle cx="36" cy="37" r="2.6"/></g>${shine('M14 10q3-3 7-4', 1.8, 0.8)}`,
+    'b:chrono': () => `<defs>${lg('f', '#ffe0a8', '#b86f2c')}${lg('c', '#ffffff', '#c8e8ff')}</defs>
+      <rect x="6" y="18" width="36" height="26" rx="5" fill="url(#f)" ${st(3.2)}/><rect x="11" y="27" width="26" height="12" rx="3" fill="#3a1c0c" ${st(2)}/>
+      <path d="M14 33h20" stroke="#ff8a00" stroke-width="2" stroke-dasharray="3 2"/>
+      <circle cx="24" cy="11" r="9" fill="url(#c)" ${st(2.8)}/><path d="M24 6v5l3.6 2.4" fill="none" ${st(2.2)}/>${shine('M9 22h8', 1.6, 0.7)}`,
+    'b:dream': () => `<defs>${lg('c', '#ffffff', '#c9b6ff')}${lg('m', '#fff27a', '#ffb000')}</defs>
+      <path d="M8 34Q2 34 3 27Q4 21 11 22Q12 13 21 14Q27 7 34 13Q43 12 43 21Q47 26 43 31Q41 35 35 34Z" fill="url(#c)" ${st(3)}/>
+      <path d="M30 18a6 6 0 1 0 6 8a5 5 0 1 1-6-8Z" fill="url(#m)" ${st(2)}/>
+      <g font-family="sans-serif" font-weight="700" fill="#7a2cff"><text x="12" y="30" font-size="7">z</text><text x="17" y="26" font-size="5">z</text></g>
+      <path d="M14 40l2 4M24 40v5M34 40l-2 4" stroke="#b16bff" stroke-width="2" stroke-linecap="round"/>`,
+    'b:simulation': () => `<defs>${lg('s', '#3a2766', '#0b0620')}${ckDef('k')}</defs>
+      <rect x="4" y="7" width="40" height="30" rx="4" fill="url(#s)" ${st(3.2)}/><path d="M18 37l-2 7h16l-2-7" fill="#8d7ad0" ${st(2.4)}/>
+      <g font-family="monospace" font-size="5" fill="#3dff7a"><text x="8" y="15">01101</text><text x="8" y="21">10110</text><text x="8" y="27">01011</text><text x="8" y="33">11010</text></g>
+      ${cookie('k', 33, 22, 8, 2, true)}`,
+    'b:dragon': () => `<defs>${lg('d', '#ff9a8a', '#c0102f')}${lg('b', '#fff27a', '#ff8a00')}</defs>
+      <path d="M8 40Q6 22 18 14L16 6 22 11Q28 8 34 12L38 5 38 15Q44 22 40 34Q36 44 24 44Q12 44 8 40Z" fill="url(#d)" ${st(3.2)}/>
+      <ellipse cx="24" cy="34" rx="9" ry="7" fill="url(#b)" ${st(2)}/>
+      ${eye(19, 22, 2.8, 3, '#1a0b33', 1.5, 0.4, 0.4)}${eye(30, 22, 2.8, 3, '#1a0b33', 1.5, -0.4, 0.4)}
+      <path d="M17 8q0-6 6-6t6 6Z" fill="#fff" ${st(2)}/><rect x="16" y="6" width="14" height="4" rx="1.5" fill="#fff" ${st(2)}/>
+      <path d="M40 30q6-2 7-7" stroke="#ff8a00" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+    'b:godoven': () => `<defs>${lg('g', '#fff27a', '#e59a00')}${lg('w', '#ffffff', '#fff2c4')}</defs>
+      <ellipse cx="24" cy="8" rx="9" ry="3.4" fill="none" stroke="${OL}" stroke-width="5"/><ellipse cx="24" cy="8" rx="9" ry="3.4" fill="none" stroke="#fff27a" stroke-width="2.4"/>
+      <rect x="7" y="16" width="34" height="28" rx="5" fill="url(#w)" ${st(3.2)}/><rect x="12" y="24" width="24" height="14" rx="4" fill="url(#g)" ${st(2.2)}/>
+      <circle cx="24" cy="31" r="4.4" fill="#d99a4e" ${st(1.6)}/><path d="M3 22l4 2M45 22l-4 2M5 32h3M43 32h-3" stroke="#ffcc33" stroke-width="2" stroke-linecap="round"/>`,
+    'b:milkyway': () => `<defs>${lg('m', '#ffffff', '#b8d2f5')}${rg('s', '#3a2766', '#07030f', 0.5, 0.5, 0.7)}</defs>
+      <circle cx="24" cy="24" r="21" fill="url(#s)" ${st(3)}/>
+      <path d="M6 30Q16 18 24 24T42 16" fill="none" stroke="url(#m)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M17 32h14l-2 12h-10Z" fill="url(#m)" ${st(2.4)}/><path d="M17 36h14" stroke="#1ff4ff" stroke-width="1.6"/>
+      ${spark(12, 12, 2.6, '#fff', 1)}${spark(36, 32, 2.2, '#fff27a', 1)}`,
+    'b:spoon': () => `<defs>${lg('s', '#ffffff', '#8a85b0')}</defs>
+      <rect x="21" y="24" width="6" height="21" rx="3" fill="url(#s)" ${st(2.6)}/><path d="M24 26C14 26 10 18 10 12S16 2 24 2 38 6 38 12 34 26 24 26Z" fill="url(#s)" ${st(3)}/>
+      <path d="M17 12q7 6 14 0q-7-6-14 0Z" fill="none" stroke="#7a2cff" stroke-width="2"/><ellipse cx="24" cy="12" rx="3" ry="2" fill="none" stroke="#ff2bd6" stroke-width="1.6"/>
+      ${shine('M15 8q2-3 5-4', 1.8, 0.8)}`,
+    'b:memes': () => `<defs>${ckDef('k')}</defs>
+      <rect x="5" y="5" width="38" height="38" rx="6" fill="#fff" ${st(3.2)}/>
+      <rect x="9" y="13" width="30" height="22" rx="3" fill="#ffe8d6" ${st(2)}/>
+      ${cookie('k', 24, 24, 7.4, 1.8, false)}<path d="M19.5 22h4M24.5 22h4" stroke="${OL}" stroke-width="2.6"/>
+      <g font-family="Impact,sans-serif" font-weight="900" font-size="6" text-anchor="middle" fill="#fff" stroke="${OL}" stroke-width=".8"><text x="24" y="11.4">MUCH COOKIE</text><text x="24" y="41">WOW</text></g>`,
+    'b:omniverse': () => `<defs>${rg('o', '#ffffff', '#7a2cff', 0.5, 0.5, 0.6)}</defs>
+      <circle cx="24" cy="24" r="21" fill="url(#o)" ${st(3.2)}/>
+      <g fill="none" stroke="${OL}" stroke-width="1.6" opacity=".7">${[0, 30, 60, 90, 120, 150].map((a) => `<ellipse cx="24" cy="24" rx="19" ry="6" transform="rotate(${a} 24 24)"/>`).join('')}</g>
+      <circle cx="24" cy="24" r="5" fill="#d99a4e" ${st(2)}/>`,
+    'b:crumbcore': () => `<defs>${rg('c', '#fff27a', '#ff3d00', 0.5, 0.5, 0.6)}${lg('r', '#ffe0a8', '#6b3a1f')}</defs>
+      <path d="${blob(24, 24, 20, 2, 9)}" fill="url(#r)" ${st(3.2)}/><circle cx="24" cy="24" r="9" fill="url(#c)" ${st(2.4)}/>
+      <g fill="#4a2511" ${st(1.2)}><path d="M9 14l3-1 1 3-3 1z"/><path d="M36 10l3 1-1 3-3-1z"/><path d="M38 34l2 2-2 2-2-2z"/><path d="M10 34l3 1-1 3-3-1z"/></g>
+      ${spark(24, 24, 4, '#fff', 1.2)}`,
+    'b:absolute': () => `<defs>${rg('a', '#ffffff', '#ffcc33', 0.4, 0.35, 0.8)}${lg('r', '#ff2bd6', '#1ff4ff', 1, 1)}</defs>
+      <circle cx="24" cy="24" r="22" fill="none" stroke="url(#r)" stroke-width="3"/>
+      <path d="${blob(24, 24, 17, 1.2, 18)}" fill="url(#a)" ${st(3)}/>
+      <g fill="#7a2cff" ${st(1.2)}><path d="${star(17, 18, 3.4, 1.4, 5, 0)}"/><path d="${star(30, 16, 3, 1.2, 5, 0)}"/><path d="${star(28, 30, 3.6, 1.4, 5, 0)}"/><path d="${star(16, 30, 2.6, 1, 5, 0)}"/></g>
+      ${shine('M12 15q3-5 8-6', 2.2, 0.9)}`,
     'b:ai': () => `<defs>${lg('h', '#e8e6f5', '#8d7ad0')}${lg('v', '#1ff4ff', '#0b6d8a')}${lg('t', '#ffffff', '#d4c4ff')}</defs>
       <path d="M12 12Q12 4 18 5Q20 1 24 3Q28 1 30 5Q36 4 36 12Z" fill="url(#t)" ${st(2.6)}/>
       <rect x="8" y="12" width="32" height="26" rx="8" fill="url(#h)" ${st(3.2)}/>
