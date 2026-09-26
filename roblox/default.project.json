@@ -1,0 +1,34 @@
+{
+  "name": "CookieOverdrive",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "CookieServer": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "CookieClient": { "$path": "src/client" }
+      }
+    },
+    "Lighting": {
+      "$properties": { "ClockTime": 0, "Brightness": 1, "Ambient": [0.35, 0.2, 0.55], "OutdoorAmbient": [0.4, 0.25, 0.6] }
+    },
+    "Workspace": {
+      "$properties": { "Gravity": 196.2 },
+      "Baseplate": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true, "Size": [512, 4, 512], "Position": [0, -2, 0],
+          "Color": [0.07, 0.03, 0.16], "Material": "SmoothPlastic", "TopSurface": "Smooth"
+        }
+      },
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": { "Anchored": true, "Size": [12, 1, 12], "Position": [0, 0.5, 40], "Neutral": true, "Transparency": 0.4, "Color": [1, 0.17, 0.84] }
+      }
+    }
+  }
+}

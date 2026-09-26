@@ -1,0 +1,3356 @@
+<roblox version="4">
+  <Item class="Lighting" referent="0">
+    <Properties>
+      <string name="Name">Lighting</string>
+      <Color3 name="Ambient">
+        <R>0.35</R>
+        <G>0.2</G>
+        <B>0.55</B>
+      </Color3>
+      <float name="Brightness">1</float>
+      <float name="ClockTime">0</float>
+      <Color3 name="OutdoorAmbient">
+        <R>0.4</R>
+        <G>0.25</G>
+        <B>0.6</B>
+      </Color3>
+    </Properties>
+  </Item>
+  <Item class="ReplicatedStorage" referent="1">
+    <Properties>
+      <string name="Name">ReplicatedStorage</string>
+    </Properties>
+    <Item class="Folder" referent="2">
+      <Properties>
+        <string name="Name">Shared</string>
+      </Properties>
+      <Item class="ModuleScript" referent="3">
+        <Properties>
+          <string name="Name">Econ</string>
+          <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — formules d'économie partagées (serveur = autorité, client = affichage)
+local D = require(script.Parent.GameData)
+local E = {}
+
+E.GROWTH = 1.14
+E.BLD_POWER = 1.5
+E.FEVER_AT = 120
+E.FEVER_MULT = 3
+E.REBIRTH_MIN = 1e6
+E.BASE_PET_SLOTS = 3
+E.BOSS_UNLOCK = 5000
+E.GIFT_EVERY = 8 * 60
+
+function E.defaultState()
+	local b = {}
+	for _, d in D.buildings do b[d.id] = 0 end
+	return {
+		v = 1,
+		cookies = 0, totalBaked = 0, allTimeBaked = 0, clicks = 0,
+		gems = 0, rebirths = 0, stars = 0,
+		buildings = b, upgrades = {},
+		skin = "classic", skinsOwned = { classic = true },
+		theme = "synthwave", themesOwned = { synthwave = true },
+		pets = {}, equipped = {}, petUid = 1,
+		achievements = {}, quests = {}, questUid = 1,
+		mg = {},
+		nextGift = 0,
+		boostUntil = 0, boostMult = 1,
+		autoClick = true,
+		receipts = {},
+		stats = { golden = 0, crits = 0, maxCombo = 0, fevers = 0, bossKills = 0, eggs = 0, quests = 0, playTime = 0, robuxSpent = 0 },
+		lastSave = os.time(),
+	}
+end
+
+-- Remplit les champs manquants d'une sauvegarde plus ancienne
+function E.merge(def, src)
+	if type(src) ~= "table" then return def end
+	for k, v in def do
+		if src[k] == nil then
+			src[k] = v
+		elseif type(v) == "table" and type(src[k]) == "table" and next(v) ~= nil and #v == 0 then
+			E.merge(v, src[k])
+		end
+	end
+	return src
+end
+
+function E.petDef(id) return D.PET[id] end
+
+function E.petSlots(passes)
+	return E.BASE_PET_SLOTS + (passes.VIP and 2 or 0)
+end
+
+function E.equippedPets(s)
+	local out = {}
+	for _, uid in s.equipped do
+		for _, p in s.pets do
+			if p.uid == uid and D.PET[p.id] then
+				table.insert(out, { uid = p.uid, lvl = p.lvl, def = D.PET[p.id] })
+				break
+			end
+		end
+	end
+	return out
+end
+
+-- Calcule tous les multiplicateurs dérivés. passes = {key=true}
+function E.recalc(s, passes)
+	local M = { click = 1, clickCps = 0, bld = {}, cps = 1, crit = 0.03, critX = 10, goldenFreq = 1, goldenDur = 1, comboCap = 3, feverDur = 8 }
+	for _, b in D.buildings do M.bld[b.id] = 1 end
+	local vis = {}
+	for _, u in D.upgrades do
+		if s.upgrades[u.id] then
+			local fx = u.fx
+			if fx.click then M.click *= fx.click end
+			if fx.clickCps then M.clickCps += fx.clickCps end
+			if fx.bld then M.bld[fx.bld] *= fx.x or 1 end
+			if fx.cps then M.cps *= fx.cps end
+			if fx.crit then M.crit += fx.crit end
+			if fx.critX then M.critX *= fx.critX end
+			if fx.goldenFreq then M.goldenFreq *= fx.goldenFreq end
+			if fx.goldenDur then M.goldenDur *= fx.goldenDur end
+			if fx.comboCap then M.comboCap += fx.comboCap end
+			if fx.feverDur then M.feverDur *= fx.feverDur end
+			if u.vis then
+				local k, l = u.vis[1], u.vis[2]
+				local max = (D.visuals[k] and D.visuals[k].max) or 1
+				vis[k] = math.min(max, (vis[k] or 0) + l)
+			end
+		end
+	end
+	local pc, pk = 0, 0
+	for _, p in E.equippedPets(s) do
+		local b, lv = p.def.bonus, 1 + 0.5 * (p.lvl - 1)
+		if b.cps then pc += b.cps * lv end
+		if b.click then pk += b.click * lv end
+		if b.all then pc += b.all * lv; pk += b.all * lv end
+		if b.crit then M.crit += b.crit end
+		if b.golden then M.goldenFreq *= b.golden end
+	end
+	M.petCps = 1 + pc
+	M.petClick = 1 + pk
+	M.star = 1 + 0.1 * s.stars
+	local nAch = 0
+	for _ in s.achievements do nAch += 1 end
+	M.ach = 1 + 0.01 * nAch
+	-- Game Passes
+	M.pass = passes.DoubleCookies and 2 or 1
+	if passes.GoldenMagnet then M.goldenFreq *= 2; M.goldenDur *= 1.5 end
+	M.vis = vis
+	return M
+end
+
+-- Boost acheté (Developer Product) encore actif ?
+function E.boostMult(s)
+	return (s.boostUntil or 0) > os.time() and (s.boostMult or 1) or 1
+end
+
+function E.cpsBase(s, M)
+	local t = 0
+	for _, d in D.buildings do
+		local n = s.buildings[d.id] or 0
+		if n > 0 then t += d.cps * n * M.bld[d.id] end
+	end
+	return t * E.BLD_POWER * M.cps * M.petCps * M.star * M.ach * M.pass * E.boostMult(s)
+end
+
+function E.buildingCps(s, M, id)
+	return D.BLD[id].cps * E.BLD_POWER * M.bld[id] * M.cps * M.petCps * M.star * M.ach * M.pass * E.boostMult(s)
+end
+
+-- buffMul(key) et feverActive viennent de l'état live (serveur)
+function E.cpsNow(s, M, buffs, fever)
+	local m = 1
+	for _, b in buffs do m *= b.cps or 1 end
+	return E.cpsBase(s, M) * m * (fever and E.FEVER_MULT or 1)
+end
+
+function E.clickValue(s, M, buffs, fever)
+	local cm, km = 1, 1
+	for _, b in buffs do cm *= b.cps or 1; km *= b.click or 1 end
+	local base = M.click + E.cpsBase(s, M) * cm * M.clickCps
+	return base * M.petClick * M.star * M.pass * E.boostMult(s) * km * (fever and E.FEVER_MULT or 1)
+end
+
+function E.comboMultFor(M, count)
+	return 1 + math.min(M.comboCap - 1, math.floor(count / 15) * 0.5)
+end
+
+function E.bCost(id, n, owned)
+	local d = D.BLD[id]
+	local g = E.GROWTH
+	return math.ceil(d.cost * g ^ owned * (g ^ n - 1) / (g - 1) - 1e-6)
+end
+
+function E.bMax(s, id)
+	local d = D.BLD[id]
+	local o = s.buildings[id] or 0
+	local c0 = d.cost * E.GROWTH ^ o
+	local n = math.floor(math.log(s.cookies * (E.GROWTH - 1) / c0 + 1) / math.log(E.GROWTH))
+	return math.max(0, n)
+end
+
+function E.buildingUnlocked(s, i)
+	if i <= 2 then return true end
+	local id, prev = D.buildings[i].id, D.buildings[i - 1].id
+	return (s.buildings[id] or 0) > 0 or (s.buildings[prev] or 0) > 0 or s.allTimeBaked >= D.buildings[i].cost * 0.4
+end
+
+function E.reqMet(s, u)
+	local r = u.req or {}
+	if r.clicks and s.clicks < r.clicks then return false end
+	if r.bld and (s.buildings[r.bld[1]] or 0) < r.bld[2] then return false end
+	if r.baked and s.totalBaked < r.baked then return false end
+	if r.golden and s.stats.golden < r.golden then return false end
+	if r.crits and s.stats.crits < r.crits then return false end
+	if r.combo and s.stats.maxCombo < r.combo then return false end
+	return true
+end
+
+function E.reqText(u)
+	local r = u.req or {}
+	if r.clicks then return "Clique " .. D.fmt(r.clicks) .. " fois" end
+	if r.bld then return "Possède " .. r.bld[2] .. " × " .. D.BLD[r.bld[1]].name end
+	if r.baked then return "Produis " .. D.fmt(r.baked) .. " cookies" end
+	if r.golden then return "Attrape " .. r.golden .. " cookies dorés" end
+	if r.crits then return "Fais " .. r.crits .. " clics critiques" end
+	if r.combo then return "Atteins un combo de " .. r.combo end
+	return ""
+end
+
+function E.fxText(u)
+	local fx, out = u.fx, {}
+	if fx.bld then table.insert(out, D.BLD[fx.bld].name .. " ×" .. fx.x) end
+	if fx.click then table.insert(out, "Clic ×" .. fx.click) end
+	if fx.clickCps then table.insert(out, "Clic +" .. (fx.clickCps * 100) .. " % du CPS") end
+	if fx.cps then table.insert(out, "Production +" .. math.floor((fx.cps - 1) * 100 + 0.5) .. " %") end
+	if fx.crit then table.insert(out, "Critique +" .. math.floor(fx.crit * 100 + 0.5) .. " %") end
+	if fx.critX then table.insert(out, "Dégâts critiques ×" .. fx.critX) end
+	if fx.goldenFreq then table.insert(out, "Dorés +" .. math.floor((fx.goldenFreq - 1) * 100 + 0.5) .. " % plus fréquents") end
+	if fx.goldenDur then table.insert(out, "Effets dorés +" .. math.floor((fx.goldenDur - 1) * 100 + 0.5) .. " %") end
+	if fx.comboCap then table.insert(out, "Combo max +×" .. fx.comboCap / 2) end
+	if fx.feverDur then table.insert(out, "Fièvre +" .. math.floor((fx.feverDur - 1) * 100 + 0.5) .. " %") end
+	return table.concat(out, " · ")
+end
+
+function E.petPower(p)
+	local b, lv, out = D.PET[p.id].bonus, 1 + 0.5 * (p.lvl - 1), {}
+	if b.all then table.insert(out, "Tout +" .. math.floor(b.all * lv * 100 + 0.5) .. " %") end
+	if b.cps then table.insert(out, "Prod. +" .. math.floor(b.cps * lv * 100 + 0.5) .. " %") end
+	if b.click then table.insert(out, "Clic +" .. math.floor(b.click * lv * 100 + 0.5) .. " %") end
+	if b.crit then table.insert(out, "Crit +" .. math.floor(b.crit * 100 + 0.5) .. " %") end
+	if b.golden then table.insert(out, "Dorés +" .. math.floor((b.golden - 1) * 100 + 0.5) .. " %") end
+	return table.concat(out, " · ")
+end
+
+function E.rebirthGain(s)
+	return math.floor(math.sqrt(s.totalBaked / E.REBIRTH_MIN))
+end
+
+function E.minigameUnlocked(s, id)
+	local m = D.MG[id]
+	return m ~= nil and s.allTimeBaked >= m.baked
+end
+
+function E.unit(s, M)
+	return math.max(25, E.cpsBase(s, M) * 60, E.clickValue(s, M, {}, false) * 90)
+end
+
+function E.skinUnlockMet(s, sk, passes)
+	local u = sk.unlock
+	if not u then return true end
+	if u.ach then return s.achievements[u.ach] ~= nil end
+	if u.rebirths then return s.rebirths >= u.rebirths end
+	if u.pass then return passes[u.pass] == true end
+	return false
+end
+
+return E
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="4">
+        <Properties>
+          <string name="Name">GameData</string>
+          <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — données du jeu (portage Roblox de source/src/js/data.js)
+local D = {}
+
+D.buildings = {
+	{ id = "cursor", name = "Curseur RGB", cost = 15, cps = 0.1, emoji = "👆", desc = "Clique tout seul. En RGB, évidemment." },
+	{ id = "granny", name = "Mamie Gameuse", cost = 100, cps = 1, emoji = "👵", desc = "400 APM et un casque à oreilles de chat." },
+	{ id = "farm", name = "Ferme à Pépites", cost = 1100, cps = 8, emoji = "🌾", desc = "Fait pousser des pépites bio (ou presque)." },
+	{ id = "mine", name = "Mine de Choco", cost = 12000, cps = 47, emoji = "⛏️", desc = "Creuse des filons de chocolat noir 70 %." },
+	{ id = "factory", name = "Usine Néon", cost = 130000, cps = 260, emoji = "🏭", desc = "Chaîne de montage éclairée comme une rave." },
+	{ id = "bank", name = "Banque Crypto", cost = 1.4e6, cps = 1400, emoji = "🏦", desc = "Mine du $CRUNCH. Ça pump, ça dump, ça cuit." },
+	{ id = "temple", name = "Temple Sucré", cost = 2e7, cps = 7800, emoji = "🛕", desc = "On y prie le Grand Cookie Originel." },
+	{ id = "wizard", name = "Tour de Sorcier", cost = 3.3e8, cps = 44000, emoji = "🧙", desc = "Invoque des cookies. Parfois des grenouilles." },
+	{ id = "rocket", name = "Fusée Cookie", cost = 5.1e9, cps = 260000, emoji = "🚀", desc = "Rapporte des cookies de la planète Biscuit." },
+	{ id = "lab", name = "Labo Alchimie", cost = 7.5e10, cps = 1.6e6, emoji = "⚗️", desc = "Transforme l'or en cookies. Upgrade logique." },
+	{ id = "portal", name = "Portail Dimensionnel", cost = 1e12, cps = 1e7, emoji = "🌀", desc = "Ouvre sur la Cookieverse. Ne pas regarder dedans." },
+	{ id = "timemachine", name = "Machine Temporelle", cost = 1.4e13, cps = 6.5e7, emoji = "⏳", desc = "Vole des cookies à ton toi du futur." },
+	{ id = "antimatter", name = "Condensateur Antimatière", cost = 1.7e14, cps = 4.3e8, emoji = "⚛️", desc = "Condense l'univers en pâte à cookie." },
+	{ id = "prism", name = "Prisme RGB", cost = 2.1e15, cps = 2.9e9, emoji = "🔺", desc = "Convertit la lumière pure en cookies. Et en RGB." },
+	{ id = "streamer", name = "Stream 24/7", cost = 2.6e16, cps = 2.1e10, emoji = "📺", desc = "Des millions de viewers spamment des cookies." },
+}
+
+-- Effets visuels 3D débloqués par les améliorations (max = niveau max)
+D.visuals = {
+	chips_xl = { max = 1 }, sprinkles = { max = 2 }, glaze = { max = 2 }, crystals = { max = 1 },
+	rgb_rim = { max = 1 }, face = { max = 1 }, shades = { max = 1 }, crown = { max = 1 },
+	headphones = { max = 1 }, bling = { max = 2 }, halo = { max = 1 }, wings = { max = 1 },
+	laser_eyes = { max = 1 }, galaxy_core = { max = 1 }, holo = { max = 1 }, glitch = { max = 1 },
+	afterimage = { max = 1 }, orbiters = { max = 3 }, saturn_ring = { max = 1 }, fire_aura = { max = 2 },
+	lightning = { max = 1 }, shockwave = { max = 1 }, confetti_click = { max = 1 }, chat = { max = 1 },
+	cursor_rgb = { max = 1 }, cookie_rain = { max = 1 }, disco = { max = 1 }, warp = { max = 1 },
+	god_rays = { max = 1 }, black_hole = { max = 1 }, beat_pulse = { max = 1 },
+}
+
+-- fx: click, clickCps, bld+x, cps, crit, critX, goldenFreq, goldenDur, comboCap, feverDur
+-- req: clicks | bld={id,n} | baked | golden | crits | combo
+D.upgrades = {
+	{ id = "pepites_xxl", name = "Pépites XXL", cost = 100, fx = { click = 2 }, req = { clicks = 15 }, vis = { "chips_xl", 1 } },
+	{ id = "contour_rgb", name = "Contour RGB", cost = 150, fx = { bld = "cursor", x = 2 }, req = { bld = { "cursor", 1 } }, vis = { "rgb_rim", 1 } },
+	{ id = "vermicelles", name = "Vermicelles Arc-en-ciel", cost = 1000, fx = { bld = "granny", x = 2 }, req = { bld = { "granny", 1 } }, vis = { "sprinkles", 1 } },
+	{ id = "glacage", name = "Glaçage Bubblegum", cost = 2500, fx = { click = 2 }, req = { clicks = 150 }, vis = { "glaze", 1 } },
+	{ id = "onde_choc", name = "Onde de Choc", cost = 6000, fx = { crit = 0.04 }, req = { clicks = 300 }, vis = { "shockwave", 1 } },
+	{ id = "kawaii", name = "Visage Kawaii", cost = 11000, fx = { bld = "farm", x = 2 }, req = { bld = { "farm", 1 } }, vis = { "face", 1 } },
+	{ id = "curseurs_turbo", name = "Curseurs Turbo", cost = 12000, fx = { bld = "cursor", x = 2 }, req = { bld = { "cursor", 25 } }, vis = { "cursor_rgb", 1 } },
+	{ id = "deal_with_it", name = "Lunettes Deal With It", cost = 30000, fx = { bld = "cursor", x = 2, clickCps = 0.005 }, req = { bld = { "cursor", 10 } }, vis = { "shades", 1 } },
+	{ id = "confettis", name = "Confettis de Clic", cost = 60000, fx = { click = 2 }, req = { clicks = 700 }, vis = { "confetti_click", 1 } },
+	{ id = "mamies_speed", name = "Mamies Speedrun", cost = 80000, fx = { bld = "granny", x = 2 }, req = { bld = { "granny", 25 } }, vis = { "sprinkles", 1 } },
+	{ id = "orbiteurs", name = "Mini-Cookies Orbitaux", cost = 120000, fx = { bld = "mine", x = 2 }, req = { bld = { "mine", 1 } }, vis = { "orbiters", 1 } },
+	{ id = "casque", name = "Casque Gamer RGB", cost = 200000, fx = { bld = "granny", x = 2 }, req = { bld = { "granny", 10 } }, vis = { "headphones", 1 } },
+	{ id = "pluie", name = "Pluie de Cookies", cost = 400000, fx = { cps = 1.1 }, req = { baked = 250000 }, vis = { "cookie_rain", 1 } },
+	{ id = "tracteurs", name = "Tracteurs Néon", cost = 900000, fx = { bld = "farm", x = 2 }, req = { bld = { "farm", 25 } }, vis = { "glaze", 1 } },
+	{ id = "couronne", name = "Couronne du Roi", cost = 1.3e6, fx = { bld = "factory", x = 2 }, req = { bld = { "factory", 1 } }, vis = { "crown", 1 } },
+	{ id = "aura_feu", name = "Aura de Feu", cost = 2e6, fx = { comboCap = 2 }, req = { combo = 60 }, vis = { "fire_aura", 1 } },
+	{ id = "foreuse", name = "Foreuse Diamant", cost = 1e7, fx = { bld = "mine", x = 2 }, req = { bld = { "mine", 25 } }, vis = { "crystals", 1 } },
+	{ id = "chaine_or", name = "Chaîne en Or", cost = 1.4e7, fx = { bld = "bank", x = 2 }, req = { bld = { "bank", 1 } }, vis = { "bling", 1 } },
+	{ id = "yeux_laser", name = "Yeux Laser", cost = 2.5e7, fx = { clickCps = 0.01 }, req = { clicks = 2500 }, vis = { "laser_eyes", 1 } },
+	{ id = "usine_inferno", name = "Chaîne de Montage Inferno", cost = 1.1e8, fx = { bld = "factory", x = 2 }, req = { bld = { "factory", 25 } }, vis = { "fire_aura", 1 } },
+	{ id = "saturne", name = "Anneau de Saturne", cost = 2e8, fx = { bld = "temple", x = 2 }, req = { bld = { "temple", 1 } }, vis = { "saturn_ring", 1 } },
+	{ id = "eclairs", name = "Éclairs Statiques", cost = 3e8, fx = { critX = 2 }, req = { crits = 80 }, vis = { "lightning", 1 } },
+	{ id = "halo", name = "Halo Divin", cost = 6e8, fx = { goldenFreq = 1.3 }, req = { golden = 5 }, vis = { "halo", 1 } },
+	{ id = "bull_run", name = "Crypto Bull Run", cost = 1.2e9, fx = { bld = "bank", x = 2 }, req = { bld = { "bank", 25 } }, vis = { "bling", 1 } },
+	{ id = "disco", name = "Boule Disco", cost = 3.3e9, fx = { bld = "wizard", x = 2 }, req = { bld = { "wizard", 1 } }, vis = { "disco", 1 } },
+	{ id = "clic_quantique", name = "Clic Quantique", cost = 5e9, fx = { click = 2, clickCps = 0.03 }, req = { clicks = 10000 }, vis = { "orbiters", 1 } },
+	{ id = "ailes", name = "Ailes Néon", cost = 8e9, fx = { cps = 1.15 }, req = { baked = 5e9 }, vis = { "wings", 1 } },
+	{ id = "holo", name = "Shimmer Holographique", cost = 5.1e10, fx = { bld = "rocket", x = 2 }, req = { bld = { "rocket", 1 } }, vis = { "holo", 1 } },
+	{ id = "glitch", name = "Glitch Mode", cost = 1e11, fx = { clickCps = 0.02 }, req = { clicks = 6000 }, vis = { "glitch", 1 } },
+	{ id = "warp", name = "Vitesse Lumière", cost = 7.5e11, fx = { bld = "lab", x = 2 }, req = { bld = { "lab", 1 } }, vis = { "warp", 1 } },
+	{ id = "rayons", name = "Rayons Divins", cost = 2e12, fx = { goldenDur = 1.5 }, req = { golden = 20 }, vis = { "god_rays", 1 } },
+	{ id = "galaxie", name = "Cœur Galactique", cost = 1e13, fx = { bld = "portal", x = 2 }, req = { bld = { "portal", 1 } }, vis = { "galaxy_core", 1 } },
+	{ id = "bass", name = "Bass Boost", cost = 5e13, fx = { feverDur = 1.5, comboCap = 3 }, req = { combo = 200 }, vis = { "beat_pulse", 1 } },
+	{ id = "essaim", name = "Essaim Orbital", cost = 1.4e14, fx = { bld = "timemachine", x = 2 }, req = { bld = { "timemachine", 1 } }, vis = { "orbiters", 1 } },
+	{ id = "trou_noir", name = "Trou Noir", cost = 1.7e15, fx = { bld = "antimatter", x = 2 }, req = { bld = { "antimatter", 1 } }, vis = { "black_hole", 1 } },
+	{ id = "prisme", name = "Afterimage Prismatique", cost = 2.1e16, fx = { bld = "prism", x = 2, cps = 1.2 }, req = { bld = { "prism", 1 } }, vis = { "afterimage", 1 } },
+	{ id = "chat_direct", name = "Chat en Direct", cost = 2.6e17, fx = { bld = "streamer", x = 2 }, req = { bld = { "streamer", 1 } }, vis = { "chat", 1 } },
+}
+
+-- Skins : couleurs du cookie 3D (base / pépites / contour) + matériau
+D.skins = {
+	{ id = "classic", name = "Classique", cost = 0, base = "#d99a4e", chip = "#4a2511", rim = "#8a5220", material = "SmoothPlastic" },
+	{ id = "double_choco", name = "Double Choco", cost = 15, base = "#6b3a1f", chip = "#f5e6d0", rim = "#2e160a", material = "SmoothPlastic" },
+	{ id = "red_velvet", name = "Red Velvet", cost = 25, base = "#c02640", chip = "#fff3e6", rim = "#5e0a1a", material = "SmoothPlastic" },
+	{ id = "matcha", name = "Matcha Zen", cost = 25, base = "#8dbf5a", chip = "#f7f2e0", rim = "#466a24", material = "SmoothPlastic" },
+	{ id = "pixel", name = "Pixel 8-bit", cost = 40, base = "#e0a050", chip = "#3a1c0c", rim = "#1a0b33", material = "Brick" },
+	{ id = "lava", name = "Magma", cost = 60, base = "#2a1210", chip = "#ff6a00", rim = "#ff3d00", material = "CrackedLava" },
+	{ id = "galaxy", name = "Galaxie", cost = 80, base = "#2b1060", chip = "#ff5ef0", rim = "#b16bff", material = "Neon" },
+	{ id = "diamond", name = "Diamant", cost = 120, base = "#9ff3ff", chip = "#e0fbff", rim = "#63d6f0", material = "Glass" },
+	{ id = "hologram", name = "Hologramme", cost = 150, base = "#39f0ff", chip = "#ff4fe1", rim = "#39f0ff", material = "ForceField" },
+	{ id = "golden", name = "Cookie Doré", cost = 0, unlock = { ach = "a_golden10", text = "Attrape 10 cookies dorés" }, base = "#ffcc33", chip = "#b36b00", rim = "#8a5a00", material = "Foil" },
+	{ id = "rainbow", name = "Arc-en-ciel RGB", cost = 250, base = "#ff4fd8", chip = "#1a0b33", rim = "#ffffff", material = "Neon", rgb = true },
+	{ id = "void", name = "Néant", cost = 0, unlock = { rebirths = 3, text = "Fais 3 Rebirths" }, base = "#07030f", chip = "#b16bff", rim = "#b16bff", material = "Slate" },
+	-- Skins exclusifs aux Game Passes / produits Robux
+	{ id = "vip", name = "VIP Diamant Rose", cost = 0, unlock = { pass = "VIP", text = "Game Pass VIP" }, base = "#ff2bd6", chip = "#ffffff", rim = "#ffc93c", material = "Glass", rgb = false },
+	{ id = "robux", name = "Cookie Robux", cost = 0, unlock = { pass = "SkinPack", text = "Pack Skins Exclusifs" }, base = "#2bdc6a", chip = "#0b0620", rim = "#ffffff", material = "Foil" },
+	{ id = "plasma", name = "Plasma Overdrive", cost = 0, unlock = { pass = "SkinPack", text = "Pack Skins Exclusifs" }, base = "#1ff4ff", chip = "#ff2bd6", rim = "#8a5cff", material = "Neon", rgb = true },
+}
+
+-- Thèmes : ambiance de la Lighting + couleur du sol
+D.themes = {
+	{ id = "synthwave", name = "Synthwave", cost = 0, ambient = "#6b1a8f", floor = "#120428", fog = "#ff3d9a" },
+	{ id = "galaxy", name = "Nébuleuse", cost = 30, ambient = "#7a2cff", floor = "#070214", fog = "#2b1060" },
+	{ id = "matrix", name = "Matrice Sucrée", cost = 40, ambient = "#00ff88", floor = "#010a06", fog = "#003a1c" },
+	{ id = "candy", name = "Candy Pop", cost = 40, ambient = "#ffb3e6", floor = "#b3e5ff", fog = "#fff3b3" },
+	{ id = "inferno", name = "Inferno", cost = 60, ambient = "#ff6a00", floor = "#1a0202", fog = "#a0100a" },
+	{ id = "aurora", name = "Aurore Boréale", cost = 80, ambient = "#0bd6a0", floor = "#02101a", fog = "#5b3cff" },
+}
+
+D.rarities = {
+	common = { name = "Commun", color = "#b8c4d9", rank = 0 },
+	rare = { name = "Rare", color = "#3d9bff", rank = 1 },
+	epic = { name = "Épique", color = "#b14dff", rank = 2 },
+	legendary = { name = "Légendaire", color = "#ffb800", rank = 3 },
+	mythic = { name = "Mythique", color = "#ff2bd6", rank = 4 },
+}
+
+D.pets = {
+	{ id = "hamster", name = "Hamster Crunch", emoji = "🐹", rarity = "common", bonus = { click = 0.06 } },
+	{ id = "frog", name = "Crapaud Crêpe", emoji = "🐸", rarity = "common", bonus = { cps = 0.06 } },
+	{ id = "chick", name = "Poussin Beurre", emoji = "🐥", rarity = "common", bonus = { all = 0.04 } },
+	{ id = "cat", name = "Chat Choco", emoji = "🐱", rarity = "rare", bonus = { cps = 0.15 } },
+	{ id = "dog", name = "Doggo Biscuit", emoji = "🐶", rarity = "rare", bonus = { click = 0.15 } },
+	{ id = "fox", name = "Renard Caramel", emoji = "🦊", rarity = "rare", bonus = { all = 0.1 } },
+	{ id = "panda", name = "Panda Pépite", emoji = "🐼", rarity = "epic", bonus = { cps = 0.3 } },
+	{ id = "octopus", name = "Poulpe Glacé", emoji = "🐙", rarity = "epic", bonus = { click = 0.3, crit = 0.02 } },
+	{ id = "owl", name = "Hibou Sucré", emoji = "🦉", rarity = "epic", bonus = { all = 0.15, golden = 1.15 } },
+	{ id = "unicorn", name = "Licorne RGB", emoji = "🦄", rarity = "legendary", bonus = { all = 0.5 } },
+	{ id = "dragon", name = "Dragon Cramé", emoji = "🐉", rarity = "legendary", bonus = { click = 0.8, crit = 0.03 } },
+	{ id = "robot", name = "Robot Cuiseur", emoji = "🤖", rarity = "legendary", bonus = { cps = 0.8 } },
+	{ id = "glitchy", name = "Glitchy", emoji = "👾", rarity = "mythic", bonus = { all = 1.0, crit = 0.05 } },
+	{ id = "whale", name = "Baleine Lactée", emoji = "🐋", rarity = "mythic", bonus = { cps = 1.5, golden = 1.25 } },
+}
+
+-- odds : liste ordonnée {rareté, poids} (les probabilités sont affichées dans l'UI)
+D.eggs = {
+	{ id = "basic", name = "Œuf Basique", cost = 30, color = "#ffd79a", odds = { { "common", 70 }, { "rare", 25 }, { "epic", 5 } } },
+	{ id = "neon", name = "Œuf Néon", cost = 120, color = "#ff2bd6", odds = { { "rare", 55 }, { "epic", 35 }, { "legendary", 10 } } },
+	{ id = "cosmic", name = "Œuf Cosmique", cost = 400, color = "#7a2cff", odds = { { "epic", 50 }, { "legendary", 40 }, { "mythic", 10 } } },
+}
+
+D.golden = {
+	{ kind = "lucky", weight = 40, label = "CHANCEUX !", color = "#ffd23c" },
+	{ kind = "frenzy", weight = 30, label = "FRÉNÉSIE ×7", color = "#ff5a1f", buff = { id = "frenzy", name = "Frénésie", emoji = "🔥", dur = 30, cps = 7 } },
+	{ kind = "clickstorm", weight = 14, label = "CLIC-TEMPÊTE ×77", color = "#1ff4ff", buff = { id = "clickstorm", name = "Clic-Tempête", emoji = "🌪️", dur = 10, click = 77 } },
+	{ kind = "rgbstorm", weight = 8, label = "RGB STORM", color = "#ff2bd6" },
+	{ kind = "gems", weight = 8, label = "PLUIE DE GEMMES", color = "#3dffb0" },
+}
+
+D.bosses = {
+	{ id = "broccoli", name = "Brocoli Tyran", emoji = "🥦", color = "#3dff6a" },
+	{ id = "dentist", name = "Dentiste Suprême", emoji = "🦷", color = "#e8f4ff" },
+	{ id = "salad", name = "Salade Détox", emoji = "🥗", color = "#9dff3d" },
+	{ id = "rat", name = "Rat des Placards", emoji = "🐀", color = "#b0a0c0" },
+	{ id = "lemon", name = "Citron Acide", emoji = "🍋", color = "#fff23d" },
+	{ id = "salt", name = "Salière Maléfique", emoji = "🧂", color = "#ffffff" },
+	{ id = "ghost", name = "Fantôme du Régime", emoji = "👻", color = "#c9b6ff" },
+}
+
+D.minigames = {
+	{ id = "ninja", name = "Cookie Ninja", emoji = "🥷", baked = 50, text = "Produis 50 cookies" },
+	{ id = "flappy", name = "Flappy Cookie", emoji = "🐤", baked = 1000, text = "Produis 1 000 cookies" },
+	{ id = "rhythm", name = "Crunch Rythme", emoji = "🎵", baked = 25000, text = "Produis 25 000 cookies" },
+	{ id = "slots", name = "Casino Crumble", emoji = "🎰", baked = 250000, text = "Produis 250 000 cookies" },
+}
+
+-- Succès : check(state, api) — api fournit cpsBase, petDef, totalBuildings
+D.achievements = {
+	{ id = "a_click1", name = "Premier Crunch", gems = 1, desc = "Clique sur le cookie.", check = function(s) return s.clicks >= 1 end },
+	{ id = "a_click100", name = "Doigt Chaud", gems = 3, desc = "100 clics.", check = function(s) return s.clicks >= 100 end },
+	{ id = "a_click1k", name = "Tendinite Speedrun", gems = 5, desc = "1 000 clics.", check = function(s) return s.clicks >= 1000 end },
+	{ id = "a_click10k", name = "Clavier Mécanique Humain", gems = 10, desc = "10 000 clics.", check = function(s) return s.clicks >= 10000 end },
+	{ id = "a_click50k", name = "Ce N'est Plus un Jeu", gems = 25, desc = "50 000 clics.", check = function(s) return s.clicks >= 50000 end },
+	{ id = "a_bake100", name = "Petite Fournée", gems = 1, desc = "Produis 100 cookies.", check = function(s) return s.allTimeBaked >= 100 end },
+	{ id = "a_bake1k", name = "Boulanger du Dimanche", gems = 3, desc = "Produis 1 000 cookies.", check = function(s) return s.allTimeBaked >= 1e3 end },
+	{ id = "a_bake10k", name = "Influenceur Cookie", gems = 5, desc = "Produis 10 000 cookies.", check = function(s) return s.allTimeBaked >= 1e4 end },
+	{ id = "a_bake100k", name = "Startup Sucrée", gems = 8, desc = "Produis 100 000 cookies.", check = function(s) return s.allTimeBaked >= 1e5 end },
+	{ id = "a_bake1m", name = "MILLIONNAIRE", gems = 12, desc = "Produis 1 million de cookies.", check = function(s) return s.allTimeBaked >= 1e6 end },
+	{ id = "a_bake100m", name = "Licorne de la Tech", gems = 20, desc = "Produis 100 millions de cookies.", check = function(s) return s.allTimeBaked >= 1e8 end },
+	{ id = "a_bake1b", name = "Milliardaire Croustillant", gems = 30, desc = "Produis 1 milliard de cookies.", check = function(s) return s.allTimeBaked >= 1e9 end },
+	{ id = "a_bake1t", name = "L'Économie, C'est Moi", gems = 50, desc = "Produis 1 000 milliards de cookies.", check = function(s) return s.allTimeBaked >= 1e12 end },
+	{ id = "a_cps10", name = "Ça Tourne Tout Seul", gems = 3, desc = "10 cookies/seconde.", check = function(_, c) return c.cpsBase() >= 10 end },
+	{ id = "a_cps1k", name = "Machine de Guerre", gems = 8, desc = "1 000 cookies/seconde.", check = function(_, c) return c.cpsBase() >= 1e3 end },
+	{ id = "a_cps100k", name = "Usine à Gaz Sucré", gems = 15, desc = "100 000 cookies/seconde.", check = function(_, c) return c.cpsBase() >= 1e5 end },
+	{ id = "a_cps10m", name = "Singularité Cookie", gems = 30, desc = "10 millions de cookies/seconde.", check = function(_, c) return c.cpsBase() >= 1e7 end },
+	{ id = "a_b50", name = "Promoteur Immobilier", gems = 5, desc = "Possède 50 bâtiments.", check = function(_, c) return c.totalBuildings() >= 50 end },
+	{ id = "a_b200", name = "Ville Cookie", gems = 15, desc = "Possède 200 bâtiments.", check = function(_, c) return c.totalBuildings() >= 200 end },
+	{ id = "a_b500", name = "Métropole RGB", gems = 30, desc = "Possède 500 bâtiments.", check = function(_, c) return c.totalBuildings() >= 500 end },
+	{ id = "a_cursor50", name = "Armée de Doigts", gems = 5, desc = "Possède 50 Curseurs RGB.", check = function(s) return (s.buildings.cursor or 0) >= 50 end },
+	{ id = "a_granny50", name = "Maison de Retraite E-sport", gems = 8, desc = "Possède 50 Mamies Gameuses.", check = function(s) return (s.buildings.granny or 0) >= 50 end },
+	{ id = "a_golden1", name = "Chercheur d'Or", gems = 3, desc = "Attrape un cookie doré.", check = function(s) return s.stats.golden >= 1 end },
+	{ id = "a_golden10", name = "Pépite Hunter", gems = 8, desc = "Attrape 10 cookies dorés. Débloque le skin Cookie Doré.", check = function(s) return s.stats.golden >= 10 end },
+	{ id = "a_golden50", name = "Midas du Cookie", gems = 20, desc = "Attrape 50 cookies dorés.", check = function(s) return s.stats.golden >= 50 end },
+	{ id = "a_crit100", name = "Coup Critique !", gems = 5, desc = "100 clics critiques.", check = function(s) return s.stats.crits >= 100 end },
+	{ id = "a_combo50", name = "Combo Débloqué", gems = 3, desc = "Atteins un combo de 50.", check = function(s) return s.stats.maxCombo >= 50 end },
+	{ id = "a_combo150", name = "Ultra Combo", gems = 8, desc = "Atteins un combo de 150.", check = function(s) return s.stats.maxCombo >= 150 end },
+	{ id = "a_combo300", name = "C-C-C-COMBO BREAKER", gems = 15, desc = "Atteins un combo de 300.", check = function(s) return s.stats.maxCombo >= 300 end },
+	{ id = "a_fever1", name = "FIÈVRE RGB", gems = 5, desc = "Déclenche le mode Fièvre.", check = function(s) return s.stats.fevers >= 1 end },
+	{ id = "a_fever10", name = "Accro à l'Adrénaline", gems = 12, desc = "Déclenche 10 fois la Fièvre.", check = function(s) return s.stats.fevers >= 10 end },
+	{ id = "a_boss1", name = "Tueur de Boss", gems = 8, desc = "Bats ton premier boss.", check = function(s) return s.stats.bossKills >= 1 end },
+	{ id = "a_boss10", name = "Chasseur de Boss", gems = 20, desc = "Bats 10 boss.", check = function(s) return s.stats.bossKills >= 10 end },
+	{ id = "a_mg_all", name = "Touche-à-Tout", gems = 10, desc = "Joue aux 4 mini-jeux.", check = function(s)
+		for _, k in { "ninja", "flappy", "rhythm", "slots" } do
+			if not (s.mg[k] and s.mg[k].plays > 0) then return false end
+		end
+		return true
+	end },
+	{ id = "a_mg10", name = "Gamer Assidu", gems = 8, desc = "Termine 10 parties de mini-jeux.", check = function(s)
+		local n = 0
+		for _, m in s.mg do n += m.plays or 0 end
+		return n >= 10
+	end },
+	{ id = "a_egg1", name = "C'est un Œuf !", gems = 3, desc = "Fais éclore un œuf.", check = function(s) return s.stats.eggs >= 1 end },
+	{ id = "a_egg10", name = "Éleveur Pro", gems = 10, desc = "Fais éclore 10 œufs.", check = function(s) return s.stats.eggs >= 10 end },
+	{ id = "a_legend", name = "LÉGENDAIRE !!", gems = 15, desc = "Obtiens un pet légendaire.", check = function(s, c)
+		for _, p in s.pets do if c.petDef(p.id).rarity == "legendary" then return true end end
+		return false
+	end },
+	{ id = "a_mythic", name = "MYTHIQUE ?!", gems = 30, desc = "Obtiens un pet mythique.", check = function(s, c)
+		for _, p in s.pets do if c.petDef(p.id).rarity == "mythic" then return true end end
+		return false
+	end },
+	{ id = "a_rebirth1", name = "Renaissance", gems = 15, desc = "Fais ton premier Rebirth.", check = function(s) return s.rebirths >= 1 end },
+	{ id = "a_rebirth5", name = "Phénix Sucré", gems = 40, desc = "Fais 5 Rebirths.", check = function(s) return s.rebirths >= 5 end },
+	{ id = "a_skins4", name = "Fashion Week", gems = 8, desc = "Possède 4 skins de cookie.", check = function(s)
+		local n = 0
+		for _ in s.skinsOwned do n += 1 end
+		return n >= 4
+	end },
+	{ id = "a_quests10", name = "Quêteur", gems = 10, desc = "Termine 10 quêtes.", check = function(s) return s.stats.quests >= 10 end },
+	{ id = "a_upg20", name = "Collectionneur", gems = 10, desc = "Achète 20 améliorations.", check = function(_, c) return c.upgradeCount() >= 20 end },
+	{ id = "a_upg37", name = "FULL DRIP", gems = 40, desc = "Achète toutes les améliorations.", check = function(_, c) return c.upgradeCount() >= 37 end },
+	{ id = "a_afk", name = "Mode AFK", gems = 5, desc = "Secret : ne clique pas pendant 3 minutes.", check = function(_, c) return c.idleFor() >= 180 and c.cpsBase() > 0 end },
+}
+
+-- Quêtes : n(state, api) donne l'objectif
+D.quests = {
+	{ type = "clicks", text = "Clique {n} fois sur le cookie", gems = 6, n = function() return ({ 100, 200, 350 })[math.random(3)] end },
+	{ type = "bake", text = "Produis {n} cookies", gems = 8, fmt = true, n = function(_, c) return math.max(500, math.floor(c.cpsBase() * 150)) end },
+	{ type = "buy", text = "Achète {n} bâtiments", gems = 6, n = function() return ({ 5, 10, 15 })[math.random(3)] end },
+	{ type = "upgrade", text = "Achète {n} amélioration(s)", gems = 7, n = function() return math.random(1, 2) end },
+	{ type = "golden", text = "Attrape {n} cookie(s) doré(s)", gems = 10, n = function() return math.random(1, 2) end },
+	{ type = "combo", text = "Atteins un combo de {n}", gems = 8, n = function() return ({ 40, 70, 100 })[math.random(3)] end },
+	{ type = "crit", text = "Fais {n} clics critiques", gems = 7, n = function() return ({ 5, 10, 15 })[math.random(3)] end },
+	{ type = "minigame", text = "Termine {n} partie(s) de mini-jeu", gems = 9, needs = "minigame", n = function() return math.random(1, 2) end },
+	{ type = "boss", text = "Bats {n} boss", gems = 14, needs = "boss", n = function() return 1 end },
+	{ type = "fever", text = "Déclenche {n} Fièvre(s) RGB", gems = 9, n = function() return 1 end },
+}
+
+D.news = {
+	"BREAKING : une mamie gameuse atteint 400 APM sur un four à cookies.",
+	"Un cookie ratio un brownie en direct. La toile s'enflamme.",
+	"Les experts confirment : ton cookie est littéralement le main character.",
+	"Le lait annonce une collab exclusive avec ton cookie. Hype totale.",
+	"« C'est pas du sucre, c'est de l'aura » déclare le cookie.",
+	"Les dentistes du monde entier demandent une pause. Demande refusée.",
+	"Un brocoli a tenté d'infiltrer la boulangerie. Il a été cancel.",
+	"Record mondial : 1 million de clics sans toucher d'herbe.",
+	"Alerte météo : averses de pépites attendues cet après-midi.",
+	"Étude : le RGB augmente la productivité de 300 %. Source : tkt.",
+	"La Banque Crypto lance le $CRUNCH. Ça pump.",
+	"« No cap, ce cookie est bussin » — un critique gastronomique.",
+	"Les curseurs réclament des congés payés. Refusés.",
+	"Le cookie doré a encore ghosté trois joueurs aujourd'hui.",
+	"Mode Fièvre détecté dans ton serveur. Restez hydratés.",
+	"Le Stream 24/7 bat un record : 3 millions de « W » dans le chat.",
+	"Ta mamie gameuse vient de te carry en ranked. Gênant.",
+}
+
+-- Helpers
+local function index(list)
+	local t = {}
+	for _, v in list do t[v.id] = v end
+	return t
+end
+D.BLD = index(D.buildings)
+D.UPG = index(D.upgrades)
+D.SKIN = index(D.skins)
+D.THEME = index(D.themes)
+D.PET = index(D.pets)
+D.EGG = index(D.eggs)
+D.ACH = index(D.achievements)
+D.MG = index(D.minigames)
+
+-- Formatage des nombres (courts, style simulateur Roblox)
+local SUF = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "UDc", "DDc", "TDc" }
+function D.fmt(n)
+	if n ~= n then return "0" end
+	if n < 1000 then
+		if n < 10 and n % 1 ~= 0 then return string.format("%.1f", n) end
+		return tostring(math.floor(n))
+	end
+	local e = math.floor(math.log10(n) / 3)
+	if e >= #SUF then return string.format("%.2e", n) end
+	local v = n / 10 ^ (e * 3)
+	local s = v >= 100 and string.format("%.0f", v) or v >= 10 and string.format("%.1f", v) or string.format("%.2f", v)
+	return s .. SUF[e + 1]
+end
+
+function D.color(hex)
+	return Color3.fromHex(hex)
+end
+
+return D
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="5">
+        <Properties>
+          <string name="Name">Monetization</string>
+          <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — options payantes (Robux)
+--
+-- ⚠️ À CONFIGURER : crée chaque Game Pass et chaque Developer Product dans le
+-- Creator Hub (create.roblox.com → ton expérience → Monétisation), puis colle
+-- son ID numérique ci-dessous à la place du 0. Tant qu'un ID vaut 0, le bouton
+-- s'affiche mais indique « Bientôt dispo ».
+local M = {}
+
+-- Game Passes : achat unique, permanent.
+M.passes = {
+	{ key = "DoubleCookies", id = 0, price = 199, emoji = "✖️2", name = "Cookies ×2", desc = "Double TOUTE ta production et tes clics. Pour toujours." },
+	{ key = "AutoClicker", id = 0, price = 149, emoji = "🤖", name = "Auto-Clicker", desc = "Clique 6 fois par seconde tout seul (activable/désactivable)." },
+	{ key = "VIP", id = 0, price = 299, emoji = "👑", name = "VIP", desc = "+2 emplacements de pets, gemmes ×1,5, skin VIP exclusif, tag VIP dans le chat." },
+	{ key = "LuckyEggs", id = 0, price = 249, emoji = "🍀", name = "Œufs Chanceux", desc = "Chaque œuf a 30 % de chance d'être relancé en gardant le meilleur pet." },
+	{ key = "GoldenMagnet", id = 0, price = 129, emoji = "🧲", name = "Aimant Doré", desc = "Cookies dorés 2× plus fréquents et effets 50 % plus longs." },
+	{ key = "SkinPack", id = 0, price = 99, emoji = "🎨", name = "Pack Skins Exclusifs", desc = "Débloque les skins Cookie Robux et Plasma Overdrive." },
+}
+
+-- Developer Products : achats consommables, rachetables à volonté.
+-- kind : gems (n gemmes) | cookies (n minutes de production, min. garanti) | boost (×mult pendant dur s) | fever
+M.products = {
+	{ key = "Gems100", id = 0, price = 49, emoji = "💎", name = "100 Gemmes", kind = "gems", n = 100 },
+	{ key = "Gems550", id = 0, price = 199, emoji = "💎", name = "550 Gemmes", kind = "gems", n = 550, tag = "+10 % BONUS" },
+	{ key = "Gems1500", id = 0, price = 449, emoji = "💎", name = "1 500 Gemmes", kind = "gems", n = 1500, tag = "MEILLEURE OFFRE" },
+	{ key = "Cookies1h", id = 0, price = 39, emoji = "🍪", name = "Sac de Cookies", kind = "cookies", n = 60, desc = "1 h de production instantanée" },
+	{ key = "Cookies12h", id = 0, price = 149, emoji = "🍪", name = "Camion de Cookies", kind = "cookies", n = 720, desc = "12 h de production instantanée" },
+	{ key = "Boost3x", id = 0, price = 79, emoji = "⚡", name = "Boost ×3 (15 min)", kind = "boost", mult = 3, dur = 900 },
+	{ key = "Fever", id = 0, price = 25, emoji = "🌈", name = "Fièvre RGB instantanée", kind = "fever" },
+}
+
+M.passByKey = {}
+M.passById = {}
+for _, p in M.passes do
+	M.passByKey[p.key] = p
+	if p.id ~= 0 then M.passById[p.id] = p end
+end
+M.productByKey = {}
+M.productById = {}
+for _, p in M.products do
+	M.productByKey[p.key] = p
+	if p.id ~= 0 then M.productById[p.id] = p end
+end
+
+return M
+]]></string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="ServerScriptService" referent="6">
+    <Properties>
+      <string name="Name">ServerScriptService</string>
+    </Properties>
+    <Item class="Folder" referent="7">
+      <Properties>
+        <string name="Name">CookieServer</string>
+      </Properties>
+      <Item class="Script" referent="8">
+        <Properties>
+          <string name="Name">Main</string>
+          <token name="RunContext">0</token>
+          <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — serveur (autorité sur l'économie, les sauvegardes et les achats Robux)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local DataStoreService = game:GetService("DataStoreService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local D = require(Shared.GameData)
+local E = require(Shared.Econ)
+local Shop = require(Shared.Monetization)
+local World = require(script.Parent.World)
+
+--------------------------------------------------------------------------- remotes
+local Remotes = Instance.new("Folder")
+Remotes.Name = "Remotes"
+local function remote(class, name)
+	local r = Instance.new(class)
+	r.Name = name
+	r.Parent = Remotes
+	return r
+end
+local ClickEv = remote("RemoteEvent", "Click") -- client → serveur
+local ActionFn = remote("RemoteFunction", "Action") -- client → serveur (réponse)
+local SyncEv = remote("RemoteEvent", "Sync") -- serveur → client (état)
+local FxEv = remote("RemoteEvent", "Fx") -- serveur → client (événements ponctuels)
+Remotes.Parent = ReplicatedStorage
+
+--------------------------------------------------------------------------- datastore
+local STORE_NAME = "CookieOverdrive_v1"
+local store = nil
+local okStore = pcall(function() store = DataStoreService:GetDataStore(STORE_NAME) end)
+if not okStore then store = nil end
+local board = nil
+pcall(function() board = DataStoreService:GetOrderedDataStore("CookieOverdrive_AllTime_v1") end)
+
+local sessions = {} -- [Player] = session
+
+local function now() return os.clock() end
+local function rand(a, b) return a + math.random() * (b - a) end
+
+local function deepCopy(t)
+	if type(t) ~= "table" then return t end
+	local o = {}
+	for k, v in t do o[k] = deepCopy(v) end
+	return o
+end
+
+local function loadData(player)
+	if not store then return E.defaultState(), false end
+	local key = "u_" .. player.UserId
+	for attempt = 1, 4 do
+		local ok, data = pcall(function() return store:GetAsync(key) end)
+		if ok then
+			if type(data) == "table" then return E.merge(E.defaultState(), data), true end
+			return E.defaultState(), false
+		end
+		task.wait(attempt)
+	end
+	return nil, false -- échec : on ne sauvegardera pas pour ne rien écraser
+end
+
+local function saveData(player)
+	local ses = sessions[player]
+	if not ses or not store or ses.noSave then return false end
+	ses.s.lastSave = os.time()
+	local data = deepCopy(ses.s)
+	local key = "u_" .. player.UserId
+	for attempt = 1, 3 do
+		local ok = pcall(function()
+			store:UpdateAsync(key, function() return data end)
+		end)
+		if ok then
+			if board then
+				local v = math.floor(math.log10(ses.s.allTimeBaked + 1) * 1e6)
+				pcall(function() board:SetAsync(key, v) end)
+			end
+			return true
+		end
+		task.wait(attempt)
+	end
+	return false
+end
+
+--------------------------------------------------------------------------- helpers de session
+local function fx(player, kind, payload)
+	FxEv:FireClient(player, kind, payload)
+end
+local function toast(player, text, color)
+	fx(player, "toast", { text = text, color = color })
+end
+
+local function recalc(ses)
+	ses.M = E.recalc(ses.s, ses.passes)
+	ses.dirty = true
+end
+
+
+local function questProgress(ses, qtype, amount, isMax)
+	for _, q in ses.s.quests do
+		if q.type == qtype and not q.done then
+			q.progress = isMax and math.max(q.progress, amount) or q.progress + amount
+			if q.progress >= q.target then
+				q.progress = q.target
+				q.done = true
+				ses.dirty = true
+				toast(ses.player, "Quête terminée ! Réclame ta récompense 🎁", "#b6ff3b")
+			end
+		end
+	end
+end
+
+local function earn(ses, n)
+	if not (n > 0) or n ~= n or n == math.huge then return end
+	local s = ses.s
+	s.cookies += n
+	s.totalBaked += n
+	s.allTimeBaked += n
+	questProgress(ses, "bake", n)
+end
+
+local function addGems(ses, n, bonus)
+	n = math.floor(n)
+	if bonus and ses.passes.VIP then n = math.floor(n * 1.5) end
+	ses.s.gems += n
+	ses.dirty = true
+	return n
+end
+
+local function addBuff(ses, b)
+	local t = now()
+	local dur = b.dur * ses.M.goldenDur
+	for _, ex in ses.buffs do
+		if ex.id == b.id then
+			ex.untilT = t + dur
+			ex.dur = dur
+			return
+		end
+	end
+	table.insert(ses.buffs, { id = b.id, name = b.name, emoji = b.emoji, cps = b.cps, click = b.click, dur = dur, untilT = t + dur })
+end
+
+local function startFever(ses)
+	local t = now()
+	ses.fever.active = true
+	ses.fever.untilT = t + ses.M.feverDur
+	ses.combo.heat = 1
+	ses.s.stats.fevers += 1
+	questProgress(ses, "fever", 1)
+	fx(ses.player, "fever", { on = true })
+end
+
+local function endFever(ses)
+	ses.fever.active = false
+	ses.fever.cooldownUntil = now() + 20
+	ses.combo.count = 0
+	ses.combo.mult = 1
+	ses.combo.heat = 0
+	fx(ses.player, "fever", { on = false })
+end
+
+local function cpsNow(ses) return E.cpsNow(ses.s, ses.M, ses.buffs, ses.fever.active) end
+local function clickValue(ses) return E.clickValue(ses.s, ses.M, ses.buffs, ses.fever.active) end
+
+--------------------------------------------------------------------------- quêtes
+local QT = {}
+for _, q in D.quests do QT[q.type] = q end
+
+local function questAllowed(ses, q)
+	if q.needs == "minigame" then return E.minigameUnlocked(ses.s, "ninja") end
+	if q.needs == "boss" then return ses.s.allTimeBaked >= E.BOSS_UNLOCK end
+	return true
+end
+
+local function newQuest(ses, exclude)
+	local pool = {}
+	for _, q in D.quests do
+		if questAllowed(ses, q) and not table.find(exclude, q.type) then table.insert(pool, q) end
+	end
+	if #pool == 0 then pool = D.quests end
+	local q = pool[math.random(#pool)]
+	local target = math.max(1, math.floor(q.n(ses.s, ses.api) + 0.5))
+	local s = ses.s
+	local id = s.questUid
+	s.questUid += 1
+	return { id = id, type = q.type, target = target, progress = 0, gems = q.gems, done = false }
+end
+
+local function questTypes(ses)
+	local t = {}
+	for _, q in ses.s.quests do table.insert(t, q.type) end
+	return t
+end
+
+local function ensureQuests(ses)
+	local keep = {}
+	for _, q in ses.s.quests do if QT[q.type] then table.insert(keep, q) end end
+	ses.s.quests = keep
+	while #ses.s.quests < 3 do table.insert(ses.s.quests, newQuest(ses, questTypes(ses))) end
+end
+
+--------------------------------------------------------------------------- succès
+local function checkAchievements(ses)
+	local s, any = ses.s, false
+	for _, a in D.achievements do
+		if not s.achievements[a.id] then
+			local ok, res = pcall(a.check, s, ses.api)
+			if ok and res then
+				s.achievements[a.id] = os.time()
+				addGems(ses, a.gems, true)
+				any = true
+				fx(ses.player, "achievement", { name = a.name, desc = a.desc, gems = a.gems })
+			end
+		end
+	end
+	for _, sk in D.skins do
+		if sk.unlock and not s.skinsOwned[sk.id] and E.skinUnlockMet(s, sk, ses.passes) then
+			s.skinsOwned[sk.id] = true
+			toast(ses.player, "Skin débloqué : " .. sk.name .. " !", "#ffc93c")
+			any = true
+		end
+	end
+	if any then recalc(ses) end
+end
+
+--------------------------------------------------------------------------- cookies dorés & boss
+local goldenUid = 0
+local function spawnGolden(ses)
+	local x, y
+	repeat
+		x, y = rand(0.08, 0.92), rand(0.2, 0.85)
+	until math.abs(x - 0.5) > 0.2 or math.abs(y - 0.5) > 0.25
+	goldenUid += 1
+	table.insert(ses.golden, { id = goldenUid, x = x, y = y, born = now(), life = 13 })
+end
+
+local function pickWeighted(list, weightOf)
+	local tot = 0
+	for _, e in list do tot += weightOf(e) end
+	local r = math.random() * tot
+	for _, e in list do
+		r -= weightOf(e)
+		if r <= 0 then return e end
+	end
+	return list[1]
+end
+
+local function clickGolden(ses, id)
+	local g
+	for i, x in ses.golden do
+		if x.id == id then
+			g = x
+			table.remove(ses.golden, i)
+			break
+		end
+	end
+	if not g then return nil end
+	ses.lastInteract = now()
+	local s = ses.s
+	local eff = pickWeighted(D.golden, function(e) return e.weight end)
+	local label = eff.label
+	if eff.kind == "lucky" then
+		local gain = math.max(13, math.min(s.cookies * 0.15, cpsNow(ses) * 900) + clickValue(ses) * 30) + 13
+		earn(ses, gain)
+		label = "CHANCEUX ! +" .. D.fmt(gain)
+	elseif eff.buff then
+		addBuff(ses, eff.buff)
+	elseif eff.kind == "rgbstorm" then
+		if not ses.fever.active then
+			ses.fever.cooldownUntil = 0
+			startFever(ses)
+		else
+			ses.fever.untilT += 5
+		end
+	elseif eff.kind == "gems" then
+		local n = addGems(ses, math.random(3, 8), true)
+		label = "PLUIE DE GEMMES +" .. n
+	end
+	s.stats.golden += 1
+	questProgress(ses, "golden", 1)
+	ses.dirty = true
+	return { label = label, color = eff.color }
+end
+
+local function spawnBoss(ses)
+	local d = D.bosses[math.random(#D.bosses)]
+	local k = ses.s.stats.bossKills
+	local hp = math.floor(80 * (1 + 0.35 * math.min(k, 30)) + 0.5)
+	local t = now()
+	ses.boss = { id = d.id, name = d.name, emoji = d.emoji, color = d.color, hp = hp, maxHp = hp, untilT = t + 30 }
+	fx(ses.player, "boss", { state = "spawn", name = d.name, emoji = d.emoji })
+end
+
+local function defeatBoss(ses)
+	local b = ses.boss
+	if not b then return end
+	ses.boss = nil
+	local s = ses.s
+	s.stats.bossKills += 1
+	local cookies = math.max(500, cpsNow(ses) * 300 + clickValue(ses) * 100)
+	earn(ses, cookies)
+	local gems = addGems(ses, math.min(20, 8 + s.stats.bossKills), true)
+	addBuff(ses, { id = "victory", name = "Victoire", emoji = "🏆", dur = 60, cps = 2 })
+	questProgress(ses, "boss", 1)
+	ses.nextBoss = now() + rand(240, 420)
+	fx(ses.player, "boss", { state = "defeat", name = b.name })
+	toast(ses.player, b.name .. " vaincu ! +" .. D.fmt(cookies) .. " cookies et +" .. gems .. " 💎", "#ffc93c")
+end
+
+local function escapeBoss(ses)
+	local b = ses.boss
+	if not b then return end
+	ses.boss = nil
+	local stolen = math.floor(ses.s.cookies * 0.02)
+	ses.s.cookies -= stolen
+	ses.nextBoss = now() + rand(240, 420)
+	fx(ses.player, "boss", { state = "escape", name = b.name })
+	toast(ses.player, b.name .. " s'est enfui" .. (stolen > 0 and " avec " .. D.fmt(stolen) .. " cookies…" or "…"), "#ff4d6d")
+end
+
+--------------------------------------------------------------------------- clic
+local function doClick(ses, auto)
+	local s, t = ses.s, now()
+	if not auto then
+		ses.lastClick = t
+		ses.lastInteract = t
+	end
+	local c = ses.combo
+	c.count += 1
+	c.mult = E.comboMultFor(ses.M, c.count)
+	if c.count > s.stats.maxCombo then s.stats.maxCombo = math.floor(c.count) end
+	questProgress(ses, "combo", c.count, true)
+	local crit = math.random() < ses.M.crit
+	local amount = clickValue(ses) * c.mult * (crit and ses.M.critX or 1)
+	s.clicks += 1
+	earn(ses, amount)
+	questProgress(ses, "clicks", 1)
+	if crit then
+		s.stats.crits += 1
+		questProgress(ses, "crit", 1)
+	end
+	if not ses.fever.active then
+		local cool = t < ses.fever.cooldownUntil
+		c.heat = math.min(cool and 0.95 or 1, c.count / E.FEVER_AT)
+		if c.count >= E.FEVER_AT and not cool then startFever(ses) end
+	else
+		c.heat = 1
+	end
+	if ses.boss then
+		local dmg = math.floor(c.mult * (crit and 5 or 1) * (1 + (ses.M.petClick - 1) * 0.25) * 10 + 0.5) / 10
+		ses.boss.hp = math.max(0, ses.boss.hp - dmg)
+		if ses.boss.hp <= 0 then defeatBoss(ses) end
+	end
+	return amount, crit
+end
+
+ClickEv.OnServerEvent:Connect(function(player)
+	local ses = sessions[player]
+	if not ses then return end
+	-- anti-autoclick externe : 20 clics/s max
+	local t = now()
+	ses.bucket = math.min(20, ses.bucket + (t - ses.bucketT) * 20)
+	ses.bucketT = t
+	if ses.bucket < 1 then return end
+	ses.bucket -= 1
+	local amount, crit = doClick(ses, false)
+	fx(player, "click", { a = amount, c = crit, n = math.floor(ses.combo.count) })
+end)
+
+--------------------------------------------------------------------------- pets
+local function autoBestEquip(ses, inst)
+	local s = ses.s
+	local worst
+	for _, uid in s.equipped do
+		for _, p in s.pets do
+			if p.uid == uid and (not worst or D.rarities[D.PET[p.id].rarity].rank < D.rarities[D.PET[worst.id].rarity].rank) then worst = p end
+		end
+	end
+	if worst and D.rarities[D.PET[inst.id].rarity].rank > D.rarities[D.PET[worst.id].rarity].rank then
+		s.equipped[table.find(s.equipped, worst.uid)] = inst.uid
+	end
+end
+
+local function rollRarity(egg)
+	return pickWeighted(egg.odds, function(o) return o[2] end)[1]
+end
+
+local function hatch(ses, eggId)
+	local egg, s = D.EGG[eggId], ses.s
+	if not egg then return nil end
+	if s.gems < egg.cost then return { err = "Pas assez de gemmes 💎" } end
+	s.gems -= egg.cost
+	local rarity = rollRarity(egg)
+	local lucky = false
+	if ses.passes.LuckyEggs and math.random() < 0.3 then
+		local r2 = rollRarity(egg)
+		if D.rarities[r2].rank > D.rarities[rarity].rank then rarity = r2; lucky = true end
+	end
+	local pool = {}
+	for _, p in D.pets do if p.rarity == rarity then table.insert(pool, p) end end
+	local def = pool[math.random(#pool)]
+	local inst, isNew
+	for _, p in s.pets do if p.id == def.id then inst = p end end
+	if inst then
+		inst.lvl = math.min(10, inst.lvl + 1)
+		isNew = false
+	else
+		inst = { uid = s.petUid, id = def.id, lvl = 1 }
+		s.petUid += 1
+		table.insert(s.pets, inst)
+		isNew = true
+		if #s.equipped < E.petSlots(ses.passes) then table.insert(s.equipped, inst.uid) else autoBestEquip(ses, inst) end
+	end
+	s.stats.eggs += 1
+	recalc(ses)
+	return { ok = true, id = def.id, lvl = inst.lvl, isNew = isNew, rarity = rarity, lucky = lucky }
+end
+
+--------------------------------------------------------------------------- mini-jeux
+-- Récompense calculée côté serveur à partir du score, bornée par la durée réelle.
+local MG_RULES = {
+	ninja = { minDur = 25, maxRate = 6, cookies = 0.06, gemsPer = 25 },
+	flappy = { minDur = 3, maxRate = 0.9, cookies = 0.35, gemsPer = 10 },
+	rhythm = { minDur = 25, maxRate = 50, cookies = 0.002, gemsPer = 150 },
+}
+
+local function mgEnd(ses, id, score)
+	local rule = MG_RULES[id]
+	local st = ses.mgStart
+	ses.mgStart = nil
+	if not rule or not st or st.id ~= id or type(score) ~= "number" or score ~= score then return nil end
+	local elapsed = now() - st.t
+	if elapsed < rule.minDur and id ~= "flappy" then return nil end
+	score = math.clamp(math.floor(score), 0, math.floor(elapsed * rule.maxRate) + 1)
+	local s = ses.s
+	local rec = s.mg[id] or { best = 0, plays = 0 }
+	s.mg[id] = rec
+	local isBest = score > rec.best
+	if isBest then rec.best = score end
+	rec.plays += 1
+	local cookies = E.unit(s, ses.M) * score * rule.cookies
+	earn(ses, cookies)
+	local gems = addGems(ses, math.floor(score / rule.gemsPer), true)
+	questProgress(ses, "minigame", 1)
+	ses.dirty = true
+	return { cookies = cookies, gems = gems, best = rec.best, isBest = isBest, score = score }
+end
+
+-- Machine à sous : entièrement côté serveur (mise en cookies, jamais en Robux)
+local REELS = { "🍪", "🍪", "🍪", "🍫", "🍫", "🥛", "🥛", "💎", "⭐", "7️⃣" }
+local PAY = { ["🍪"] = 3, ["🍫"] = 6, ["🥛"] = 10, ["💎"] = 25, ["⭐"] = 50, ["7️⃣"] = 150 }
+local function spin(ses, betIdx)
+	local s = ses.s
+	local mults = { 1, 5, 25 }
+	local m = mults[betIdx]
+	if not m then return nil end
+	local bet = math.floor(E.unit(s, ses.M) * 0.1 * m)
+	if s.cookies < bet then return { err = "Pas assez de cookies pour miser " .. D.fmt(bet) } end
+	s.cookies -= bet
+	local r = { REELS[math.random(#REELS)], REELS[math.random(#REELS)], REELS[math.random(#REELS)] }
+	local win, gems = 0, 0
+	if r[1] == r[2] and r[2] == r[3] then
+		win = bet * PAY[r[1]]
+		if r[1] == "💎" then gems = 5 * m end
+		if r[1] == "7️⃣" then gems = 20 * m end
+	elseif r[1] == r[2] or r[2] == r[3] or r[1] == r[3] then
+		win = bet * 1.5
+	end
+	if win > 0 then earn(ses, win) end
+	if gems > 0 then gems = addGems(ses, gems, true) end
+	local rec = s.mg.slots or { best = 0, plays = 0 }
+	s.mg.slots = rec
+	rec.plays += 1
+	if win > rec.best then rec.best = win end
+	questProgress(ses, "minigame", 1)
+	ses.dirty = true
+	return { reels = r, bet = bet, win = win, gems = gems }
+end
+
+--------------------------------------------------------------------------- actions client
+local Actions = {}
+
+function Actions.buyBuilding(ses, id, qty)
+	local s = ses.s
+	if not D.BLD[id] then return false end
+	local n = qty == "max" and E.bMax(s, id) or math.clamp(math.floor(tonumber(qty) or 1), 1, 1000)
+	if n <= 0 then return false end
+	local cost = E.bCost(id, n, s.buildings[id] or 0)
+	if cost > s.cookies then return false end
+	s.cookies -= cost
+	s.buildings[id] = (s.buildings[id] or 0) + n
+	questProgress(ses, "buy", n)
+	ses.dirty = true
+	return true
+end
+
+function Actions.buyUpgrade(ses, id)
+	local u, s = D.UPG[id], ses.s
+	if not u or s.upgrades[id] or not E.reqMet(s, u) or u.cost > s.cookies then return false end
+	s.cookies -= u.cost
+	s.upgrades[id] = true
+	recalc(ses)
+	questProgress(ses, "upgrade", 1)
+	return true
+end
+
+function Actions.skin(ses, id)
+	local sk, s = D.SKIN[id], ses.s
+	if not sk then return false end
+	if not s.skinsOwned[id] then
+		if sk.unlock then
+			if not E.skinUnlockMet(s, sk, ses.passes) then return false end
+		elseif s.gems < sk.cost then
+			return false
+		else
+			s.gems -= sk.cost
+		end
+		s.skinsOwned[id] = true
+	end
+	s.skin = id
+	ses.dirty = true
+	return true
+end
+
+function Actions.theme(ses, id)
+	local th, s = D.THEME[id], ses.s
+	if not th then return false end
+	if not s.themesOwned[id] then
+		if s.gems < th.cost then return false end
+		s.gems -= th.cost
+		s.themesOwned[id] = true
+	end
+	s.theme = id
+	ses.dirty = true
+	return true
+end
+
+function Actions.hatch(ses, eggId) return hatch(ses, eggId) end
+
+function Actions.equip(ses, uid)
+	local s = ses.s
+	local i = table.find(s.equipped, uid)
+	if i then
+		table.remove(s.equipped, i)
+	else
+		local owned = false
+		for _, p in s.pets do if p.uid == uid then owned = true end end
+		if not owned then return false end
+		if #s.equipped >= E.petSlots(ses.passes) then return { err = E.petSlots(ses.passes) .. " pets max équipés." } end
+		table.insert(s.equipped, uid)
+	end
+	recalc(ses)
+	return true
+end
+
+function Actions.claimQuest(ses, id)
+	local s = ses.s
+	for i, q in s.quests do
+		if q.id == id and q.done then
+			local g = addGems(ses, q.gems, true)
+			s.stats.quests += 1
+			s.quests[i] = newQuest(ses, questTypes(ses))
+			return g
+		end
+	end
+	return false
+end
+
+function Actions.rerollQuest(ses, id)
+	local s = ses.s
+	if s.gems < 3 then return false end
+	for i, q in s.quests do
+		if q.id == id then
+			s.gems -= 3
+			s.quests[i] = newQuest(ses, questTypes(ses))
+			ses.dirty = true
+			return true
+		end
+	end
+	return false
+end
+
+function Actions.gift(ses)
+	local s = ses.s
+	if os.time() < (s.nextGift or 0) then return false end
+	s.nextGift = os.time() + E.GIFT_EVERY
+	local r = math.random()
+	local label
+	if r < 0.45 then
+		label = "+" .. addGems(ses, math.random(4, 10), true) .. " gemmes 💎"
+	elseif r < 0.8 then
+		local n = E.unit(s, ses.M) * rand(2, 5)
+		earn(ses, n)
+		label = "+" .. D.fmt(n) .. " cookies 🍪"
+	else
+		addBuff(ses, { id = "gift", name = "Cadeau", emoji = "🎁", dur = 45, cps = 3 })
+		label = "Production ×3 pendant 45 s 🎁"
+	end
+	ses.dirty = true
+	return label
+end
+
+function Actions.rebirth(ses)
+	local s = ses.s
+	local gain = E.rebirthGain(s)
+	if gain < 1 then return false end
+	s.stars += gain
+	s.rebirths += 1
+	addGems(ses, 10 * gain, true)
+	s.cookies, s.totalBaked = 0, 0
+	for _, b in D.buildings do s.buildings[b.id] = 0 end
+	s.upgrades = {}
+	ses.buffs, ses.golden, ses.boss = {}, {}, nil
+	ses.combo = { count = 0, mult = 1, heat = 0 }
+	if ses.fever.active then endFever(ses) end
+	recalc(ses)
+	saveData(ses.player)
+	return gain
+end
+
+function Actions.golden(ses, id) return clickGolden(ses, id) end
+
+function Actions.mgStart(ses, id)
+	if not MG_RULES[id] or not E.minigameUnlocked(ses.s, id) then return false end
+	ses.mgStart = { id = id, t = now() }
+	ses.inMinigame = true
+	return true
+end
+
+function Actions.mgEnd(ses, id, score)
+	ses.inMinigame = false
+	local res = mgEnd(ses, id, score)
+	-- ne pas punir les joueurs partis en mini-jeu
+	local t = now()
+	if ses.nextGolden < t + 8 then ses.nextGolden = t + rand(8, 20) end
+	if ses.boss then ses.boss.untilT = math.max(ses.boss.untilT, t + 12) end
+	return res
+end
+
+function Actions.mgClose(ses)
+	ses.inMinigame = false
+	ses.mgStart = nil
+	return true
+end
+
+function Actions.spin(ses, betIdx)
+	if not E.minigameUnlocked(ses.s, "slots") then return nil end
+	return spin(ses, betIdx)
+end
+
+function Actions.autoClick(ses, on)
+	ses.s.autoClick = on == true
+	ses.dirty = true
+	return ses.s.autoClick
+end
+
+-- Achats Robux : le client demande, le serveur ouvre la fenêtre officielle Roblox
+function Actions.buyPass(ses, key)
+	local p = Shop.passByKey[key]
+	if not p or p.id == 0 or ses.passes[key] then return false end
+	MarketplaceService:PromptGamePassPurchase(ses.player, p.id)
+	return true
+end
+
+function Actions.buyProduct(ses, key)
+	local p = Shop.productByKey[key]
+	if not p or p.id == 0 then return false end
+	MarketplaceService:PromptProductPurchase(ses.player, p.id)
+	return true
+end
+
+ActionFn.OnServerInvoke = function(player, name, a, b)
+	local ses = sessions[player]
+	local f = Actions[name]
+	if not ses or not f or type(name) ~= "string" then return nil end
+	local ok, res = pcall(f, ses, a, b)
+	if not ok then
+		warn("[Cookie] action " .. name .. " : " .. tostring(res))
+		return nil
+	end
+	ses.dirty = true
+	return res
+end
+
+--------------------------------------------------------------------------- Game Passes & Developer Products
+local function applyPass(ses, key)
+	if ses.passes[key] then return end
+	ses.passes[key] = true
+	recalc(ses)
+	checkAchievements(ses)
+	if key == "VIP" then ses.player:SetAttribute("VIP", true) end
+end
+
+local function refreshPasses(ses)
+	for _, p in Shop.passes do
+		if p.id ~= 0 then
+			local ok, owns = pcall(function()
+				return MarketplaceService:UserOwnsGamePassAsync(ses.player.UserId, p.id)
+			end)
+			if ok and owns then applyPass(ses, p.key) end
+		end
+	end
+end
+
+MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
+	local ses = sessions[player]
+	local p = Shop.passById[passId]
+	if ses and p and purchased then
+		applyPass(ses, p.key)
+		ses.s.stats.robuxSpent += p.price
+		fx(player, "purchase", { name = p.name, emoji = p.emoji })
+		saveData(player)
+	end
+end)
+
+local function grantProduct(ses, p)
+	local s = ses.s
+	if p.kind == "gems" then
+		addGems(ses, p.n, false)
+	elseif p.kind == "cookies" then
+		earn(ses, math.max(E.unit(s, ses.M) * 10, E.cpsBase(s, ses.M) * 60 * p.n))
+	elseif p.kind == "boost" then
+		local base = math.max(os.time(), s.boostUntil or 0)
+		s.boostUntil = base + p.dur
+		s.boostMult = p.mult
+	elseif p.kind == "fever" then
+		ses.fever.cooldownUntil = 0
+		if ses.fever.active then ses.fever.untilT += 8 else startFever(ses) end
+	end
+	s.stats.robuxSpent += p.price
+	ses.dirty = true
+end
+
+MarketplaceService.ProcessReceipt = function(info)
+	local player = Players:GetPlayerByUserId(info.PlayerId)
+	local ses = player and sessions[player]
+	if not ses then return Enum.ProductPurchaseDecision.NotProcessedYet end
+	local s = ses.s
+	if s.receipts[info.PurchaseId] then return Enum.ProductPurchaseDecision.PurchaseGranted end
+	local p = Shop.productById[info.ProductId]
+	if not p then return Enum.ProductPurchaseDecision.NotProcessedYet end
+	grantProduct(ses, p)
+	s.receipts[info.PurchaseId] = os.time()
+	-- on garde au plus 60 reçus
+	local list = {}
+	for k, v in s.receipts do table.insert(list, { k, v }) end
+	if #list > 60 then
+		table.sort(list, function(x, y) return x[2] < y[2] end)
+		for i = 1, #list - 60 do s.receipts[list[i][1]] = nil end
+	end
+	if not saveData(player) and store then
+		-- sauvegarde impossible : Roblox renverra le reçu plus tard
+		s.receipts[info.PurchaseId] = nil
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	fx(player, "purchase", { name = p.name, emoji = p.emoji })
+	return Enum.ProductPurchaseDecision.PurchaseGranted
+end
+
+--------------------------------------------------------------------------- joueurs
+local function makeLeaderstats(player)
+	local ls = Instance.new("Folder")
+	ls.Name = "leaderstats"
+	local c = Instance.new("StringValue")
+	c.Name = "🍪 Cookies"
+	c.Parent = ls
+	local r = Instance.new("IntValue")
+	r.Name = "⭐ Rebirths"
+	r.Parent = ls
+	ls.Parent = player
+	return c, r
+end
+
+local function onJoin(player)
+	local s, loaded = loadData(player)
+	local noSave = false
+	if not s then
+		s = E.defaultState()
+		noSave = true
+		task.defer(function()
+			toast(player, "⚠️ Sauvegarde indisponible, ta progression de cette session ne sera pas enregistrée.", "#ff4d6d")
+		end)
+	end
+	local t = now()
+	local ses = {
+		player = player, s = s, passes = {}, noSave = noSave,
+		combo = { count = 0, mult = 1, heat = 0 },
+		fever = { active = false, untilT = 0, cooldownUntil = 0 },
+		buffs = {}, golden = {}, boss = nil,
+		nextGolden = t + rand(20, 40), nextBoss = nil,
+		lastClick = -10, lastInteract = t,
+		bucket = 20, bucketT = t, autoAcc = 0,
+		secAcc = 0, saveAcc = 0, dirty = true, fullAcc = 0,
+	}
+	ses.api = {
+		cpsBase = function() return E.cpsBase(ses.s, ses.M) end,
+		petDef = E.petDef,
+		idleFor = function() return now() - ses.lastInteract end,
+		totalBuildings = function()
+			local n = 0
+			for _, v in ses.s.buildings do n += v end
+			return n
+		end,
+		upgradeCount = function()
+			local n = 0
+			for _ in ses.s.upgrades do n += 1 end
+			return n
+		end,
+	}
+	sessions[player] = ses
+	ses.M = E.recalc(s, ses.passes)
+	refreshPasses(ses)
+	ensureQuests(ses)
+	ses.cookiesVal, ses.rebirthVal = makeLeaderstats(player)
+	-- gains hors-ligne : 50 %, max 12 h
+	if loaded then
+		local away = math.min(12 * 3600, os.time() - (s.lastSave or os.time()))
+		if away > 60 then
+			local gain = E.cpsBase(s, ses.M) * away * 0.5
+			if gain > 0 then
+				earn(ses, gain)
+				task.delay(2, function()
+					fx(player, "offline", { away = away, gain = gain })
+				end)
+			end
+		end
+	end
+	World.onJoin(player)
+end
+
+local function onLeave(player)
+	saveData(player)
+	sessions[player] = nil
+end
+
+Players.PlayerAdded:Connect(onJoin)
+for _, p in Players:GetPlayers() do task.spawn(onJoin, p) end
+Players.PlayerRemoving:Connect(onLeave)
+game:BindToClose(function()
+	for p in sessions do
+		task.spawn(saveData, p)
+	end
+	if not RunService:IsStudio() then task.wait(3) end
+end)
+
+--------------------------------------------------------------------------- boucle de jeu
+local function snapshot(ses)
+	local t = now()
+	local buffs = {}
+	for _, b in ses.buffs do table.insert(buffs, { id = b.id, name = b.name, emoji = b.emoji, left = b.untilT - t, dur = b.dur }) end
+	local golden = {}
+	for _, g in ses.golden do table.insert(golden, { id = g.id, x = g.x, y = g.y, left = g.life - (t - g.born) }) end
+	local boss
+	if ses.boss then
+		local b = ses.boss
+		boss = { name = b.name, emoji = b.emoji, color = b.color, hp = b.hp, maxHp = b.maxHp, left = b.untilT - t }
+	end
+	return {
+		cookies = ses.s.cookies, totalBaked = ses.s.totalBaked, allTimeBaked = ses.s.allTimeBaked,
+		gems = ses.s.gems, cps = cpsNow(ses), cpsBase = E.cpsBase(ses.s, ses.M), click = clickValue(ses),
+		combo = { n = math.floor(ses.combo.count), mult = ses.combo.mult, heat = ses.combo.heat },
+		fever = ses.fever.active and (ses.fever.untilT - t) or 0,
+		buffs = buffs, golden = golden, boss = boss,
+		boost = math.max(0, (ses.s.boostUntil or 0) - os.time()), boostMult = ses.s.boostMult,
+		giftIn = math.max(0, (ses.s.nextGift or 0) - os.time()),
+	}
+end
+
+local lastT = now()
+RunService.Heartbeat:Connect(function()
+	local t = now()
+	local dt = t - lastT
+	if dt < 0.1 then return end
+	lastT = t
+	for player, ses in sessions do
+		local s = ses.s
+		-- production
+		local cps = cpsNow(ses)
+		if cps > 0 then earn(ses, cps * dt) end
+		-- auto-clicker (Game Pass)
+		if ses.passes.AutoClicker and s.autoClick and not ses.inMinigame then
+			ses.autoAcc += dt * 6
+			while ses.autoAcc >= 1 do
+				ses.autoAcc -= 1
+				doClick(ses, true)
+			end
+		end
+		-- déclin du combo
+		local c = ses.combo
+		if not ses.fever.active and t - ses.lastClick > 0.7 and c.count > 0 and not (ses.passes.AutoClicker and s.autoClick) then
+			c.count = math.max(0, c.count - dt * (18 + c.count * 0.6))
+			c.mult = E.comboMultFor(ses.M, c.count)
+			c.heat = math.min(t < ses.fever.cooldownUntil and 0.95 or 1, c.count / E.FEVER_AT)
+		end
+		if ses.fever.active and t >= ses.fever.untilT then endFever(ses) end
+		-- buffs
+		for i = #ses.buffs, 1, -1 do
+			if t >= ses.buffs[i].untilT then table.remove(ses.buffs, i) end
+		end
+		-- cookies dorés
+		for i = #ses.golden, 1, -1 do
+			if t - ses.golden[i].born > ses.golden[i].life then table.remove(ses.golden, i) end
+		end
+		if not ses.inMinigame and t >= ses.nextGolden then
+			if #ses.golden < 2 then spawnGolden(ses) end
+			ses.nextGolden = t + rand(45, 110) / ses.M.goldenFreq
+		elseif ses.inMinigame then
+			ses.nextGolden = math.max(ses.nextGolden, t + 5)
+		end
+		-- boss
+		if ses.boss and t >= ses.boss.untilT then escapeBoss(ses) end
+		if not ses.boss and s.allTimeBaked >= E.BOSS_UNLOCK and not ses.inMinigame then
+			ses.nextBoss = ses.nextBoss or t + rand(90, 150)
+			if t >= ses.nextBoss then spawnBoss(ses) end
+		end
+		-- chaque seconde
+		ses.secAcc += dt
+		ses.saveAcc += dt
+		ses.fullAcc += dt
+		if ses.secAcc >= 1 then
+			s.stats.playTime += ses.secAcc
+			ses.secAcc = 0
+			checkAchievements(ses)
+			ses.cookiesVal.Value = D.fmt(s.cookies)
+			ses.rebirthVal.Value = s.rebirths
+		end
+		if ses.saveAcc >= 60 then
+			ses.saveAcc = 0
+			task.spawn(saveData, player)
+		end
+		-- synchro
+		if ses.dirty or ses.fullAcc >= 2 then
+			ses.dirty = false
+			ses.fullAcc = 0
+			local receipts = s.receipts
+			s.receipts = nil -- inutile côté client
+			local payload = { live = snapshot(ses), state = s, passes = ses.passes, vis = ses.M.vis, mult = { bld = ses.M.bld, petSlots = E.petSlots(ses.passes) } }
+			SyncEv:FireClient(player, payload)
+			s.receipts = receipts
+		else
+			SyncEv:FireClient(player, { live = snapshot(ses) })
+		end
+	end
+end)
+
+--------------------------------------------------------------------------- classement global
+task.spawn(function()
+	while true do
+		task.wait(5)
+		if board then
+			local ok, pages = pcall(function() return board:GetSortedAsync(false, 10) end)
+			if ok then
+				local rows = {}
+				for i, e in pages:GetCurrentPage() do
+					local uid = tonumber(string.sub(e.key, 3))
+					local name = "???"
+					pcall(function() name = Players:GetNameFromUserIdAsync(uid) end)
+					table.insert(rows, { rank = i, name = name, value = 10 ^ (e.value / 1e6) - 1 })
+				end
+				World.setLeaderboard(rows)
+			end
+		end
+		task.wait(55)
+	end
+end)
+
+World.init()
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="9">
+        <Properties>
+          <string name="Name">World</string>
+          <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — décor partagé : arène néon + classement mondial
+-- (le cookie géant est construit côté client pour que chacun voie son propre skin)
+local World = {}
+
+local boardFrame
+
+local function part(props)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	for k, v in props do p[k] = v end
+	p.Parent = workspace
+	return p
+end
+
+function World.init()
+	local arena = Instance.new("Folder")
+	arena.Name = "Arena"
+	arena.Parent = workspace
+
+	-- piédestal central
+	local ped = part({ Name = "Pedestal", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 34, 34), CFrame = CFrame.new(0, 1, 0) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromHex("#1a0b33"), Material = Enum.Material.SmoothPlastic })
+	ped.Parent = arena
+	local ring = part({ Name = "NeonRing", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 36, 36), CFrame = CFrame.new(0, 0.9, 0) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromHex("#ff2bd6"), Material = Enum.Material.Neon, CanCollide = false })
+	ring.Parent = arena
+
+	-- piliers néon autour de l'arène
+	local cols = { "#ff2bd6", "#1ff4ff", "#b6ff3b", "#ffc93c", "#8a5cff", "#ff4d6d" }
+	for i = 1, 12 do
+		local a = i / 12 * math.pi * 2
+		local p = part({ Name = "Pillar", Size = Vector3.new(2, 30, 2), CFrame = CFrame.new(math.cos(a) * 70, 15, math.sin(a) * 70), Color = Color3.fromHex(cols[(i - 1) % #cols + 1]), Material = Enum.Material.Neon })
+		p.Parent = arena
+		local l = Instance.new("PointLight")
+		l.Color = p.Color
+		l.Range = 30
+		l.Brightness = 2
+		l.Parent = p
+	end
+
+	-- panneau du classement
+	local bd = part({ Name = "Leaderboard", Size = Vector3.new(30, 20, 1), CFrame = CFrame.new(0, 14, -60), Color = Color3.fromHex("#0b0620"), Material = Enum.Material.SmoothPlastic })
+	bd.Parent = arena
+	local sg = Instance.new("SurfaceGui")
+	sg.Face = Enum.NormalId.Back
+	sg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	sg.PixelsPerStud = 30
+	sg.Parent = bd
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0.15, 0)
+	title.BackgroundTransparency = 1
+	title.Font = Enum.Font.FredokaOne
+	title.TextScaled = true
+	title.TextColor3 = Color3.fromHex("#ffc93c")
+	title.Text = "🏆 TOP COOKIE BAKERS 🏆"
+	title.Parent = sg
+	boardFrame = Instance.new("Frame")
+	boardFrame.BackgroundTransparency = 1
+	boardFrame.Position = UDim2.new(0.05, 0, 0.17, 0)
+	boardFrame.Size = UDim2.new(0.9, 0, 0.8, 0)
+	boardFrame.Parent = sg
+	local lay = Instance.new("UIListLayout")
+	lay.Padding = UDim.new(0.01, 0)
+	lay.Parent = boardFrame
+
+	-- panneau boutique Robux (décoratif, invite à ouvrir l'onglet Boutique)
+	local shop = part({ Name = "ShopSign", Size = Vector3.new(22, 8, 1), CFrame = CFrame.new(-45, 10, -40) * CFrame.Angles(0, math.rad(45), 0), Color = Color3.fromHex("#2bdc6a"), Material = Enum.Material.Neon })
+	shop.Parent = arena
+	local ssg = Instance.new("SurfaceGui")
+	ssg.Face = Enum.NormalId.Back
+	ssg.Parent = shop
+	local st = Instance.new("TextLabel")
+	st.Size = UDim2.fromScale(1, 1)
+	st.BackgroundTransparency = 1
+	st.Font = Enum.Font.FredokaOne
+	st.TextScaled = true
+	st.TextColor3 = Color3.new(1, 1, 1)
+	st.TextStrokeTransparency = 0
+	st.Text = "💎 BOUTIQUE : Cookies ×2, Auto-Clicker, VIP ! 💎"
+	st.Parent = ssg
+end
+
+function World.setLeaderboard(rows)
+	if not boardFrame then return end
+	for _, c in boardFrame:GetChildren() do
+		if c:IsA("TextLabel") then c:Destroy() end
+	end
+	local D = require(game:GetService("ReplicatedStorage").Shared.GameData)
+	for _, r in rows do
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.new(1, 0, 0.09, 0)
+		l.BackgroundTransparency = 1
+		l.Font = Enum.Font.GothamBold
+		l.TextScaled = true
+		l.TextXAlignment = Enum.TextXAlignment.Left
+		l.TextColor3 = r.rank == 1 and Color3.fromHex("#ffc93c") or Color3.new(1, 1, 1)
+		l.Text = string.format("#%d  %s  —  %s 🍪", r.rank, r.name, D.fmt(r.value))
+		l.LayoutOrder = r.rank
+		l.Parent = boardFrame
+	end
+end
+
+function World.onJoin(player)
+	-- tag VIP au-dessus de la tête
+	player.CharacterAdded:Connect(function(char)
+		if not player:GetAttribute("VIP") then return end
+		local head = char:WaitForChild("Head", 5)
+		if not head then return end
+		local bb = Instance.new("BillboardGui")
+		bb.Size = UDim2.fromOffset(120, 30)
+		bb.StudsOffset = Vector3.new(0, 2.5, 0)
+		bb.AlwaysOnTop = true
+		bb.Parent = head
+		local t = Instance.new("TextLabel")
+		t.Size = UDim2.fromScale(1, 1)
+		t.BackgroundTransparency = 1
+		t.Font = Enum.Font.FredokaOne
+		t.TextScaled = true
+		t.TextColor3 = Color3.fromHex("#ffc93c")
+		t.TextStrokeTransparency = 0
+		t.Text = "👑 VIP"
+		t.Parent = bb
+	end)
+end
+
+return World
+]]></string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="StarterPlayer" referent="10">
+    <Properties>
+      <string name="Name">StarterPlayer</string>
+    </Properties>
+    <Item class="StarterPlayerScripts" referent="11">
+      <Properties>
+        <string name="Name">StarterPlayerScripts</string>
+      </Properties>
+      <Item class="Folder" referent="12">
+        <Properties>
+          <string name="Name">CookieClient</string>
+        </Properties>
+        <Item class="ModuleScript" referent="13">
+          <Properties>
+            <string name="Name">CookieModel</string>
+            <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — le cookie géant 3D (local : chaque joueur voit son skin et ses améliorations)
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local D = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("GameData"))
+
+local C = {}
+
+local CENTER = Vector3.new(0, 15, 0)
+local R = 10 -- rayon
+local THICK = 3
+
+local model, body, rim, chipsFolder, visFolder, pivot
+local currentSkin, currentTheme, currentVisKey
+local rgbSkin = false
+local scalePulse = 0
+local orbiters, spinners = {}, {}
+local beatPulse = false
+local petFolder
+
+local function mk(class, props, parent)
+	local o = Instance.new(class)
+	for k, v in props do o[k] = v end
+	o.Parent = parent
+	return o
+end
+
+local function weld(p)
+	p.Anchored = true
+	p.CanCollide = false
+	p.CastShadow = false
+end
+
+local function build()
+	model = mk("Model", { Name = "MyCookie" }, workspace)
+	pivot = CFrame.new(CENTER)
+	body = mk("Part", {
+		Name = "Body", Shape = Enum.PartType.Cylinder, Size = Vector3.new(THICK, R * 2, R * 2),
+		Material = Enum.Material.SmoothPlastic, Anchored = true, CanCollide = true,
+	}, model)
+	rim = mk("Part", {
+		Name = "Rim", Shape = Enum.PartType.Cylinder, Size = Vector3.new(THICK * 0.8, R * 2 + 0.8, R * 2 + 0.8),
+		Material = Enum.Material.SmoothPlastic, Anchored = true, CanCollide = false,
+	}, model)
+	chipsFolder = mk("Folder", { Name = "Chips" }, model)
+	visFolder = mk("Folder", { Name = "Visuals" }, model)
+	model.PrimaryPart = body
+	mk("PointLight", { Range = 40, Brightness = 1.5, Color = Color3.fromHex("#ffc93c") }, body)
+	petFolder = mk("Folder", { Name = "MyPets" }, workspace)
+end
+
+-- positions des pépites sur la face (coordonnées -1..1)
+local CHIPS = { { -0.45, 0.35 }, { 0.35, 0.45 }, { 0.05, -0.05 }, { -0.35, -0.4 }, { 0.5, -0.3 }, { -0.7, -0.05 }, { 0.15, 0.75 }, { 0.72, 0.15 }, { -0.1, -0.75 } }
+
+-- offsets relatifs au cookie (le cookie est un cylindre dont l'axe est Z une fois tourné)
+local BASE_ROT = CFrame.Angles(0, math.rad(90), 0) -- axe du cylindre (X) → Z monde
+local local_ = {} -- [part] = CFrame relatif au pivot
+
+local function attach(p, rel)
+	weld(p)
+	local_[p] = rel
+end
+
+local function rebuildChips(skin, big)
+	chipsFolder:ClearAllChildren()
+	local size = big and 2.2 or 1.5
+	for side = -1, 1, 2 do
+		for _, c in CHIPS do
+			local p = mk("Part", { Shape = Enum.PartType.Ball, Size = Vector3.new(size, size, size), Color = Color3.fromHex(skin.chip), Material = Enum.Material.SmoothPlastic }, chipsFolder)
+			attach(p, CFrame.new(c[1] * R * 0.85, c[2] * R * 0.85, side * THICK * 0.45))
+		end
+	end
+end
+
+function C.setSkin(id, bigChips)
+	local skin = D.SKIN[id] or D.skins[1]
+	local key = id .. tostring(bigChips)
+	if currentSkin == key then return end
+	currentSkin = key
+	body.Color = Color3.fromHex(skin.base)
+	body.Material = Enum.Material[skin.material] or Enum.Material.SmoothPlastic
+	rim.Color = Color3.fromHex(skin.rim)
+	rgbSkin = skin.rgb == true
+	rebuildChips(skin, bigChips)
+end
+
+function C.setTheme(id)
+	if currentTheme == id then return end
+	currentTheme = id
+	local th = D.THEME[id] or D.themes[1]
+	Lighting.Ambient = Color3.fromHex(th.ambient):Lerp(Color3.new(0, 0, 0), 0.4)
+	Lighting.OutdoorAmbient = Color3.fromHex(th.ambient)
+	Lighting.FogColor = Color3.fromHex(th.fog)
+	Lighting.FogStart = 60
+	Lighting.FogEnd = 400
+	local bp = workspace:FindFirstChild("Baseplate")
+	if bp then bp.Color = Color3.fromHex(th.floor) end
+end
+
+---------------------------------------------------------------- effets visuels des améliorations
+local function emojiBoard(text, rel, size)
+	local anchor = mk("Part", { Size = Vector3.new(0.2, 0.2, 0.2), Transparency = 1 }, visFolder)
+	attach(anchor, rel)
+	local bb = mk("BillboardGui", { Size = UDim2.fromScale(size, size), LightInfluence = 0, AlwaysOnTop = false }, anchor)
+	mk("TextLabel", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = text, TextScaled = true, Font = Enum.Font.GothamBold }, bb)
+	return anchor
+end
+
+local function neonPart(props, rel)
+	local p = mk("Part", props, visFolder)
+	p.Material = p.Material == Enum.Material.Plastic and Enum.Material.Neon or p.Material
+	attach(p, rel)
+	return p
+end
+
+local function particles(parent, props)
+	return mk("ParticleEmitter", props, parent)
+end
+
+local function faceBoard(text)
+	-- texte « collé » sur la face avant du cookie
+	local p = mk("Part", { Size = Vector3.new(R * 1.4, R * 1.4, 0.1), Transparency = 1 }, visFolder)
+	attach(p, CFrame.new(0, 0, THICK * 0.55))
+	local sg = mk("SurfaceGui", { Face = Enum.NormalId.Back, LightInfluence = 0, SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud, PixelsPerStud = 20 }, p)
+	mk("TextLabel", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = text, TextScaled = true, Font = Enum.Font.GothamBold }, sg)
+	local sg2 = sg:Clone()
+	sg2.Face = Enum.NormalId.Front
+	sg2.Parent = p
+	return p
+end
+
+function C.setVisuals(vis)
+	-- clé de cache pour ne reconstruire que quand ça change
+	local keys = {}
+	for k, v in vis do table.insert(keys, k .. v) end
+	table.sort(keys)
+	local key = table.concat(keys, ",")
+	if key == currentVisKey then return end
+	currentVisKey = key
+	for p in local_ do
+		if p.Parent == visFolder or (p.Parent and p:IsDescendantOf(visFolder)) then local_[p] = nil end
+	end
+	visFolder:ClearAllChildren()
+	orbiters, spinners = {}, {}
+	beatPulse = vis.beat_pulse ~= nil
+	for _, s in Lighting:GetChildren() do
+		if s.Name == "CookieFx" then s:Destroy() end
+	end
+
+	if vis.glaze then
+		neonPart({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, R * 1.6, R * 1.6), Color = Color3.fromHex("#ff8ad8"), Material = Enum.Material.SmoothPlastic }, CFrame.new(0, 0.6, THICK * 0.45) * CFrame.Angles(0, math.rad(90), 0))
+		if vis.glaze >= 2 then
+			neonPart({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, R * 1.6, R * 1.6), Color = Color3.fromHex("#8ad8ff"), Material = Enum.Material.SmoothPlastic }, CFrame.new(0, 0.6, -THICK * 0.45) * CFrame.Angles(0, math.rad(90), 0))
+		end
+	end
+	if vis.sprinkles then
+		local cols = { "#ff2bd6", "#1ff4ff", "#b6ff3b", "#ffc93c", "#8a5cff" }
+		for i = 1, 18 * vis.sprinkles do
+			local a, r = math.random() * math.pi * 2, math.sqrt(math.random()) * R * 0.8
+			neonPart({ Size = Vector3.new(0.3, 1, 0.3), Color = Color3.fromHex(cols[i % #cols + 1]) }, CFrame.new(math.cos(a) * r, math.sin(a) * r, THICK * 0.62) * CFrame.Angles(0, 0, math.random() * 6))
+		end
+	end
+	if vis.crystals then
+		for i = 1, 8 do
+			local a = i / 8 * math.pi * 2
+			neonPart({ Size = Vector3.new(1.2, 1.2, 1.2), Color = Color3.fromHex("#9ff3ff"), Material = Enum.Material.Glass, Transparency = 0.2 }, CFrame.new(math.cos(a) * R * 0.6, math.sin(a) * R * 0.6, THICK * 0.55) * CFrame.Angles(0.7, 0.7, 0))
+		end
+	end
+	if vis.rgb_rim then
+		local p = neonPart({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(THICK * 0.6, R * 2 + 1.6, R * 2 + 1.6), Color = Color3.new(1, 0, 1) }, CFrame.Angles(0, math.rad(90), 0))
+		p.Name = "RGB"
+	end
+	if vis.face and not vis.shades then faceBoard("◕‿◕") end
+	if vis.shades then faceBoard("😎") end
+	if vis.crown then emojiBoard("👑", CFrame.new(0, R + 3, 0), 9) end
+	if vis.headphones then emojiBoard("🎧", CFrame.new(0, R * 0.2, 0), 26) end
+	if vis.bling then emojiBoard(vis.bling >= 2 and "📿💰" or "📿", CFrame.new(0, -R - 2, 1), 7) end
+	if vis.halo then
+		neonPart({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.5, R * 1.4, R * 1.4), Color = Color3.fromHex("#fff6a8") }, CFrame.new(0, R + 6, 0) * CFrame.Angles(0, 0, math.rad(90)))
+	end
+	if vis.wings then
+		emojiBoard("🪽", CFrame.new(-R - 5, 2, 0), 12)
+		emojiBoard("🪽", CFrame.new(R + 5, 2, 0), 12)
+	end
+	if vis.laser_eyes then
+		for s = -1, 1, 2 do
+			local p = neonPart({ Size = Vector3.new(0.4, 0.4, 40), Color = Color3.fromHex("#ff2020"), Transparency = 0.3 }, CFrame.new(s * 2.5, 2.5, THICK * 0.5 + 20))
+			p.Name = "Laser"
+		end
+	end
+	if vis.orbiters then
+		for i = 1, vis.orbiters * 3 do
+			local p = mk("Part", { Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.6, 3, 3), Color = body.Color, Material = Enum.Material.SmoothPlastic }, visFolder)
+			weld(p)
+			table.insert(orbiters, { part = p, off = i / (vis.orbiters * 3) * math.pi * 2, radius = R + 4 + (i % 3) * 2, speed = 0.8 + (i % 3) * 0.3 })
+		end
+	end
+	if vis.saturn_ring then
+		local p = neonPart({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, R * 3.4, R * 3.4), Color = Color3.fromHex("#ffc93c"), Transparency = 0.5 }, CFrame.Angles(0, 0, math.rad(90)) * CFrame.Angles(math.rad(20), 0, 0))
+		table.insert(spinners, { part = p, speed = 0.4 })
+	end
+	if vis.fire_aura then
+		mk("Fire", { Size = 14 + 6 * vis.fire_aura, Heat = 12, Color = Color3.fromHex("#ff6a00"), SecondaryColor = Color3.fromHex("#ff2bd6") }, body)
+	end
+	if vis.lightning or vis.glitch then
+		particles(body, { Rate = 12, Lifetime = NumberRange.new(0.1, 0.3), Speed = NumberRange.new(20), LightEmission = 1, Size = NumberSequence.new(0.6), Color = ColorSequence.new(Color3.fromHex("#1ff4ff"), Color3.fromHex("#ff2bd6")), SpreadAngle = Vector2.new(180, 180) })
+	end
+	if vis.holo or vis.galaxy_core then
+		mk("Sparkles", { SparkleColor = Color3.fromHex(vis.galaxy_core and "#b16bff" or "#39f0ff") }, body)
+	end
+	if vis.cursor_rgb then
+		for i = 1, 10 do
+			local a = emojiBoard("👆", CFrame.new(), 3)
+			local_[a] = nil
+			table.insert(orbiters, { part = a, off = i / 10 * math.pi * 2, radius = R + 2, speed = -1.6 })
+		end
+	end
+	if vis.chat then
+		emojiBoard("💬 W  🔥 no cap  👑 GOAT", CFrame.new(R + 10, R, 0), 14)
+	end
+	if vis.cookie_rain then
+		local sky = mk("Part", { Size = Vector3.new(160, 1, 160), Transparency = 1 }, visFolder)
+		attach(sky, CFrame.new(0, 45, 0))
+		particles(sky, { Rate = 25, Lifetime = NumberRange.new(4, 6), Speed = NumberRange.new(15, 25), EmissionDirection = Enum.NormalId.Bottom, Size = NumberSequence.new(1.5), Color = ColorSequence.new(Color3.fromHex("#d99a4e")), Texture = "rbxasset://textures/particles/sparkles_main.dds" })
+	end
+	if vis.disco then
+		local ball = neonPart({ Shape = Enum.PartType.Ball, Size = Vector3.new(6, 6, 6), Color = Color3.fromHex("#e0e0ff"), Material = Enum.Material.Foil }, CFrame.new(0, R + 16, 0))
+		table.insert(spinners, { part = ball, speed = 1 })
+		for i = 1, 4 do
+			mk("SpotLight", { Range = 60, Brightness = 5, Angle = 30, Face = Enum.NormalId.Bottom, Color = Color3.fromHSV(i / 4, 1, 1) }, ball)
+		end
+	end
+	if vis.warp then
+		particles(body, { Rate = 40, Lifetime = NumberRange.new(0.4), Speed = NumberRange.new(80), LightEmission = 1, Size = NumberSequence.new(0.3), Color = ColorSequence.new(Color3.new(1, 1, 1)), SpreadAngle = Vector2.new(180, 180) })
+	end
+	if vis.god_rays then
+		mk("SunRaysEffect", { Name = "CookieFx", Intensity = 0.25, Spread = 0.8 }, Lighting)
+		mk("BloomEffect", { Name = "CookieFx", Intensity = 1, Size = 30, Threshold = 0.9 }, Lighting)
+	end
+	if vis.black_hole then
+		neonPart({ Shape = Enum.PartType.Ball, Size = Vector3.new(R * 3, R * 3, R * 3), Color = Color3.new(0, 0, 0), Material = Enum.Material.SmoothPlastic }, CFrame.new(0, 0, -R * 2.2))
+		local disk = neonPart({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, R * 4.5, R * 4.5), Color = Color3.fromHex("#ff6a00"), Transparency = 0.4 }, CFrame.new(0, 0, -R * 2.2) * CFrame.Angles(0, 0, math.rad(90)) * CFrame.Angles(math.rad(12), 0, 0))
+		table.insert(spinners, { part = disk, speed = 2 })
+	end
+	if vis.afterimage then
+		for i = 1, 3 do
+			local ghost = mk("Part", { Shape = Enum.PartType.Cylinder, Size = body.Size, Color = Color3.fromHSV(i / 3, 1, 1), Material = Enum.Material.ForceField, Transparency = 0.3 }, visFolder)
+			attach(ghost, CFrame.new(i * 1.5 - 3, 0, -1 - i) * BASE_ROT:Inverse())
+		end
+	end
+end
+
+---------------------------------------------------------------- pets qui suivent le joueur
+local petBoards = {}
+function C.setPets(list) -- list = { {emoji, color} }
+	for _, b in petBoards do b.part:Destroy() end
+	petBoards = {}
+	for i, p in list do
+		local part = mk("Part", { Size = Vector3.new(0.5, 0.5, 0.5), Transparency = 1, Anchored = true, CanCollide = false, CanQuery = false }, petFolder)
+		local bb = mk("BillboardGui", { Size = UDim2.fromScale(3, 3), LightInfluence = 0 }, part)
+		mk("TextLabel", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = p.emoji, TextScaled = true, Font = Enum.Font.GothamBold }, bb)
+		mk("PointLight", { Color = Color3.fromHex(p.color), Range = 6, Brightness = 2 }, part)
+		table.insert(petBoards, { part = part, i = i })
+	end
+end
+
+---------------------------------------------------------------- interactions
+function C.isCookie(inst)
+	return inst and model and inst:IsDescendantOf(model)
+end
+
+function C.pulse(crit)
+	scalePulse = crit and 0.18 or 0.08
+end
+
+function C.worldPos()
+	return CENTER
+end
+
+function C.shockwave(color)
+	local ring = mk("Part", { Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, R * 2, R * 2), Color = color or Color3.new(1, 1, 1), Material = Enum.Material.Neon, Transparency = 0.3, Anchored = true, CanCollide = false, CanQuery = false, CFrame = pivot * BASE_ROT }, workspace)
+	TweenService:Create(ring, TweenInfo.new(0.5), { Size = Vector3.new(0.2, R * 5, R * 5), Transparency = 1 }):Play()
+	task.delay(0.55, function() ring:Destroy() end)
+end
+
+function C.confetti()
+	local p = mk("Part", { Size = Vector3.new(1, 1, 1), Transparency = 1, Anchored = true, CanCollide = false, CanQuery = false, Position = CENTER + Vector3.new(0, 0, THICK) }, workspace)
+	local e = particles(p, { Rate = 0, Lifetime = NumberRange.new(1, 1.6), Speed = NumberRange.new(20, 35), SpreadAngle = Vector2.new(70, 70), Acceleration = Vector3.new(0, -40, 0), Size = NumberSequence.new(0.5), Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromHex("#ff2bd6")), ColorSequenceKeypoint.new(0.5, Color3.fromHex("#1ff4ff")), ColorSequenceKeypoint.new(1, Color3.fromHex("#b6ff3b")) }), LightEmission = 0.6 })
+	e:Emit(25)
+	task.delay(2, function() p:Destroy() end)
+end
+
+---------------------------------------------------------------- animation
+function C.start()
+	build()
+	local t0 = os.clock()
+	RunService.RenderStepped:Connect(function(dt)
+		local t = os.clock() - t0
+		scalePulse = math.max(0, scalePulse - dt * 0.6)
+		local beat = beatPulse and (math.max(0, math.sin(t * math.pi * 4)) ^ 8) * 0.05 or 0
+		local s = 1 + scalePulse + beat
+		pivot = CFrame.new(CENTER + Vector3.new(0, math.sin(t * 1.5) * 0.8, 0)) * CFrame.Angles(0, math.sin(t * 0.6) * 0.5, 0)
+		body.Size = Vector3.new(THICK, R * 2, R * 2) * s
+		body.CFrame = pivot * BASE_ROT
+		rim.Size = Vector3.new(THICK * 0.8, R * 2 + 0.8, R * 2 + 0.8) * s
+		rim.CFrame = pivot * BASE_ROT
+		if rgbSkin then body.Color = Color3.fromHSV((t * 0.15) % 1, 0.7, 1) end
+		for p, rel in local_ do
+			if p.Parent then
+				local cf = rel
+				p.CFrame = pivot * CFrame.new(cf.Position * s) * (cf - cf.Position)
+				if p.Name == "RGB" then p.Color = Color3.fromHSV((t * 0.3) % 1, 1, 1) end
+			else
+				local_[p] = nil
+			end
+		end
+		for _, o in orbiters do
+			local a = o.off + t * o.speed
+			o.part.CFrame = pivot * CFrame.new(math.cos(a) * o.radius, math.sin(a) * o.radius * 0.35, math.sin(a) * o.radius) * CFrame.Angles(0, a, 0)
+		end
+		for _, sp in spinners do
+			if local_[sp.part] then local_[sp.part] *= CFrame.Angles(sp.speed * dt, 0, 0) end
+		end
+		-- pets autour du joueur
+		local char = Players.LocalPlayer.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if root then
+			local n = #petBoards
+			for _, b in petBoards do
+				local a = b.i / math.max(1, n) * math.pi * 2 + t * 0.8
+				local target = root.Position + Vector3.new(math.cos(a) * 5, 2 + math.sin(t * 3 + b.i) * 0.5, math.sin(a) * 5)
+				b.part.Position = b.part.Position:Lerp(target, math.min(1, dt * 6))
+			end
+		end
+	end)
+end
+
+return C
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="14">
+          <Properties>
+            <string name="Name">Kit</string>
+            <string name="Source"><![CDATA[-- Petit kit UI : création d'instances + composants « chunky » style Roblox simulator
+local K = {}
+
+K.colors = {
+	bg = Color3.fromHex("#0b0620"), panel = Color3.fromHex("#160b34"), panel2 = Color3.fromHex("#22124a"),
+	ink = Color3.fromHex("#fff6fe"), muted = Color3.fromHex("#b3a6dd"), stroke = Color3.fromHex("#1a0b33"),
+	hot = Color3.fromHex("#ff2bd6"), cyan = Color3.fromHex("#1ff4ff"), lime = Color3.fromHex("#b6ff3b"),
+	gold = Color3.fromHex("#ffc93c"), red = Color3.fromHex("#ff4d6d"), violet = Color3.fromHex("#8a5cff"),
+	green = Color3.fromHex("#2bdc6a"),
+}
+local Cc = K.colors
+
+K.DISPLAY = Enum.Font.FredokaOne
+K.BODY = Enum.Font.GothamMedium
+K.BOLD = Enum.Font.GothamBold
+
+function K.new(class, props, children)
+	local o = Instance.new(class)
+	local parent = nil
+	for k, v in props or {} do
+		if k == "Parent" then parent = v else o[k] = v end
+	end
+	for _, c in children or {} do c.Parent = o end
+	if parent then o.Parent = parent end
+	return o
+end
+local new = K.new
+
+function K.corner(r) return new("UICorner", { CornerRadius = UDim.new(0, r or 12) }) end
+function K.stroke(color, th) return new("UIStroke", { Color = color or Cc.stroke, Thickness = th or 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }) end
+function K.textStroke(color, th) return new("UIStroke", { Color = color or Cc.stroke, Thickness = th or 2 }) end
+function K.pad(p) return new("UIPadding", { PaddingTop = UDim.new(0, p), PaddingBottom = UDim.new(0, p), PaddingLeft = UDim.new(0, p), PaddingRight = UDim.new(0, p) }) end
+function K.list(pad, dir, align)
+	return new("UIListLayout", { Padding = UDim.new(0, pad or 6), FillDirection = dir or Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = align or Enum.HorizontalAlignment.Center })
+end
+
+-- Texte « Roblox » : gros, blanc, contour sombre
+function K.label(text, size, props)
+	local l = new("TextLabel", {
+		BackgroundTransparency = 1, Text = text, Font = K.DISPLAY, TextSize = size or 20,
+		TextColor3 = Cc.ink, Size = UDim2.new(1, 0, 0, (size or 20) + 6), TextWrapped = true,
+	}, { K.textStroke() })
+	for k, v in props or {} do l[k] = v end
+	return l
+end
+
+function K.small(text, size, props)
+	local l = new("TextLabel", {
+		BackgroundTransparency = 1, Text = text, Font = K.BODY, TextSize = size or 14,
+		TextColor3 = Cc.muted, Size = UDim2.new(1, 0, 0, (size or 14) + 4), TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+	})
+	for k, v in props or {} do l[k] = v end
+	return l
+end
+
+-- Bouton 3D (ombre dessous) ; color = Color3
+function K.button(text, color, props, onClick)
+	local b = new("TextButton", {
+		Text = text, Font = K.DISPLAY, TextSize = 18, TextColor3 = Cc.ink,
+		BackgroundColor3 = color or Cc.green, AutoButtonColor = true, Size = UDim2.new(0, 120, 0, 40),
+	}, { K.corner(10), K.stroke(Cc.stroke, 3), K.textStroke(Cc.stroke, 2) })
+	for k, v in props or {} do b[k] = v end
+	if onClick then
+		b.MouseButton1Click:Connect(function()
+			local s = b.Size
+			b.Size = UDim2.new(s.X.Scale * 0.95, s.X.Offset * 0.95, s.Y.Scale * 0.95, s.Y.Offset * 0.95)
+			task.delay(0.08, function() b.Size = s end)
+			onClick(b)
+		end)
+	end
+	return b
+end
+
+function K.card(props, children)
+	local f = new("Frame", { BackgroundColor3 = Cc.panel2, Size = UDim2.new(1, 0, 0, 70) }, { K.corner(12), K.stroke(Cc.stroke, 2), K.pad(8) })
+	for k, v in props or {} do f[k] = v end
+	for _, c in children or {} do c.Parent = f end
+	return f
+end
+
+function K.rgb(t, off)
+	return Color3.fromHSV(((t or os.clock()) * 0.12 + (off or 0)) % 1, 0.85, 1)
+end
+
+function K.fmtTime(sec)
+	sec = math.max(0, math.floor(sec))
+	if sec >= 3600 then return string.format("%dh%02d", sec // 3600, (sec % 3600) // 60) end
+	return string.format("%d:%02d", sec // 60, sec % 60)
+end
+
+return K
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="LocalScript" referent="15">
+          <Properties>
+            <string name="Name">Main</string>
+            <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — client : relie serveur, cookie 3D, interface et mini-jeux
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local D = require(RS:WaitForChild("Shared"):WaitForChild("GameData"))
+local Remotes = RS:WaitForChild("Remotes")
+local ClickEv, ActionFn, SyncEv, FxEv = Remotes:WaitForChild("Click"), Remotes:WaitForChild("Action"), Remotes:WaitForChild("Sync"), Remotes:WaitForChild("Fx")
+
+local Cookie = require(script.Parent:WaitForChild("CookieModel"))
+local UI = require(script.Parent:WaitForChild("UI"))
+local Minigames = require(script.Parent:WaitForChild("Minigames"))
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local Store = { state = nil, live = nil, passes = {}, vis = {}, mult = { bld = {}, petSlots = 3 } }
+
+local function act(name, ...)
+	local ok, res = pcall(function(...) return ActionFn:InvokeServer(name, ...) end, ...)
+	if not ok then
+		warn(res)
+		return nil
+	end
+	return res
+end
+
+-- dernier point cliqué, pour afficher le « +N » au bon endroit
+local lastTap = Vector2.new(0, 0)
+local function tap(screenPos)
+	lastTap = screenPos
+	Cookie.pulse(false)
+	ClickEv:FireServer()
+end
+
+Cookie.start()
+Minigames.init(act, UI)
+UI.init(Store, act, tap, Minigames)
+
+-- clic direct sur le cookie 3D
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed or Minigames.isOpen() then return end
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+	local pos = input.Position
+	local ray = camera:ViewportPointToRay(pos.X, pos.Y)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { player.Character }
+	local hit = workspace:Raycast(ray.Origin, ray.Direction * 500, params)
+	if hit and Cookie.isCookie(hit.Instance) then
+		tap(Vector2.new(pos.X, pos.Y))
+	end
+end)
+
+----------------------------------------------------------------------------- synchro serveur
+SyncEv.OnClientEvent:Connect(function(p)
+	Store.live = p.live
+	if p.state then
+		Store.state = p.state
+		Store.passes = p.passes or {}
+		Store.vis = p.vis or {}
+		Store.mult = p.mult or Store.mult
+		local s = p.state
+		Cookie.setSkin(s.skin, Store.vis.chips_xl ~= nil)
+		Cookie.setTheme(s.theme)
+		Cookie.setVisuals(Store.vis)
+		local pets = {}
+		for _, uid in s.equipped do
+			for _, pet in s.pets do
+				if pet.uid == uid then
+					local def = D.PET[pet.id]
+					table.insert(pets, { emoji = def.emoji, color = D.rarities[def.rarity].color })
+				end
+			end
+		end
+		Cookie.setPets(pets)
+		UI.onFull()
+	end
+	if Store.state then
+		Store.state.cookies = p.live.cookies
+		Store.state.gems = p.live.gems
+		Store.state.totalBaked = p.live.totalBaked
+		Store.state.allTimeBaked = p.live.allTimeBaked
+		UI.onLive(p.live)
+	end
+end)
+
+----------------------------------------------------------------------------- événements ponctuels
+FxEv.OnClientEvent:Connect(function(kind, d)
+	if kind == "click" then
+		local vis = Store.vis
+		UI.floatText("+" .. D.fmt(d.a), lastTap, d.c and Color3.fromHex("#ffc93c") or Color3.new(1, 1, 1), d.c and 34 or 26)
+		if d.c then
+			Cookie.pulse(true)
+			UI.floatText("CRITIQUE !", lastTap + Vector2.new(0, -40), Color3.fromHex("#ff2bd6"), 22)
+		end
+		if vis.shockwave and (d.c or d.n % 10 == 0) then Cookie.shockwave(Color3.fromHSV(os.clock() % 1, 1, 1)) end
+		if vis.confetti_click and d.n % 15 == 0 then Cookie.confetti() end
+	elseif kind == "toast" then
+		UI.toast(d.text, d.color)
+	elseif kind == "achievement" then
+		UI.toast("🏆 Succès : " .. d.name .. "  (+" .. d.gems .. " 💎)", "#ffc93c")
+	elseif kind == "fever" then
+		if d.on then UI.toast("🌈 FIÈVRE RGB ! Tout ×3 !", "#ff2bd6") end
+	elseif kind == "boss" then
+		if d.state == "spawn" then UI.toast(d.emoji .. " " .. d.name .. " attaque ! Clique pour le battre !", "#ff4d6d") end
+	elseif kind == "offline" then
+		UI.modal("Bon retour ! 👋", "Pendant ton absence (" .. math.floor(d.away / 60) .. " min), ta boulangerie a produit\n+" .. D.fmt(d.gain) .. " 🍪", {
+			{ "Cool !", Color3.fromHex("#2bdc6a") },
+			{ "×3 Boost 💎", Color3.fromHex("#ff2bd6"), function() UI.openTab("shop") end },
+		})
+	elseif kind == "purchase" then
+		UI.modal("MERCI ! " .. d.emoji, d.name .. " est activé. Profite bien ! 🍪", nil, Color3.fromHex("#2bdc6a"))
+	end
+end)
+
+-- Première visite : petite aide
+task.delay(4, function()
+	if Store.state and Store.state.clicks == 0 then
+		UI.modal("COOKIE OVERDRIVE 🍪", "Clique sur le cookie géant (ou le bouton 🍪 en bas à gauche) pour produire des cookies.\nAchète des bâtiments et des améliorations avec les onglets à droite !", { { "C'est parti !", Color3.fromHex("#2bdc6a") } })
+	end
+end)
+
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="16">
+          <Properties>
+            <string name="Name">Minigames</string>
+            <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — les 4 mini-jeux (interface 2D)
+-- Le gameplay tourne côté client ; la récompense est calculée et plafonnée par le serveur.
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RS = game:GetService("ReplicatedStorage")
+
+local D = require(RS.Shared.GameData)
+local K = require(script.Parent.Kit)
+local new, Cc = K.new, K.colors
+
+local MG = {}
+local act, UI
+local overlay, arena, hudLabel, conn, inputConns = nil, nil, nil, nil, {}
+local running = false
+
+local function cleanup()
+	running = false
+	if conn then conn:Disconnect(); conn = nil end
+	for _, c in inputConns do c:Disconnect() end
+	inputConns = {}
+end
+
+local function close()
+	cleanup()
+	if overlay then overlay:Destroy(); overlay = nil end
+	act("mgClose")
+end
+
+local function shell(title)
+	if overlay then overlay:Destroy() end
+	overlay = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Cc.bg, BackgroundTransparency = 0.08, ZIndex = 40, Active = true, Parent = UI.gui })
+	K.label(title, 30, { Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 36), Parent = overlay })
+	hudLabel = K.label("", 22, { Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 0, 28), TextColor3 = Cc.cyan, Parent = overlay })
+	K.button("✕ Quitter", Cc.red, { Position = UDim2.new(1, -130, 0, 10), Size = UDim2.fromOffset(120, 40), Parent = overlay }, close)
+	arena = new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -16), Size = UDim2.new(0.94, 0, 1, -100),
+		BackgroundColor3 = Cc.panel, ClipsDescendants = true, Parent = overlay,
+	}, { K.corner(18), new("UIStroke", { Color = Cc.hot, Thickness = 3 }), new("UIAspectRatioConstraint", { AspectRatio = 1.5, DominantAxis = Enum.DominantAxis.Height }) })
+	return arena
+end
+
+local function sprite(text, size, parent)
+	return new("TextLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(size, size), BackgroundTransparency = 1,
+		Text = text, TextScaled = true, Font = K.BOLD, Parent = parent or arena,
+	})
+end
+
+-- écran de départ
+local function startScreen(title, desc, onGo)
+	local f = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = arena }, { K.list(14), new("UIPadding", { PaddingTop = UDim.new(0.2, 0) }) })
+	K.label(title, 40, { Parent = f })
+	K.small(desc, 18, { TextColor3 = Cc.ink, TextXAlignment = Enum.TextXAlignment.Center, Size = UDim2.new(0.8, 0, 0, 60), Parent = f })
+	K.button("▶ JOUER", Cc.green, { Size = UDim2.fromOffset(200, 60), TextSize = 28, Parent = f }, function()
+		f:Destroy()
+		onGo()
+	end)
+end
+
+local function finish(id, score)
+	cleanup()
+	local res = act("mgEnd", id, score)
+	local f = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Cc.bg, BackgroundTransparency = 0.3, ZIndex = 10, Parent = arena }, { K.list(12), new("UIPadding", { PaddingTop = UDim.new(0.18, 0) }) })
+	K.label("FIN DE PARTIE", 40, { Parent = f, ZIndex = 11 })
+	if res then
+		K.label("Score : " .. D.fmt(res.score) .. (res.isBest and "  🏆 NOUVEAU RECORD !" or ""), 24, { Parent = f, ZIndex = 11, TextColor3 = Cc.gold })
+		K.label("+" .. D.fmt(res.cookies) .. " 🍪   +" .. res.gems .. " 💎", 26, { Parent = f, ZIndex = 11, TextColor3 = Cc.lime })
+	else
+		K.label("Partie trop courte, pas de récompense.", 20, { Parent = f, ZIndex = 11 })
+	end
+	local row = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 56), Parent = f, ZIndex = 11 }, { K.list(12, Enum.FillDirection.Horizontal) })
+	K.button("🔁 Rejouer", Cc.hot, { Size = UDim2.fromOffset(170, 52), ZIndex = 11, Parent = row }, function() MG.open(id) end)
+	K.button("Retour", Cc.violet, { Size = UDim2.fromOffset(150, 52), ZIndex = 11, Parent = row }, close)
+end
+
+local function onPress(fn)
+	table.insert(inputConns, UserInputService.InputBegan:Connect(function(i)
+		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch
+			or i.KeyCode == Enum.KeyCode.Space or i.KeyCode == Enum.KeyCode.ButtonA then
+			fn(i)
+		end
+	end))
+end
+
+---------------------------------------------------------------------------- COOKIE NINJA
+local function ninja()
+	shell("🥷 COOKIE NINJA")
+	startScreen("Cookie Ninja", "Glisse (ou tape) sur les cookies pour les trancher.\nÉvite les brocolis 🥦 ! 30 secondes.", function()
+		if not act("mgStart", "ninja") then return close() end
+		running = true
+		local items, score, t, spawnAcc, dur = {}, 0, 0, 0, 30
+		local down = false
+		table.insert(inputConns, UserInputService.InputBegan:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then down = true end
+		end))
+		table.insert(inputConns, UserInputService.InputEnded:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then down = false end
+		end))
+		local function slice(it)
+			if it.dead then return end
+			it.dead = true
+			if it.bomb then
+				score = math.max(0, score - 5)
+				UI.floatText("-5 🥦", it.label.AbsolutePosition, Cc.red)
+			else
+				score += it.golden and 5 or 1
+				UI.floatText(it.golden and "+5" or "+1", it.label.AbsolutePosition, Cc.gold)
+			end
+			TweenService:Create(it.label, TweenInfo.new(0.2), { TextTransparency = 1, Rotation = 90 }):Play()
+			task.delay(0.2, function() it.label:Destroy() end)
+		end
+		conn = RunService.RenderStepped:Connect(function(dt)
+			t += dt
+			spawnAcc += dt
+			local rate = 0.55 - math.min(0.3, t / 100)
+			while spawnAcc > rate do
+				spawnAcc -= rate
+				local r = math.random()
+				local bomb, golden = r < 0.15, r > 0.95
+				local it = { x = math.random() * 0.8 + 0.1, y = 1.1, vx = (math.random() - 0.5) * 0.4, vy = -(1.2 + math.random() * 0.4), bomb = bomb, golden = golden }
+				it.label = sprite(bomb and "🥦" or golden and "🌟" or "🍪", 70)
+				it.label.Active = true
+				local function hit() if down or UserInputService.TouchEnabled then slice(it) end end
+				it.label.MouseEnter:Connect(hit)
+				it.label.InputBegan:Connect(function(i)
+					if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then slice(it) end
+				end)
+				table.insert(items, it)
+			end
+			for i = #items, 1, -1 do
+				local it = items[i]
+				it.vy += 1.3 * dt
+				it.x += it.vx * dt
+				it.y += it.vy * dt
+				if not it.dead then
+					it.label.Position = UDim2.fromScale(it.x, it.y)
+					it.label.Rotation += dt * 180
+				end
+				if it.y > 1.2 and it.vy > 0 then
+					if not it.dead then it.label:Destroy() end
+					table.remove(items, i)
+				end
+			end
+			hudLabel.Text = "Score : " .. score .. "   ⏱ " .. math.max(0, math.ceil(dur - t))
+			if t >= dur then
+				for _, it in items do if not it.dead then it.label:Destroy() end end
+				finish("ninja", score)
+			end
+		end)
+	end)
+end
+
+---------------------------------------------------------------------------- FLAPPY COOKIE
+local function flappy()
+	shell("🐤 FLAPPY COOKIE")
+	startScreen("Flappy Cookie", "Tape / clique / Espace pour voler.\nPasse entre les bouteilles de lait !", function()
+		if not act("mgStart", "flappy") then return close() end
+		running = true
+		local y, vy, score, t = 0.5, 0, 0, 0
+		local pipes, pipeAcc = {}, 1.2
+		local bird = sprite("🍪", 56)
+		bird.Position = UDim2.fromScale(0.25, y)
+		local over = false
+		onPress(function()
+			if not over then vy = -0.9 end
+		end)
+		conn = RunService.RenderStepped:Connect(function(dt)
+			dt = math.min(dt, 1 / 30)
+			t += dt
+			vy += 2.6 * dt
+			y += vy * dt
+			bird.Position = UDim2.fromScale(0.25, y)
+			bird.Rotation = math.clamp(vy * 60, -30, 70)
+			pipeAcc += dt
+			if pipeAcc > 1.6 then
+				pipeAcc = 0
+				local gap = math.random() * 0.45 + 0.28
+				local p = { x = 1.1, gap = gap, passed = false }
+				p.top = new("Frame", { AnchorPoint = Vector2.new(0.5, 1), Size = UDim2.new(0.08, 0, gap - 0.14, 0), BackgroundColor3 = Color3.fromHex("#e8f4ff"), Parent = arena }, { K.corner(6), K.stroke(Cc.cyan, 3) })
+				p.bot = new("Frame", { AnchorPoint = Vector2.new(0.5, 0), Size = UDim2.new(0.08, 0, 1 - gap - 0.14, 0), BackgroundColor3 = Color3.fromHex("#e8f4ff"), Parent = arena }, { K.corner(6), K.stroke(Cc.cyan, 3) })
+				table.insert(pipes, p)
+			end
+			local speed = 0.32 + math.min(0.2, t / 200)
+			local dead = y > 1.02 or y < -0.05
+			for i = #pipes, 1, -1 do
+				local p = pipes[i]
+				p.x -= speed * dt
+				p.top.Position = UDim2.fromScale(p.x, p.gap - 0.14)
+				p.bot.Position = UDim2.fromScale(p.x, p.gap + 0.14)
+				-- collision (arène au ratio 1.5 : 0.04 de largeur ≈ 0.06 de hauteur)
+				if math.abs(p.x - 0.25) < 0.055 and math.abs(y - p.gap) > 0.14 - 0.035 then dead = true end
+				if not p.passed and p.x < 0.25 then
+					p.passed = true
+					score += 1
+				end
+				if p.x < -0.1 then
+					p.top:Destroy(); p.bot:Destroy()
+					table.remove(pipes, i)
+				end
+			end
+			hudLabel.Text = "Score : " .. score
+			if dead and not over then
+				over = true
+				finish("flappy", score)
+			end
+		end)
+	end)
+end
+
+---------------------------------------------------------------------------- CRUNCH RYTHME
+local function rhythm()
+	shell("🎵 CRUNCH RYTHME")
+	local KEYS = { Enum.KeyCode.D, Enum.KeyCode.F, Enum.KeyCode.J, Enum.KeyCode.K }
+	local COLS = { Cc.hot, Cc.cyan, Cc.lime, Cc.gold }
+	startScreen("Crunch Rythme", "Touche les notes quand elles atteignent la ligne.\nClavier : D F J K — ou tape sur les colonnes. 35 secondes.", function()
+		if not act("mgStart", "rhythm") then return close() end
+		running = true
+		local notes, score, combo, t, dur = {}, 0, 0, 0, 35
+		local HIT_Y, SPEED = 0.85, 0.55
+		local bpm = 128
+		local beat = 60 / bpm
+		local nextNote = 1
+		for lane = 1, 4 do
+			local col = new("TextButton", { Text = "", AutoButtonColor = false, Position = UDim2.fromScale((lane - 1) * 0.25, 0), Size = UDim2.fromScale(0.25, 1), BackgroundColor3 = COLS[lane], BackgroundTransparency = 0.88, Parent = arena })
+			col.MouseButton1Down:Connect(function() MG._rhythmHit(lane) end)
+			K.label(KEYS[lane].Name, 22, { Position = UDim2.fromScale(0, 0.92), Size = UDim2.fromScale(1, 0.08), Parent = col })
+		end
+		new("Frame", { Position = UDim2.fromScale(0, HIT_Y), Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = Cc.ink, Parent = arena })
+		function MG._rhythmHit(lane)
+			if not running then return end
+			local best, bi
+			for i, n in notes do
+				if n.lane == lane and not n.done then
+					local d = math.abs(n.y - HIT_Y)
+					if d < 0.09 and (not best or d < best) then best, bi = d, i end
+				end
+			end
+			if bi then
+				local n = notes[bi]
+				n.done = true
+				local at = n.label.AbsolutePosition
+				n.label:Destroy()
+				combo += 1
+				local pts = best < 0.035 and 10 or 5
+				score += pts + math.min(combo, 20) // 5
+				UI.floatText(best < 0.035 and "PARFAIT" or "BIEN", at, best < 0.035 and Cc.lime or Cc.cyan, 22)
+			else
+				combo = 0
+			end
+		end
+		table.insert(inputConns, UserInputService.InputBegan:Connect(function(i)
+			local lane = table.find(KEYS, i.KeyCode)
+			if lane then MG._rhythmHit(lane) end
+		end))
+		conn = RunService.RenderStepped:Connect(function(dt)
+			t += dt
+			-- motif : une note par demi-temps, lanes pseudo-aléatoires, parfois des pauses
+			while t + HIT_Y / SPEED >= nextNote * beat / 2 + 1 and nextNote * beat / 2 < dur - 2 do
+				if math.random() < 0.72 then
+					local lane = math.random(4)
+					local n = { lane = lane, y = 0 }
+					n.label = sprite("🍪", 54)
+					n.label.Position = UDim2.fromScale((lane - 0.5) * 0.25, 0)
+					n.born = t
+					table.insert(notes, n)
+				end
+				nextNote += 1
+			end
+			for i = #notes, 1, -1 do
+				local n = notes[i]
+				n.y += SPEED * dt
+				if not n.done then
+					n.label.Position = UDim2.fromScale((n.lane - 0.5) * 0.25, n.y)
+					if n.y > HIT_Y + 0.1 then
+						n.done = true
+						n.label:Destroy()
+						combo = 0
+					end
+				end
+				if n.done then table.remove(notes, i) end
+			end
+			hudLabel.Text = "Score : " .. score .. "   Combo : " .. combo .. "   ⏱ " .. math.max(0, math.ceil(dur - t))
+			if t >= dur then
+				for _, n in notes do if not n.done then n.label:Destroy() end end
+				finish("rhythm", score)
+			end
+		end)
+	end)
+end
+
+---------------------------------------------------------------------------- CASINO CRUMBLE
+local function slots()
+	shell("🎰 CASINO CRUMBLE")
+	local f = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = arena }, { K.list(14), new("UIPadding", { PaddingTop = UDim.new(0.08, 0) }) })
+	K.small("3 identiques = gros gain · 2 identiques = mise ×1,5 · 💎💎💎 et 7️⃣7️⃣7️⃣ donnent des gemmes !\nOn mise des cookies du jeu, jamais de vrais Robux.", 15, { TextColor3 = Cc.ink, TextXAlignment = Enum.TextXAlignment.Center, Size = UDim2.new(0.9, 0, 0, 44), Parent = f })
+	local reelRow = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(0.8, 0, 0.35, 0), Parent = f }, { K.list(12, Enum.FillDirection.Horizontal) })
+	local reels = {}
+	for i = 1, 3 do
+		local box = new("Frame", { Size = UDim2.new(0.3, 0, 1, 0), BackgroundColor3 = Cc.bg, Parent = reelRow }, { K.corner(14), new("UIStroke", { Color = Cc.gold, Thickness = 4 }) })
+		reels[i] = new("TextLabel", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "🍪", TextScaled = true, Font = K.BOLD, Parent = box })
+	end
+	local result = K.label("Choisis ta mise !", 24, { Parent = f })
+	local btns = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 60), Parent = f }, { K.list(12, Enum.FillDirection.Horizontal) })
+	local spinning = false
+	local SYMS = { "🍪", "🍫", "🥛", "💎", "⭐", "7️⃣" }
+	local plays = 0
+	for i, m in { 1, 5, 25 } do
+		K.button("MISE ×" .. m, i == 3 and Cc.hot or Cc.green, { Size = UDim2.fromOffset(150, 56), TextSize = 22, Parent = btns }, function()
+			if spinning then return end
+			spinning = true
+			local res = act("spin", i)
+			if not res or res.err then
+				result.Text = res and res.err or "Impossible de jouer."
+				spinning = false
+				return
+			end
+			plays += 1
+			-- animation des rouleaux
+			for k = 1, 3 do
+				task.spawn(function()
+					for _ = 1, 8 + k * 5 do
+						reels[k].Text = SYMS[math.random(#SYMS)]
+						task.wait(0.05)
+					end
+					reels[k].Text = res.reels[k]
+				end)
+			end
+			task.wait(0.05 * 23 + 0.1)
+			if res.win > 0 then
+				result.Text = "GAGNÉ +" .. D.fmt(res.win) .. " 🍪" .. (res.gems > 0 and ("  +" .. res.gems .. " 💎") or "")
+				result.TextColor3 = Cc.lime
+			else
+				result.Text = "Perdu… mise : " .. D.fmt(res.bet) .. " 🍪"
+				result.TextColor3 = Cc.red
+			end
+			spinning = false
+		end)
+	end
+	hudLabel.Text = "La mise dépend de ta production actuelle"
+end
+
+---------------------------------------------------------------------------- API
+function MG.open(id)
+	cleanup()
+	if id == "ninja" then ninja()
+	elseif id == "flappy" then flappy()
+	elseif id == "rhythm" then rhythm()
+	elseif id == "slots" then slots() end
+end
+
+function MG.isOpen() return overlay ~= nil end
+
+function MG.init(actFn, ui)
+	act, UI = actFn, ui
+end
+
+return MG
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="17">
+          <Properties>
+            <string name="Name">UI</string>
+            <string name="Source"><![CDATA[-- COOKIE OVERDRIVE — interface (HUD, onglets, boutique Robux, popups)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local RS = game:GetService("ReplicatedStorage")
+
+local D = require(RS.Shared.GameData)
+local E = require(RS.Shared.Econ)
+local Shop = require(RS.Shared.Monetization)
+local K = require(script.Parent.Kit)
+local new, Cc = K.new, K.colors
+
+local UI = {}
+local Store -- { state, live, passes, vis, mult }
+local act -- function(name, ...) -> résultat serveur
+local onCookieTap -- function(screenPos)
+local Minigames
+
+local gui, hud, panel, panelBody, panelTitle, goldenLayer, fxLayer, toastList, modalLayer
+local hudRefs = {}
+local currentTab = nil
+local rowUpdaters = {}
+local buyQty = 1
+
+---------------------------------------------------------------------------- utilitaires
+local function fmt(n) return D.fmt(n or 0) end
+
+function UI.toast(text, color)
+	if not toastList then return end
+	local t = K.card({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Cc.panel, BackgroundTransparency = 0.05 }, {
+		K.small(text, 15, { TextColor3 = Cc.ink, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), Font = K.BOLD }),
+	})
+	t:FindFirstChildOfClass("UIStroke").Color = color and Color3.fromHex(color) or Cc.hot
+	t:FindFirstChildOfClass("UIStroke").Thickness = 3
+	t.Parent = toastList
+	task.delay(4.5, function()
+		if t.Parent then
+			TweenService:Create(t, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
+			task.wait(0.3)
+			t:Destroy()
+		end
+	end)
+end
+
+function UI.floatText(text, pos, color, size)
+	if not fxLayer then return end
+	local l = K.label(text, size or 26, {
+		Size = UDim2.fromOffset(300, 40), AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(pos.X + math.random(-25, 25), pos.Y - 20), TextColor3 = color or Cc.ink,
+	})
+	l.Parent = fxLayer
+	TweenService:Create(l, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Position = l.Position - UDim2.fromOffset(0, 90), TextTransparency = 1,
+	}):Play()
+	local st = l:FindFirstChildOfClass("UIStroke")
+	TweenService:Create(st, TweenInfo.new(0.9), { Transparency = 1 }):Play()
+	task.delay(0.95, function() l:Destroy() end)
+end
+
+local function closeModal()
+	modalLayer:ClearAllChildren()
+	modalLayer.Visible = false
+end
+
+-- Popup générique : title, lines, buttons = { {text, color, fn} }
+function UI.modal(title, body, buttons, accent)
+	modalLayer:ClearAllChildren()
+	modalLayer.Visible = true
+	local box = new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(0.9, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Cc.panel, Parent = modalLayer,
+	}, {
+		K.corner(18), new("UIStroke", { Color = accent or Cc.hot, Thickness = 4 }), K.pad(16), K.list(10),
+		new("UISizeConstraint", { MaxSize = Vector2.new(420, 600) }),
+	})
+	K.label(title, 28, { LayoutOrder = 1, TextColor3 = accent or Cc.ink, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y }).Parent = box
+	K.small(body, 16, { LayoutOrder = 2, TextColor3 = Cc.ink, TextXAlignment = Enum.TextXAlignment.Center, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y }).Parent = box
+	local row = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 46), LayoutOrder = 3, Parent = box }, { K.list(10, Enum.FillDirection.Horizontal) })
+	for _, b in buttons or { { "OK", Cc.green } } do
+		K.button(b[1], b[2], { Size = UDim2.new(0, 150, 0, 44) }, function()
+			closeModal()
+			if b[3] then b[3]() end
+		end).Parent = row
+	end
+	return box
+end
+
+---------------------------------------------------------------------------- HUD
+local function buildHud()
+	hud = new("Frame", { Name = "HUD", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = gui })
+
+	-- compteur de cookies (haut centre)
+	local top = new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6), Size = UDim2.fromOffset(360, 96),
+		BackgroundColor3 = Cc.panel, BackgroundTransparency = 0.15, Parent = hud,
+	}, { K.corner(16), new("UIStroke", { Color = Cc.hot, Thickness = 3 }), K.list(0) })
+	hudRefs.topStroke = top:FindFirstChildOfClass("UIStroke")
+	hudRefs.cookies = K.label("🍪 0", 36, { LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 42) })
+	hudRefs.cookies.Parent = top
+	hudRefs.cps = K.label("0 / seconde", 17, { LayoutOrder = 2, TextColor3 = Cc.cyan, Font = K.BOLD })
+	hudRefs.cps.Parent = top
+	-- barre de combo / chaleur
+	local bar = new("Frame", { LayoutOrder = 3, Size = UDim2.new(0.86, 0, 0, 12), BackgroundColor3 = Cc.stroke, Parent = top }, { K.corner(6) })
+	hudRefs.heat = new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Cc.hot, Parent = bar }, { K.corner(6) })
+	hudRefs.combo = K.label("", 14, { Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(0, -1), Parent = bar, TextSize = 12 })
+
+	-- gemmes / étoiles (haut gauche)
+	local left = new("Frame", { Position = UDim2.fromOffset(8, 60), Size = UDim2.fromOffset(170, 80), BackgroundTransparency = 1, Parent = hud }, { K.list(4, nil, Enum.HorizontalAlignment.Left) })
+	local function chip(color)
+		local f = new("Frame", { Size = UDim2.fromOffset(160, 34), BackgroundColor3 = Cc.panel, BackgroundTransparency = 0.1, Parent = left }, { K.corner(17), new("UIStroke", { Color = color, Thickness = 2 }) })
+		return K.label("", 20, { Size = UDim2.fromScale(1, 1), Parent = f })
+	end
+	hudRefs.gems = chip(Cc.lime)
+	hudRefs.stars = chip(Cc.gold)
+
+	-- buffs (sous le compteur)
+	hudRefs.buffs = new("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 108), Size = UDim2.fromOffset(500, 30), BackgroundTransparency = 1, Parent = hud }, { K.list(6, Enum.FillDirection.Horizontal) })
+
+	-- boss
+	local boss = new("Frame", { Visible = false, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 142), Size = UDim2.fromOffset(380, 58), BackgroundColor3 = Cc.panel, Parent = hud }, { K.corner(12), new("UIStroke", { Color = Cc.red, Thickness = 3 }), K.pad(6), K.list(4) })
+	hudRefs.boss = boss
+	hudRefs.bossName = K.label("", 18, { LayoutOrder = 1, Parent = boss })
+	local hpBg = new("Frame", { LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 14), BackgroundColor3 = Cc.stroke, Parent = boss }, { K.corner(7) })
+	hudRefs.bossHp = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Cc.red, Parent = hpBg }, { K.corner(7) })
+
+	-- bannière fièvre
+	hudRefs.fever = K.label("🌈 FIÈVRE RGB ×3 🌈", 40, { Visible = false, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 205), Size = UDim2.fromOffset(500, 50), Parent = hud })
+
+	-- gros bouton cookie (tap mobile / clic rapide)
+	local tap = new("TextButton", {
+		Name = "TapCookie", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 14, 1, -60), Size = UDim2.fromOffset(130, 130),
+		BackgroundColor3 = Color3.fromHex("#d99a4e"), Text = "🍪", TextScaled = true, Font = K.BOLD, AutoButtonColor = false, Parent = hud,
+	}, { new("UICorner", { CornerRadius = UDim.new(1, 0) }), new("UIStroke", { Color = Cc.hot, Thickness = 5 }) })
+	hudRefs.tap = tap
+	hudRefs.tapStroke = tap:FindFirstChildOfClass("UIStroke")
+	tap.MouseButton1Down:Connect(function()
+		local p = UserInputService:GetMouseLocation()
+		tap.Size = UDim2.fromOffset(118, 118)
+		task.delay(0.06, function() tap.Size = UDim2.fromOffset(130, 130) end)
+		onCookieTap(Vector2.new(p.X, p.Y - 36))
+	end)
+	K.small("Clique le cookie géant ou ce bouton !", 12, { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 10, 1, -40), Size = UDim2.fromOffset(200, 16), TextColor3 = Cc.ink, Parent = hud })
+
+	-- cadeau gratuit + auto-clicker
+	hudRefs.gift = K.button("🎁 Cadeau", Cc.gold, { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 154, 1, -140), Size = UDim2.fromOffset(130, 40), TextSize = 16, Parent = hud }, function()
+		local r = act("gift")
+		if r then UI.modal("🎁 CADEAU !", r, { { "Merci !", Cc.green } }, Cc.gold) end
+	end)
+	hudRefs.auto = K.button("🤖 Auto : ON", Cc.cyan, { Visible = false, AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 154, 1, -92), Size = UDim2.fromOffset(130, 40), TextSize = 16, Parent = hud }, function()
+		act("autoClick", not Store.state.autoClick)
+	end)
+
+	-- fil d'actus
+	local ticker = new("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = Cc.bg, BackgroundTransparency = 0.2, ClipsDescendants = true, Parent = hud })
+	hudRefs.news = K.small("", 15, { Size = UDim2.new(3, 0, 1, 0), TextColor3 = Cc.muted, TextWrapped = false, Parent = ticker })
+	task.spawn(function()
+		while true do
+			hudRefs.news.Text = "📰  " .. D.news[math.random(#D.news)]
+			hudRefs.news.Position = UDim2.new(1, 0, 0, 0)
+			local tw = TweenService:Create(hudRefs.news, TweenInfo.new(18, Enum.EasingStyle.Linear), { Position = UDim2.new(-1.1, 0, 0, 0) })
+			tw:Play()
+			tw.Completed:Wait()
+		end
+	end)
+end
+
+---------------------------------------------------------------------------- panneau à onglets
+local TABS = {
+	{ id = "buildings", label = "🏠", title = "Bâtiments" },
+	{ id = "upgrades", label = "⬆️", title = "Améliorations" },
+	{ id = "pets", label = "🐾", title = "Pets & Œufs" },
+	{ id = "style", label = "🎨", title = "Skins & Thèmes" },
+	{ id = "quests", label = "📜", title = "Quêtes" },
+	{ id = "games", label = "🎮", title = "Mini-jeux" },
+	{ id = "ach", label = "🏆", title = "Succès" },
+	{ id = "rebirth", label = "⭐", title = "Rebirth" },
+	{ id = "shop", label = "💎", title = "BOUTIQUE ROBUX" },
+}
+local tabBuilders = {}
+
+local function openTab(id)
+	if currentTab == id and panel.Visible then
+		panel.Visible = false
+		currentTab = nil
+		return
+	end
+	currentTab = id
+	panel.Visible = true
+	UI.rebuild(true)
+end
+UI.openTab = openTab
+
+function UI.rebuild(resetScroll)
+	if not panel.Visible or not currentTab or not Store.state then return end
+	local pos = panelBody.CanvasPosition
+	for _, c in panelBody:GetChildren() do
+		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then c:Destroy() end
+	end
+	rowUpdaters = {}
+	for _, t in TABS do if t.id == currentTab then panelTitle.Text = t.label .. "  " .. t.title end end
+	tabBuilders[currentTab](panelBody)
+	UI.refreshRows()
+	if not resetScroll then panelBody.CanvasPosition = pos end
+end
+
+function UI.refreshRows()
+	for _, f in rowUpdaters do f() end
+end
+
+local function buildPanel()
+	-- rail d'onglets (droite)
+	local rail = new("ScrollingFrame", {
+		AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -6, 0.5, 0), Size = UDim2.new(0, 64, 0.8, 0),
+		BackgroundTransparency = 1, ScrollBarThickness = 0, AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(),
+		Parent = gui,
+	}, { K.list(6) })
+	for i, t in TABS do
+		local b = K.button(t.label, t.id == "shop" and Cc.green or Cc.violet, { Size = UDim2.fromOffset(56, 52), TextSize = 26, LayoutOrder = i }, function() openTab(t.id) end)
+		b.Parent = rail
+		if t.id == "shop" then
+			hudRefs.shopBtn = b
+		end
+	end
+
+	panel = new("Frame", {
+		Visible = false, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -76, 0.5, 0), Size = UDim2.new(0.42, 0, 0.82, 0),
+		BackgroundColor3 = Cc.panel, BackgroundTransparency = 0.05, Parent = gui,
+	}, { K.corner(18), new("UIStroke", { Color = Cc.violet, Thickness = 3 }), new("UISizeConstraint", { MinSize = Vector2.new(280, 200), MaxSize = Vector2.new(470, 2000) }) })
+	panelTitle = K.label("", 24, { Position = UDim2.fromOffset(12, 8), Size = UDim2.new(1, -60, 0, 32), TextXAlignment = Enum.TextXAlignment.Left, Parent = panel })
+	K.button("✕", Cc.red, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 8), Size = UDim2.fromOffset(36, 32), Parent = panel }, function()
+		panel.Visible = false
+		currentTab = nil
+	end)
+	panelBody = new("ScrollingFrame", {
+		Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 1, -52), BackgroundTransparency = 1, ScrollBarThickness = 6,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y, CanvasSize = UDim2.new(), Parent = panel,
+	}, { K.list(8), new("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 14), PaddingBottom = UDim.new(0, 10) }) })
+end
+
+-- ligne générique : icône, titre, sous-titre, bouton
+local function row(parent, order, icon, title, sub, btnText, btnColor, onBuy)
+	local card = K.card({ LayoutOrder = order, Size = UDim2.new(1, 0, 0, 74), Parent = parent })
+	K.label(icon, 34, { Size = UDim2.fromOffset(46, 56), Position = UDim2.fromOffset(0, 0), Parent = card })
+	local t = K.label(title, 18, { Position = UDim2.fromOffset(52, 0), Size = UDim2.new(1, -170, 0, 22), TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, Parent = card })
+	local s = K.small(sub, 13, { Position = UDim2.fromOffset(52, 24), Size = UDim2.new(1, -170, 0, 34), TextYAlignment = Enum.TextYAlignment.Top, Parent = card })
+	local b
+	if btnText then
+		b = K.button(btnText, btnColor or Cc.green, { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0), Size = UDim2.fromOffset(108, 46), TextSize = 15, TextWrapped = true, Parent = card }, onBuy)
+	end
+	return card, t, s, b
+end
+
+local function setBuyable(b, ok)
+	b.BackgroundColor3 = ok and Cc.green or Color3.fromHex("#4a3f6b")
+	b.TextColor3 = ok and Cc.ink or Cc.muted
+end
+
+local function section(parent, order, text)
+	K.label(text, 20, { LayoutOrder = order, TextColor3 = Cc.gold, Parent = parent })
+end
+
+---------------------------------------------------------------------------- onglet : bâtiments
+tabBuilders.buildings = function(body)
+	local s = Store.state
+	local qrow = new("Frame", { LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Parent = body }, { K.list(6, Enum.FillDirection.Horizontal) })
+	for _, q in { 1, 10, 100, "max" } do
+		K.button(q == "max" and "MAX" or "×" .. q, buyQty == q and Cc.hot or Cc.violet, { Size = UDim2.fromOffset(70, 36), Parent = qrow }, function()
+			buyQty = q
+			UI.rebuild()
+		end)
+	end
+	for i, d in D.buildings do
+		if E.buildingUnlocked(s, i) then
+			local card, t, sub, b = row(body, i, d.emoji, d.name, d.desc, "", Cc.green, function()
+				act("buyBuilding", d.id, buyQty)
+			end)
+			table.insert(rowUpdaters, function()
+				local st = Store.state
+				local owned = st.buildings[d.id] or 0
+				local n = buyQty == "max" and math.max(1, E.bMax(st, d.id)) or buyQty
+				local cost = E.bCost(d.id, n, owned)
+				local per = D.BLD[d.id].cps * E.BLD_POWER * (Store.mult.bld[d.id] or 1)
+				t.Text = d.name .. "  ×" .. owned
+				sub.Text = "+" .. fmt(per) .. "/s chacun (base) · " .. d.desc
+				b.Text = "🍪 " .. fmt(cost) .. (n > 1 and ("\n×" .. n) or "")
+				setBuyable(b, st.cookies >= cost)
+			end)
+		else
+			row(body, i, "❔", "???", "Continue à produire pour débloquer.", nil)
+			break
+		end
+	end
+end
+
+---------------------------------------------------------------------------- onglet : améliorations
+tabBuilders.upgrades = function(body)
+	local s = Store.state
+	local list = {}
+	for _, u in D.upgrades do
+		if not s.upgrades[u.id] then table.insert(list, u) end
+	end
+	table.sort(list, function(a, b)
+		local ra, rb = E.reqMet(s, a), E.reqMet(s, b)
+		if ra ~= rb then return ra end
+		return a.cost < b.cost
+	end)
+	local n = 0
+	for _, u in s.upgrades do n += 1 end
+	K.small(n .. " / " .. #D.upgrades .. " achetées — chaque amélioration ajoute un effet visuel au cookie géant !", 14, { LayoutOrder = 0, TextColor3 = Cc.cyan, Size = UDim2.new(1, 0, 0, 36), Parent = body })
+	for i, u in list do
+		local ok = E.reqMet(s, u)
+		local _, _, _, b = row(body, i, ok and "✨" or "🔒", u.name, ok and E.fxText(u) or ("🔒 " .. E.reqText(u)), ok and ("🍪 " .. fmt(u.cost)) or "Verrouillé", Cc.green, function()
+			act("buyUpgrade", u.id)
+		end)
+		table.insert(rowUpdaters, function() setBuyable(b, ok and Store.state.cookies >= u.cost) end)
+	end
+end
+
+---------------------------------------------------------------------------- onglet : pets
+local function hatchAnim(res)
+	local def = D.PET[res.id]
+	local rar = D.rarities[res.rarity]
+	UI.modal(
+		(res.isNew and "NOUVEAU PET !" or "PET AMÉLIORÉ !"),
+		def.emoji .. "\n" .. def.name .. "\n" .. rar.name .. " · niveau " .. res.lvl .. (res.lucky and "\n🍀 Œuf Chanceux activé !" or "") .. "\n" .. E.petPower({ id = res.id, lvl = res.lvl }),
+		{ { "Trop bien !", Cc.green } },
+		Color3.fromHex(rar.color)
+	)
+end
+
+tabBuilders.pets = function(body)
+	local s = Store.state
+	section(body, 0, "🥚 Œufs (payés en gemmes 💎)")
+	for i, egg in D.eggs do
+		local odds = {}
+		for _, o in egg.odds do table.insert(odds, D.rarities[o[1]].name .. " " .. o[2] .. " %") end
+		local _, _, _, b = row(body, i, "🥚", egg.name, "Probabilités : " .. table.concat(odds, " · "), "💎 " .. egg.cost, Cc.green, function()
+			local res = act("hatch", egg.id)
+			if res and res.ok then hatchAnim(res) elseif res and res.err then UI.toast(res.err, "#ff4d6d") end
+		end)
+		table.insert(rowUpdaters, function() setBuyable(b, Store.state.gems >= egg.cost) end)
+	end
+	if not Store.passes.LuckyEggs then
+		K.button("🍀 Œufs Chanceux (Game Pass) — meilleurs pets !", Cc.green, { LayoutOrder = 10, Size = UDim2.new(1, 0, 0, 40), TextSize = 15, Parent = body }, function() act("buyPass", "LuckyEggs") end)
+	end
+	local slots = Store.mult.petSlots or 3
+	section(body, 20, "🐾 Tes pets (" .. #s.equipped .. "/" .. slots .. " équipés)")
+	if slots < 5 then
+		K.button("👑 VIP : +2 emplacements de pets", Cc.gold, { LayoutOrder = 21, Size = UDim2.new(1, 0, 0, 40), TextSize = 15, Parent = body }, function() act("buyPass", "VIP") end)
+	end
+	local pets = table.clone(s.pets)
+	table.sort(pets, function(a, b) return D.rarities[D.PET[a.id].rarity].rank > D.rarities[D.PET[b.id].rarity].rank end)
+	for i, p in pets do
+		local def = D.PET[p.id]
+		local eq = table.find(s.equipped, p.uid) ~= nil
+		local card, t = row(body, 30 + i, def.emoji, def.name .. " Nv." .. p.lvl, D.rarities[def.rarity].name .. " · " .. E.petPower(p), eq and "Retirer" or "Équiper", eq and Cc.red or Cc.cyan, function()
+			local r = act("equip", p.uid)
+			if type(r) == "table" and r.err then UI.toast(r.err, "#ff4d6d") end
+		end)
+		t.TextColor3 = Color3.fromHex(D.rarities[def.rarity].color)
+		if eq then card:FindFirstChildOfClass("UIStroke").Color = Cc.lime end
+	end
+	if #pets == 0 then K.small("Aucun pet pour l'instant. Fais éclore un œuf !", 14, { LayoutOrder = 30, Parent = body }) end
+end
+
+---------------------------------------------------------------------------- onglet : style
+tabBuilders.style = function(body)
+	local s = Store.state
+	section(body, 0, "🍪 Skins du cookie")
+	for i, sk in D.skins do
+		local owned = s.skinsOwned[sk.id]
+		local btn, col
+		if s.skin == sk.id then
+			btn, col = "Équipé ✓", Cc.lime
+		elseif owned then
+			btn, col = "Équiper", Cc.cyan
+		elseif sk.unlock and sk.unlock.pass then
+			btn, col = "Robux 💰", Cc.green
+		elseif sk.unlock then
+			btn, col = "🔒", Color3.fromHex("#4a3f6b")
+		else
+			btn, col = "💎 " .. sk.cost, Cc.green
+		end
+		local card = row(body, i, "🍪", sk.name, sk.unlock and ("Déblocage : " .. sk.unlock.text) or (sk.cost == 0 and "Gratuit" or "Skin payé en gemmes"), btn, col, function()
+			if not owned and sk.unlock and sk.unlock.pass then
+				act("buyPass", sk.unlock.pass)
+			else
+				act("skin", sk.id)
+			end
+		end)
+		card.BackgroundColor3 = Color3.fromHex(sk.base):Lerp(Cc.panel2, 0.55)
+	end
+	section(body, 50, "🌆 Thèmes de l'arène")
+	for i, th in D.themes do
+		local owned = s.themesOwned[th.id]
+		local card = row(body, 50 + i, "🌆", th.name, owned and "Débloqué" or "Thème payé en gemmes", s.theme == th.id and "Actif ✓" or owned and "Activer" or ("💎 " .. th.cost), s.theme == th.id and Cc.lime or Cc.green, function()
+			act("theme", th.id)
+		end)
+		card.BackgroundColor3 = Color3.fromHex(th.ambient):Lerp(Cc.panel2, 0.6)
+	end
+end
+
+---------------------------------------------------------------------------- onglet : quêtes
+tabBuilders.quests = function(body)
+	local s = Store.state
+	for i, q in s.quests do
+		local def
+		for _, d in D.quests do if d.type == q.type then def = d end end
+		if def then
+			local text = string.gsub(def.text, "{n}", def.fmt and fmt(q.target) or tostring(q.target))
+			local card = K.card({ LayoutOrder = i, Size = UDim2.new(1, 0, 0, 104), Parent = body })
+			K.label(text, 17, { Size = UDim2.new(1, 0, 0, 22), TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
+			local bg = new("Frame", { Position = UDim2.fromOffset(0, 30), Size = UDim2.new(1, 0, 0, 14), BackgroundColor3 = Cc.stroke, Parent = card }, { K.corner(7) })
+			new("Frame", { Size = UDim2.fromScale(math.clamp(q.progress / q.target, 0, 1), 1), BackgroundColor3 = q.done and Cc.lime or Cc.cyan, Parent = bg }, { K.corner(7) })
+			K.small(fmt(q.progress) .. " / " .. fmt(q.target) .. "  ·  récompense 💎 " .. q.gems, 13, { Position = UDim2.fromOffset(0, 48), Parent = card })
+			if q.done then
+				K.button("Réclamer 💎", Cc.gold, { Position = UDim2.new(1, -130, 0, 64), Size = UDim2.fromOffset(130, 32), TextSize = 15, Parent = card }, function()
+					local g = act("claimQuest", q.id)
+					if g then UI.toast("+" .. g .. " gemmes 💎", "#b6ff3b") end
+				end)
+			else
+				K.button("Changer (💎3)", Cc.violet, { Position = UDim2.new(1, -130, 0, 64), Size = UDim2.fromOffset(130, 32), TextSize = 14, Parent = card }, function()
+					act("rerollQuest", q.id)
+				end)
+			end
+		end
+	end
+end
+
+---------------------------------------------------------------------------- onglet : mini-jeux
+tabBuilders.games = function(body)
+	local s = Store.state
+	for i, m in D.minigames do
+		local ok = E.minigameUnlocked(s, m.id)
+		local rec = s.mg[m.id]
+		row(body, i, m.emoji, m.name, ok and ("Record : " .. fmt(rec and rec.best or 0) .. " · parties : " .. (rec and rec.plays or 0)) or ("🔒 " .. m.text), ok and "JOUER" or "🔒", ok and Cc.hot or Color3.fromHex("#4a3f6b"), function()
+			if ok then
+				panel.Visible = false
+				currentTab = nil
+				Minigames.open(m.id)
+			end
+		end)
+	end
+end
+
+---------------------------------------------------------------------------- onglet : succès
+tabBuilders.ach = function(body)
+	local s = Store.state
+	local n = 0
+	for _ in s.achievements do n += 1 end
+	K.small(n .. " / " .. #D.achievements .. " débloqués · chaque succès = +1 % de production", 14, { LayoutOrder = 0, TextColor3 = Cc.cyan, Parent = body })
+	for i, a in D.achievements do
+		local got = s.achievements[a.id] ~= nil
+		local card = row(body, i, got and "🏆" or "🔒", a.name, a.desc .. "  (💎 " .. a.gems .. ")", nil)
+		if got then card:FindFirstChildOfClass("UIStroke").Color = Cc.gold else card.BackgroundTransparency = 0.4 end
+	end
+end
+
+---------------------------------------------------------------------------- onglet : rebirth
+tabBuilders.rebirth = function(body)
+	local s = Store.state
+	local gain = E.rebirthGain(s)
+	K.label("⭐ " .. s.stars .. " étoiles · " .. s.rebirths .. " rebirth(s)", 22, { LayoutOrder = 1, TextColor3 = Cc.gold, Parent = body })
+	K.small("Chaque étoile donne +10 % de production et de clics, POUR TOUJOURS. Le rebirth remet à zéro tes cookies, bâtiments et améliorations, mais tu gardes gemmes, pets, skins et succès.", 15, { LayoutOrder = 2, TextColor3 = Cc.ink, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Parent = body })
+	K.label(gain >= 1 and ("Rebirth maintenant : +" .. gain .. " ⭐ et +" .. gain * 10 .. " 💎") or ("Il faut " .. fmt(E.REBIRTH_MIN) .. " cookies produits depuis le dernier rebirth."), 18, { LayoutOrder = 3, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Parent = body })
+	local b = K.button("⭐ REBIRTH ⭐", Cc.gold, { LayoutOrder = 4, Size = UDim2.new(1, 0, 0, 56), TextSize = 26, Parent = body }, function()
+		if gain < 1 then return end
+		UI.modal("Rebirth ?", "Tu vas repartir de zéro avec +" .. gain .. " ⭐ (+" .. gain * 10 .. "% de production). Sûr ?", {
+			{ "Annuler", Cc.red },
+			{ "GO !", Cc.gold, function()
+				local g = act("rebirth")
+				if g then UI.modal("⭐ RENAISSANCE ⭐", "+" .. g .. " étoiles ! Ton cookie est plus fort que jamais.", nil, Cc.gold) end
+			end },
+		}, Cc.gold)
+	end)
+	setBuyable(b, gain >= 1)
+end
+
+---------------------------------------------------------------------------- onglet : boutique Robux
+tabBuilders.shop = function(body)
+	local passes = Store.passes
+	K.label("💎 Game Passes (à vie)", 22, { LayoutOrder = 0, TextColor3 = Cc.lime, Parent = body })
+	for i, p in Shop.passes do
+		local owned = passes[p.key]
+		local btn = owned and "Possédé ✓" or (p.id == 0 and "Bientôt" or ("R$ " .. p.price))
+		local card = row(body, i, p.emoji, p.name, p.desc, btn, owned and Cc.lime or Cc.green, function()
+			if not owned then
+				if not act("buyPass", p.key) then UI.toast("Bientôt disponible !", "#ffc93c") end
+			end
+		end)
+		card:FindFirstChildOfClass("UIStroke").Color = owned and Cc.lime or Cc.gold
+	end
+	K.label("🛒 Packs & Boosts", 22, { LayoutOrder = 50, TextColor3 = Cc.cyan, Parent = body })
+	for i, p in Shop.products do
+		local desc = p.desc or ""
+		if p.kind == "gems" then desc = "Pour les œufs, skins et thèmes." .. (p.tag and ("  🔥 " .. p.tag) or "")
+		elseif p.kind == "boost" then desc = "Toute ta production ×" .. p.mult .. " pendant " .. math.floor(p.dur / 60) .. " min (cumulable)."
+		elseif p.kind == "fever" then desc = "Déclenche la Fièvre RGB (×3) tout de suite !" end
+		row(body, 50 + i, p.emoji, p.name, desc, p.id == 0 and "Bientôt" or ("R$ " .. p.price), Cc.green, function()
+			if not act("buyProduct", p.key) then UI.toast("Bientôt disponible !", "#ffc93c") end
+		end)
+	end
+	K.small("Les achats passent par la fenêtre officielle Roblox. Les probabilités des œufs sont affichées dans l'onglet Pets.", 12, { LayoutOrder = 200, Size = UDim2.new(1, 0, 0, 34), Parent = body })
+end
+
+---------------------------------------------------------------------------- cookies dorés
+local goldenButtons = {}
+local function refreshGolden(list)
+	local seen = {}
+	for _, g in list do
+		seen[g.id] = true
+		if not goldenButtons[g.id] then
+			local b = new("TextButton", {
+				AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(g.x, g.y), Size = UDim2.fromOffset(78, 78),
+				BackgroundColor3 = Cc.gold, Text = "🍪", TextScaled = true, Font = K.BOLD, Parent = goldenLayer,
+			}, { new("UICorner", { CornerRadius = UDim.new(1, 0) }), new("UIStroke", { Color = Color3.fromHex("#fff2a8"), Thickness = 5 }) })
+			b.MouseButton1Click:Connect(function()
+				local res = act("golden", g.id)
+				local p = b.AbsolutePosition + b.AbsoluteSize / 2
+				b:Destroy()
+				goldenButtons[g.id] = nil
+				if res then
+					UI.floatText(res.label, p, Color3.fromHex(res.color), 32)
+					UI.toast("✨ " .. res.label, res.color)
+				end
+			end)
+			TweenService:Create(b, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Size = UDim2.fromOffset(90, 90), Rotation = 12 }):Play()
+			goldenButtons[g.id] = b
+		end
+	end
+	for id, b in goldenButtons do
+		if not seen[id] then
+			b:Destroy()
+			goldenButtons[id] = nil
+		end
+	end
+end
+
+---------------------------------------------------------------------------- mises à jour
+function UI.onLive(live)
+	hudRefs.cookies.Text = "🍪 " .. fmt(live.cookies)
+	hudRefs.cps.Text = fmt(live.cps) .. " / seconde  ·  clic " .. fmt(live.click)
+	hudRefs.gems.Text = "💎 " .. fmt(live.gems)
+	hudRefs.heat.Size = UDim2.fromScale(live.fever > 0 and 1 or live.combo.heat, 1)
+	hudRefs.combo.Text = live.combo.n > 0 and ("COMBO " .. live.combo.n .. "  ×" .. live.combo.mult) or ""
+	hudRefs.fever.Visible = live.fever > 0
+	-- buffs
+	for _, c in hudRefs.buffs:GetChildren() do
+		if c:IsA("TextLabel") or c:IsA("Frame") then c:Destroy() end
+	end
+	local function buffChip(text, color)
+		local f = new("Frame", { Size = UDim2.fromOffset(0, 28), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Cc.panel, Parent = hudRefs.buffs }, { K.corner(14), new("UIStroke", { Color = color, Thickness = 2 }), new("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }) })
+		K.label(text, 15, { Size = UDim2.fromScale(0, 1), AutomaticSize = Enum.AutomaticSize.X, Parent = f })
+	end
+	for _, b in live.buffs do buffChip(b.emoji .. " " .. b.name .. " " .. math.ceil(b.left) .. "s", Cc.hot) end
+	if live.boost > 0 then buffChip("⚡ Boost ×" .. live.boostMult .. " " .. K.fmtTime(live.boost), Cc.lime) end
+	-- boss
+	if live.boss then
+		hudRefs.boss.Visible = true
+		hudRefs.bossName.Text = live.boss.emoji .. " " .. live.boss.name .. " — " .. math.ceil(live.boss.left) .. "s — CLIQUE !"
+		hudRefs.bossHp.Size = UDim2.fromScale(live.boss.hp / live.boss.maxHp, 1)
+	else
+		hudRefs.boss.Visible = false
+	end
+	-- cadeau
+	hudRefs.gift.Text = live.giftIn > 0 and ("🎁 " .. K.fmtTime(live.giftIn)) or "🎁 Cadeau !"
+	hudRefs.gift.BackgroundColor3 = live.giftIn > 0 and Color3.fromHex("#4a3f6b") or Cc.gold
+	refreshGolden(live.golden)
+	UI.refreshRows()
+end
+
+function UI.onFull()
+	local s = Store.state
+	hudRefs.stars.Text = "⭐ " .. s.stars .. " étoiles"
+	hudRefs.auto.Visible = Store.passes.AutoClicker == true
+	hudRefs.auto.Text = s.autoClick and "🤖 Auto : ON" or "🤖 Auto : OFF"
+	local sk = D.SKIN[s.skin]
+	if sk then hudRefs.tap.BackgroundColor3 = Color3.fromHex(sk.base) end
+	UI.rebuild(false)
+end
+
+---------------------------------------------------------------------------- init
+function UI.init(store, actFn, tapFn, minigames)
+	Store, act, onCookieTap, Minigames = store, actFn, tapFn, minigames
+	gui = new("ScreenGui", { Name = "CookieUI", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, IgnoreGuiInset = true, Parent = Players.LocalPlayer:WaitForChild("PlayerGui") })
+	goldenLayer = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 5, Parent = gui })
+	buildHud()
+	buildPanel()
+	fxLayer = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 20, Parent = gui })
+	toastList = new("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -34), Size = UDim2.fromOffset(340, 300), BackgroundTransparency = 1, ZIndex = 30, Parent = gui }, {
+		new("UIListLayout", { Padding = UDim.new(0, 6), VerticalAlignment = Enum.VerticalAlignment.Bottom, SortOrder = Enum.SortOrder.LayoutOrder }),
+	})
+	modalLayer = new("Frame", { Visible = false, Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, ZIndex = 50, Active = true, Parent = gui })
+	UI.gui = gui
+	-- bordure RGB animée + bouton boutique qui clignote
+	RunService.RenderStepped:Connect(function()
+		local t = os.clock()
+		hudRefs.topStroke.Color = K.rgb(t)
+		hudRefs.tapStroke.Color = K.rgb(t, 0.3)
+		if hudRefs.fever.Visible then hudRefs.fever.TextColor3 = K.rgb(t * 3) end
+		if hudRefs.shopBtn then hudRefs.shopBtn.Rotation = math.sin(t * 4) * 6 end
+	end)
+end
+
+return UI
+]]></string>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="Workspace" referent="18">
+    <Properties>
+      <string name="Name">Workspace</string>
+      <float name="Gravity">196.2</float>
+      <bool name="NeedsPivotMigration">false</bool>
+    </Properties>
+    <Item class="Part" referent="19">
+      <Properties>
+        <string name="Name">Baseplate</string>
+        <bool name="Anchored">true</bool>
+        <Color3uint8 name="Color3uint8">1181737</Color3uint8>
+        <token name="Material">272</token>
+        <Vector3 name="Position">
+          <X>0</X>
+          <Y>-2</Y>
+          <Z>0</Z>
+        </Vector3>
+        <Vector3 name="size">
+          <X>512</X>
+          <Y>4</Y>
+          <Z>512</Z>
+        </Vector3>
+        <token name="TopSurface">0</token>
+      </Properties>
+    </Item>
+    <Item class="SpawnLocation" referent="20">
+      <Properties>
+        <string name="Name">SpawnLocation</string>
+        <bool name="Anchored">true</bool>
+        <Color3uint8 name="Color3uint8">16722902</Color3uint8>
+        <bool name="Neutral">true</bool>
+        <Vector3 name="Position">
+          <X>0</X>
+          <Y>0.5</Y>
+          <Z>40</Z>
+        </Vector3>
+        <Vector3 name="size">
+          <X>12</X>
+          <Y>1</Y>
+          <Z>12</Z>
+        </Vector3>
+        <float name="Transparency">0.4</float>
+      </Properties>
+    </Item>
+  </Item>
+</roblox>
