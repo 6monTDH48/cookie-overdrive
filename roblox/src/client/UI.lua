@@ -403,7 +403,6 @@ local function buildPanel()
 		ScrollingDirection = Enum.ScrollingDirection.Y, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar, ZIndex = 2, Parent = p,
 	})
-	K.padding(body, 12, 12, 18, 12)
 	L.body = body
 	body:GetPropertyChangedSignal("AbsoluteWindowSize"):Connect(function()
 		if L.page and UI.tab and math.abs(L.page.AbsoluteSize.X - (body.AbsoluteWindowSize.X - 28)) > 2 then UI.render(true) end
@@ -440,8 +439,9 @@ function UI.render(keepScroll: boolean?)
 	if page then page:Destroy() end
 	-- largeur fixe en pixels : la page ne peut plus déborder à droite du panneau
 	local width = math.max(200, body.AbsoluteWindowSize.X - 24 - 4)
-	local pg = frame({ Name = "Page_" .. UI.tab, Size = UDim2.fromOffset(width, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 2, Parent = body })
+	local pg = frame({ Name = "Page_" .. UI.tab, Position = UDim2.fromOffset(12, 12), Size = UDim2.fromOffset(width, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 2, Parent = body })
 	K.vlist(pg, 8)
+	K.padding(pg, 0, 0, 18, 0)
 	page = pg
 	L.page = pg
 	Panel.render(UI.tab, pg, width)
