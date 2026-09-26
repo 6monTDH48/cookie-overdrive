@@ -405,6 +405,9 @@ local function buildPanel()
 	})
 	K.padding(body, 12, 12, 18, 12)
 	L.body = body
+	body:GetPropertyChangedSignal("AbsoluteWindowSize"):Connect(function()
+		if page and UI.tab and math.abs(page.AbsoluteSize.X - (body.AbsoluteWindowSize.X - 28)) > 2 then UI.render(true) end
+	end)
 end
 
 local function styleTab(id: string)
@@ -435,10 +438,11 @@ function UI.render(keepScroll: boolean?)
 	local body = L.body :: ScrollingFrame
 	local y = body.CanvasPosition.Y
 	if page then page:Destroy() end
-	local pg = frame({ Name = "Page_" .. UI.tab, Size = UDim2.fromScale(1, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 2, Parent = body })
+	-- largeur fixe en pixels : la page ne peut plus déborder à droite du panneau
+	local width = math.max(200, body.AbsoluteWindowSize.X - 24 - 4)
+	local pg = frame({ Name = "Page_" .. UI.tab, Size = UDim2.fromOffset(width, 0), AutomaticSize = Enum.AutomaticSize.Y, ZIndex = 2, Parent = body })
 	K.vlist(pg, 8)
 	page = pg
-	local width = math.max(200, body.AbsoluteSize.X - 24 - 6)
 	Panel.render(UI.tab, pg, width)
 	lastSoft = Panel.softKey(UI.tab)
 	if keepScroll then
