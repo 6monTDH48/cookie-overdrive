@@ -571,6 +571,7 @@ function D.fmt(n)
 	if e >= #SUF then return string.format("%.2e", n) end
 	local v = n / 10 ^ (e * 3)
 	local s = v >= 100 and string.format("%.0f", v) or v >= 10 and string.format("%.1f", v) or string.format("%.2f", v)
+	if string.find(s, "%.") then s = string.gsub(string.gsub(s, "0+$", ""), "%.$", "") end
 	return (string.gsub(s, "%.", ",")) .. " " .. SUF[e + 1]
 end
 
