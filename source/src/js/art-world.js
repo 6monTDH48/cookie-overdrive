@@ -227,6 +227,28 @@
       ${spark(8.5, 10, 3.6, '#fff', 1.3)}`;
     },
 
+    'b:ai': () => `<defs>${lg('h', '#e8e6f5', '#8d7ad0')}${lg('v', '#1ff4ff', '#0b6d8a')}${lg('t', '#ffffff', '#d4c4ff')}</defs>
+      <path d="M12 12Q12 4 18 5Q20 1 24 3Q28 1 30 5Q36 4 36 12Z" fill="url(#t)" ${st(2.6)}/>
+      <rect x="8" y="12" width="32" height="26" rx="8" fill="url(#h)" ${st(3.2)}/>
+      <rect x="12" y="17" width="24" height="12" rx="5" fill="url(#v)" ${st(2.2)}/>
+      <circle cx="19" cy="23" r="2.4" fill="#fff"/><circle cx="29" cy="23" r="2.4" fill="#fff"/>
+      <path d="M19 33Q24 36 29 33" fill="none" ${st(2.2)}/>
+      <path d="M17 38v6M31 38v6" ${st(3)}/><circle cx="41" cy="9" r="4.6" fill="#d99a4e" ${st(2)}/><circle cx="40" cy="8" r="1" fill="#4a2511"/><circle cx="42.4" cy="10.4" r=".9" fill="#4a2511"/>
+      ${shine('M11.5 17v10', 1.8, 0.7)}`,
+    'b:dyson': () => `<defs>${rg('s', '#fff6c4', '#ff8a00', 0.5, 0.5, 0.6)}${lg('r', '#b8a0ff', '#3a2766')}</defs>
+      <circle cx="24" cy="24" r="10" fill="url(#s)" ${st(2.4)}/>
+      <g fill="none" stroke="${OL}" stroke-width="5.4"><ellipse cx="24" cy="24" rx="20" ry="8"/><ellipse cx="24" cy="24" rx="8" ry="20" transform="rotate(35 24 24)"/></g>
+      <g fill="none" stroke="url(#r)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="20" ry="8"/><ellipse cx="24" cy="24" rx="8" ry="20" transform="rotate(35 24 24)"/></g>
+      <g fill="#4a2511"><circle cx="21" cy="21" r="1.4"/><circle cx="27" cy="25" r="1.6"/><circle cx="22" cy="28" r="1.1"/></g>
+      ${spark(40, 7, 3, '#fff27a', 1.2)}`,
+    'b:multiverse': () => `<defs>${lg('a', '#ff5ec8', '#7a2cff')}${lg('b', '#1ff4ff', '#1b5fd6')}${lg('c', '#fff27a', '#ff8a00')}</defs>
+      <circle cx="16" cy="18" r="11" fill="url(#a)" ${st(3)}/><circle cx="32" cy="18" r="11" fill="url(#b)" ${st(3)}/><circle cx="24" cy="31" r="11" fill="url(#c)" ${st(3)}/>
+      <g fill="#4a2511" stroke="${OL}" stroke-width="1"><circle cx="13" cy="16" r="1.6"/><circle cx="34" cy="15" r="1.6"/><circle cx="22" cy="33" r="1.8"/><circle cx="27" cy="29" r="1.3"/></g>
+      ${shine('M9 14q2-4 6-5', 1.8, 0.8)}${spark(42, 40, 3, '#fff', 1.2)}`,
+    'b:bigbang': () => `<defs>${rg('x', '#ffffff', '#ff2bd6', 0.5, 0.5, 0.55)}</defs>
+      <path d="${star(24, 24, 21, 9, 12, 0)}" fill="url(#x)" ${st(3)}/>
+      <circle cx="24" cy="24" r="7.6" fill="#d99a4e" ${st(2.4)}/><g fill="#4a2511"><circle cx="22" cy="22" r="1.4"/><circle cx="26.4" cy="25.6" r="1.5"/><circle cx="21.6" cy="26.6" r="1"/></g>
+      ${spark(8, 8, 3.2, '#1ff4ff', 1.2)}${spark(41, 40, 3.2, '#fff27a', 1.2)}${spark(40, 9, 2.4, '#fff', 1)}`,
     'b:streamer': () => `<defs>${lg('f', '#9b86f0', '#3f2a8f')}${lg('s', '#ff2bd6', '#1ff4ff', 1, 1)}${lg('r', '#ff7a8a', '#d0102f')}${lg('m', '#efe8ff', '#8d7ad0')}</defs>
       <path d="M20 34.5L18 41H30L28 34.5Z" fill="url(#m)" ${st(2.6)}/>
       <rect x="12.5" y="40" width="23" height="4.6" rx="2.3" fill="url(#m)" ${st(2.8)}/>

@@ -23,6 +23,10 @@
     { id: 'antimatter',  name: 'Condensateur Antimatière', cost: 1.7e14,  cps: 4.3e8,  desc: 'Condense l\'univers en pâte à cookie.' },
     { id: 'prism',       name: 'Prisme RGB', cost: 2.1e15,  cps: 2.9e9,  desc: 'Convertit la lumière pure en cookies. Et en RGB.' },
     { id: 'streamer',    name: 'Stream 24/7', cost: 2.6e16,  cps: 2.1e10, desc: 'Des millions de viewers spamment des cookies.' },
+    { id: 'ai',          name: 'IA Pâtissière', cost: 3.1e17,  cps: 1.5e11, desc: 'Elle a lu toutes les recettes du monde. Elle en invente de meilleures.' },
+    { id: 'dyson',       name: 'Sphère de Dyson Choco', cost: 3.7e18,  cps: 1.1e12, desc: 'Capture toute l\'énergie d\'une étoile pour préchauffer le four.' },
+    { id: 'multiverse',  name: 'Usine Multivers', cost: 4.4e19,  cps: 8e12,   desc: 'Chaque univers parallèle bosse pour toi. Même celui où tu es un brocoli.' },
+    { id: 'bigbang',     name: 'Big Bang Sucré', cost: 5.5e20,  cps: 6e13,   desc: 'Crée des univers entiers faits de pâte à cookie.' },
   ];
 
   /* ───────────────────────── VISUAL LAYERS ─────────────────────────
@@ -108,6 +112,14 @@
     { id: 'trou_noir',     name: 'Trou Noir', cost: 1.7e15,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 1] }, vis: ['black_hole', 1] },
     { id: 'prisme',        name: 'Afterimage Prismatique', cost: 2.1e16,  fx: { bld: 'prism', x: 2, cps: 1.2 },   req: { bld: ['prism', 1] },     vis: ['afterimage', 1] },
     { id: 'chat_direct',   name: 'Chat en Direct', cost: 2.6e17,  fx: { bld: 'streamer', x: 2 },          req: { bld: ['streamer', 1] },  vis: ['chat', 1] },
+    { id: 'ai_1',          name: 'Réseau de Neurones Sucré', cost: 3.1e18, fx: { bld: 'ai', x: 2 },          req: { bld: ['ai', 1] },          vis: ['glitch', 1] },
+    { id: 'ai_25',         name: 'Superintelligence Gourmande', cost: 7.8e19, fx: { bld: 'ai', x: 2 },     req: { bld: ['ai', 25] },         vis: ['holo', 1] },
+    { id: 'dyson_1',       name: 'Panneaux Solaires Pépite', cost: 3.7e19, fx: { bld: 'dyson', x: 2 },    req: { bld: ['dyson', 1] },       vis: ['god_rays', 1] },
+    { id: 'dyson_25',      name: 'Étoile Apprivoisée', cost: 9.2e20, fx: { bld: 'dyson', x: 2 },          req: { bld: ['dyson', 25] },      vis: ['halo', 1] },
+    { id: 'multi_1',       name: 'Câbles Interdimensionnels', cost: 4.4e20, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 1] }, vis: ['warp', 1] },
+    { id: 'multi_25',      name: 'Conseil des Toi Alternatifs', cost: 1.1e22, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 25] }, vis: ['afterimage', 1] },
+    { id: 'bang_1',        name: 'Inflation Cosmique', cost: 5.5e21, fx: { bld: 'bigbang', x: 2 },       req: { bld: ['bigbang', 1] },     vis: ['galaxy_core', 1] },
+    { id: 'bang_25',       name: 'Théorie du Tout (Chocolat)', cost: 1.4e23, fx: { bld: 'bigbang', x: 2, cps: 1.2 }, req: { bld: ['bigbang', 25] }, vis: ['black_hole', 1] },
     // ── vague 2 : paliers 25 / 50 et bonus globaux ──
     { id: 'curseurs_50',   name: 'Curseurs Hyperthreadés', cost: 5e6,     fx: { bld: 'cursor', x: 3 },            req: { bld: ['cursor', 50] },   vis: ['cursor_rgb', 1] },
     { id: 'mamies_50',     name: 'Mamies Pro League', cost: 4e7,     fx: { bld: 'granny', x: 3 },            req: { bld: ['granny', 50] },   vis: ['headphones', 1] },
@@ -238,6 +250,9 @@
   const B = (s, id) => s.buildings[id] || 0;
   const totalB = (s) => Object.values(s.buildings).reduce((a, b) => a + b, 0);
   const achievements = [
+    { id: 'a_ai',        name: 'Singularité Sucrée', gems: 20, desc: 'Possède une IA Pâtissière.',        check: (s) => B(s, 'ai') >= 1 },
+    { id: 'a_bigbang',   name: 'Créateur d\'Univers', gems: 50, desc: 'Possède un Big Bang Sucré.',     check: (s) => B(s, 'bigbang') >= 1 },
+    { id: 'a_bld500',    name: 'Empire Industriel', gems: 25, desc: 'Possède 500 bâtiments au total.',    check: (s) => totalB(s) >= 500 },
     { id: 'a_boss5',     name: 'Chasseur de Légumes', gems: 8,  desc: 'Bats 5 boss.',                          check: (s) => s.stats.bossKills >= 5 },
     { id: 'a_boss15',    name: 'Terreur du Potager', gems: 15, desc: 'Bats 15 boss.',                         check: (s) => s.stats.bossKills >= 15 },
     { id: 'a_boss40',    name: 'Végétarien Repenti', gems: 30, desc: 'Bats 40 boss.',                         check: (s) => s.stats.bossKills >= 40 },

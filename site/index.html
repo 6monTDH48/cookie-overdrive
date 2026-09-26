@@ -598,6 +598,10 @@
     { id: 'antimatter',  name: 'Condensateur Antimatière', cost: 1.7e14,  cps: 4.3e8,  desc: 'Condense l\'univers en pâte à cookie.' },
     { id: 'prism',       name: 'Prisme RGB', cost: 2.1e15,  cps: 2.9e9,  desc: 'Convertit la lumière pure en cookies. Et en RGB.' },
     { id: 'streamer',    name: 'Stream 24/7', cost: 2.6e16,  cps: 2.1e10, desc: 'Des millions de viewers spamment des cookies.' },
+    { id: 'ai',          name: 'IA Pâtissière', cost: 3.1e17,  cps: 1.5e11, desc: 'Elle a lu toutes les recettes du monde. Elle en invente de meilleures.' },
+    { id: 'dyson',       name: 'Sphère de Dyson Choco', cost: 3.7e18,  cps: 1.1e12, desc: 'Capture toute l\'énergie d\'une étoile pour préchauffer le four.' },
+    { id: 'multiverse',  name: 'Usine Multivers', cost: 4.4e19,  cps: 8e12,   desc: 'Chaque univers parallèle bosse pour toi. Même celui où tu es un brocoli.' },
+    { id: 'bigbang',     name: 'Big Bang Sucré', cost: 5.5e20,  cps: 6e13,   desc: 'Crée des univers entiers faits de pâte à cookie.' },
   ];
 
   /* ───────────────────────── VISUAL LAYERS ─────────────────────────
@@ -683,6 +687,14 @@
     { id: 'trou_noir',     name: 'Trou Noir', cost: 1.7e15,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 1] }, vis: ['black_hole', 1] },
     { id: 'prisme',        name: 'Afterimage Prismatique', cost: 2.1e16,  fx: { bld: 'prism', x: 2, cps: 1.2 },   req: { bld: ['prism', 1] },     vis: ['afterimage', 1] },
     { id: 'chat_direct',   name: 'Chat en Direct', cost: 2.6e17,  fx: { bld: 'streamer', x: 2 },          req: { bld: ['streamer', 1] },  vis: ['chat', 1] },
+    { id: 'ai_1',          name: 'Réseau de Neurones Sucré', cost: 3.1e18, fx: { bld: 'ai', x: 2 },          req: { bld: ['ai', 1] },          vis: ['glitch', 1] },
+    { id: 'ai_25',         name: 'Superintelligence Gourmande', cost: 7.8e19, fx: { bld: 'ai', x: 2 },     req: { bld: ['ai', 25] },         vis: ['holo', 1] },
+    { id: 'dyson_1',       name: 'Panneaux Solaires Pépite', cost: 3.7e19, fx: { bld: 'dyson', x: 2 },    req: { bld: ['dyson', 1] },       vis: ['god_rays', 1] },
+    { id: 'dyson_25',      name: 'Étoile Apprivoisée', cost: 9.2e20, fx: { bld: 'dyson', x: 2 },          req: { bld: ['dyson', 25] },      vis: ['halo', 1] },
+    { id: 'multi_1',       name: 'Câbles Interdimensionnels', cost: 4.4e20, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 1] }, vis: ['warp', 1] },
+    { id: 'multi_25',      name: 'Conseil des Toi Alternatifs', cost: 1.1e22, fx: { bld: 'multiverse', x: 2 }, req: { bld: ['multiverse', 25] }, vis: ['afterimage', 1] },
+    { id: 'bang_1',        name: 'Inflation Cosmique', cost: 5.5e21, fx: { bld: 'bigbang', x: 2 },       req: { bld: ['bigbang', 1] },     vis: ['galaxy_core', 1] },
+    { id: 'bang_25',       name: 'Théorie du Tout (Chocolat)', cost: 1.4e23, fx: { bld: 'bigbang', x: 2, cps: 1.2 }, req: { bld: ['bigbang', 25] }, vis: ['black_hole', 1] },
     // ── vague 2 : paliers 25 / 50 et bonus globaux ──
     { id: 'curseurs_50',   name: 'Curseurs Hyperthreadés', cost: 5e6,     fx: { bld: 'cursor', x: 3 },            req: { bld: ['cursor', 50] },   vis: ['cursor_rgb', 1] },
     { id: 'mamies_50',     name: 'Mamies Pro League', cost: 4e7,     fx: { bld: 'granny', x: 3 },            req: { bld: ['granny', 50] },   vis: ['headphones', 1] },
@@ -813,6 +825,9 @@
   const B = (s, id) => s.buildings[id] || 0;
   const totalB = (s) => Object.values(s.buildings).reduce((a, b) => a + b, 0);
   const achievements = [
+    { id: 'a_ai',        name: 'Singularité Sucrée', gems: 20, desc: 'Possède une IA Pâtissière.',        check: (s) => B(s, 'ai') >= 1 },
+    { id: 'a_bigbang',   name: 'Créateur d\'Univers', gems: 50, desc: 'Possède un Big Bang Sucré.',     check: (s) => B(s, 'bigbang') >= 1 },
+    { id: 'a_bld500',    name: 'Empire Industriel', gems: 25, desc: 'Possède 500 bâtiments au total.',    check: (s) => totalB(s) >= 500 },
     { id: 'a_boss5',     name: 'Chasseur de Légumes', gems: 8,  desc: 'Bats 5 boss.',                          check: (s) => s.stats.bossKills >= 5 },
     { id: 'a_boss15',    name: 'Terreur du Potager', gems: 15, desc: 'Bats 15 boss.',                         check: (s) => s.stats.bossKills >= 15 },
     { id: 'a_boss40',    name: 'Végétarien Repenti', gems: 30, desc: 'Bats 40 boss.',                         check: (s) => s.stats.bossKills >= 40 },
@@ -1493,6 +1508,28 @@
       ${spark(8.5, 10, 3.6, '#fff', 1.3)}`;
     },
 
+    'b:ai': () => `<defs>${lg('h', '#e8e6f5', '#8d7ad0')}${lg('v', '#1ff4ff', '#0b6d8a')}${lg('t', '#ffffff', '#d4c4ff')}</defs>
+      <path d="M12 12Q12 4 18 5Q20 1 24 3Q28 1 30 5Q36 4 36 12Z" fill="url(#t)" ${st(2.6)}/>
+      <rect x="8" y="12" width="32" height="26" rx="8" fill="url(#h)" ${st(3.2)}/>
+      <rect x="12" y="17" width="24" height="12" rx="5" fill="url(#v)" ${st(2.2)}/>
+      <circle cx="19" cy="23" r="2.4" fill="#fff"/><circle cx="29" cy="23" r="2.4" fill="#fff"/>
+      <path d="M19 33Q24 36 29 33" fill="none" ${st(2.2)}/>
+      <path d="M17 38v6M31 38v6" ${st(3)}/><circle cx="41" cy="9" r="4.6" fill="#d99a4e" ${st(2)}/><circle cx="40" cy="8" r="1" fill="#4a2511"/><circle cx="42.4" cy="10.4" r=".9" fill="#4a2511"/>
+      ${shine('M11.5 17v10', 1.8, 0.7)}`,
+    'b:dyson': () => `<defs>${rg('s', '#fff6c4', '#ff8a00', 0.5, 0.5, 0.6)}${lg('r', '#b8a0ff', '#3a2766')}</defs>
+      <circle cx="24" cy="24" r="10" fill="url(#s)" ${st(2.4)}/>
+      <g fill="none" stroke="${OL}" stroke-width="5.4"><ellipse cx="24" cy="24" rx="20" ry="8"/><ellipse cx="24" cy="24" rx="8" ry="20" transform="rotate(35 24 24)"/></g>
+      <g fill="none" stroke="url(#r)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="20" ry="8"/><ellipse cx="24" cy="24" rx="8" ry="20" transform="rotate(35 24 24)"/></g>
+      <g fill="#4a2511"><circle cx="21" cy="21" r="1.4"/><circle cx="27" cy="25" r="1.6"/><circle cx="22" cy="28" r="1.1"/></g>
+      ${spark(40, 7, 3, '#fff27a', 1.2)}`,
+    'b:multiverse': () => `<defs>${lg('a', '#ff5ec8', '#7a2cff')}${lg('b', '#1ff4ff', '#1b5fd6')}${lg('c', '#fff27a', '#ff8a00')}</defs>
+      <circle cx="16" cy="18" r="11" fill="url(#a)" ${st(3)}/><circle cx="32" cy="18" r="11" fill="url(#b)" ${st(3)}/><circle cx="24" cy="31" r="11" fill="url(#c)" ${st(3)}/>
+      <g fill="#4a2511" stroke="${OL}" stroke-width="1"><circle cx="13" cy="16" r="1.6"/><circle cx="34" cy="15" r="1.6"/><circle cx="22" cy="33" r="1.8"/><circle cx="27" cy="29" r="1.3"/></g>
+      ${shine('M9 14q2-4 6-5', 1.8, 0.8)}${spark(42, 40, 3, '#fff', 1.2)}`,
+    'b:bigbang': () => `<defs>${rg('x', '#ffffff', '#ff2bd6', 0.5, 0.5, 0.55)}</defs>
+      <path d="${star(24, 24, 21, 9, 12, 0)}" fill="url(#x)" ${st(3)}/>
+      <circle cx="24" cy="24" r="7.6" fill="#d99a4e" ${st(2.4)}/><g fill="#4a2511"><circle cx="22" cy="22" r="1.4"/><circle cx="26.4" cy="25.6" r="1.5"/><circle cx="21.6" cy="26.6" r="1"/></g>
+      ${spark(8, 8, 3.2, '#1ff4ff', 1.2)}${spark(41, 40, 3.2, '#fff27a', 1.2)}${spark(40, 9, 2.4, '#fff', 1)}`,
     'b:streamer': () => `<defs>${lg('f', '#9b86f0', '#3f2a8f')}${lg('s', '#ff2bd6', '#1ff4ff', 1, 1)}${lg('r', '#ff7a8a', '#d0102f')}${lg('m', '#efe8ff', '#8d7ad0')}</defs>
       <path d="M20 34.5L18 41H30L28 34.5Z" fill="url(#m)" ${st(2.6)}/>
       <rect x="12.5" y="40" width="23" height="4.6" rx="2.3" fill="url(#m)" ${st(2.8)}/>
