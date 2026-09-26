@@ -450,8 +450,24 @@
         h('div.rb-box', h('h4', I('ui:skull'), ' Tu perds'), 'Cookies', h('br'), 'Bâtiments', h('br'), 'Upgrades (et leurs effets sur le cookie)'),
         h('div.rb-box', h('h4', I('ui:gem'), ' Tu gardes'), 'Gemmes, pets, skins, thèmes', h('br'), 'Succès et records', h('br'),
           h('b', { style: { color: 'var(--gold)' } }, '+10 % par étoile, pour toujours'), h('br'), h('b', { style: { color: 'var(--cyan)' } }, '+10 gemmes par étoile gagnée'))),
+      finalBox(),
       h('p.muted.tip', 'Le skin Néant se débloque au 3ᵉ rebirth.'));
   };
+  function finalBox() {
+    const s = S(), goals = CO.finalGoal(), ready = CO.finalReady();
+    const fmtT = (sec) => Math.floor(sec / 3600) + ' h ' + String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    return h('div.rb-box', { style: { marginTop: '14px', border: '2px solid #b16bff' } },
+      h('h4', I('boss:final'), s.gameWon ? ' Jeu terminé ! Production ×2 pour toujours' : ' Objectif final : LE GRAND RÉGIME'),
+      goals.map((g) => {
+        const pct = clampN((g.cur / g.need) * 100, 0, 100), ok = g.cur >= g.need;
+        return h('div', { style: { margin: '6px 0', fontSize: '13px' } },
+          (ok ? '✅ ' : '⬜ ') + g.label + ' — ' + (g.time ? fmtT(Math.min(g.cur, g.need)) + ' / ' + fmtT(g.need) : fmt(Math.min(g.cur, g.need), { int: 1 }) + ' / ' + fmt(g.need, { int: 1 })),
+          h('div.mprog', h('i', { style: { width: pct + '%' } })));
+      }),
+      h('button.btn.big' + (ready ? '.red' : ''), { type: 'button', disabled: !ready || !!CO.boss, style: { width: '100%', marginTop: '8px' },
+        onclick: () => { if (CO.fightFinal()) { CO.toast('LE GRAND RÉGIME arrive ! 2 minutes pour le vaincre !', { icon: 'boss:final', color: '#b16bff' }); render(true); } } },
+        s.gameWon ? 'Revanche contre LE GRAND RÉGIME' : ready ? 'AFFRONTER LE BOSS FINAL' : 'Verrouillé'));
+  }
   function rebirthFx(g) {
     const fx = h('div.rbflash', h('div.ol.ol-lg', 'REBIRTH ! +' + g + ' ', I('ui:star', 'xl')));
     document.body.append(fx);
@@ -466,7 +482,7 @@
     shop: () => D.buildings.filter((b) => CO.buildingUnlocked(b.id)).length,
     upgrades: () => D.upgrades.filter((u) => !S().upgrades[u.id] && CO.reqMet(u)).length + '|' + Object.keys(S().upgrades).length,
     games: () => MG_ORDER.map((id) => (CO.minigameUnlocked(id) ? (CO.minigames[id] ? 'u' : 'l') : Math.floor(clampN(S().allTimeBaked / D.minigameUnlocks[id].baked, 0, 1) * 40))).join(','),
-    rebirth: () => CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
+    rebirth: () => CO.finalGoal().map((g) => Math.floor(clampN(g.cur / g.need, 0, 1) * 20)).join(',') + '|' + !!CO.boss + '|' + CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
     quests: () => S().quests.map((q) => q.id + (q.done ? 'd' : '')).join(','),
     style: () => S().gems,
     pets: () => S().pets.length + '|' + S().equipped.join(','),
@@ -725,6 +741,12 @@
     CO.on('pets', () => rerender(['pets']));
     CO.on('rebirth', () => render());
     CO.on('music:track', (e) => CO.toast('♪ ' + String(e.name || '').replace(/\.[a-z0-9]+$/i, ''), { icon: 'ui:music' }));
+    CO.on('game:won', () => {
+      CO.emit('fx:confetti', {});
+      const st = S().stats, m = Math.floor((st.wonAt || st.playTime) / 60);
+      modal('TU AS GAGNÉ !', 'LE GRAND RÉGIME est vaincu. Le cookie règne sur l\'univers. Temps de jeu : ' + Math.floor(m / 60) + ' h ' + (m % 60) + ' min, ' + st.bossKills + ' boss battus. Bonus permanent : production ×2. Tu peux continuer à jouer !',
+        [{ label: 'Continuer à crunch', cls: 'gold' }], 'boss:final');
+    });
     CO.on('tab:blocked', () => {
       if (document.getElementById('tab-block')) return;
       const d = document.createElement('div'); d.id = 'tab-block';
@@ -741,7 +763,7 @@
       const txt = { frenzy: 'Production ×7 pendant ' + Math.round(30 * CO.mult.goldenDur) + ' s !', clickstorm: 'Chaque clic ×77 pendant ' + Math.round(10 * CO.mult.goldenDur) + ' s. SPAM !', rgbstorm: 'Fièvre RGB instantanée !' }[kind];
       if (txt) toast({ text: txt, icon: 'ui:golden', color: '#ffc93c' });
     });
-    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (30 s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
+    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (' + Math.round(boss.until - boss.born) + ' s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
     CO.on('fever:start', () => document.body.classList.add('fever'));
     CO.on('fever:end', () => document.body.classList.remove('fever'));
     CO.on('settings', ({ key }) => { if (key === 'numFormat') { hud.lastStr = ''; hud.lastCps = ''; hud.lastGems = -1; hud.lastStars = -1; } });

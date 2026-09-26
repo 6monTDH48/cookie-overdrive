@@ -774,6 +774,9 @@
     { kind: 'clickstorm', weight: 14, label: 'CLIC-TEMPÊTE ×77',  color: '#1ff4ff', buff: { id: 'clickstorm', name: 'Clic-Tempête', icon: 'ui:tornado', dur: 10, click: 77 } },
     { kind: 'rgbstorm',   weight: 8,  label: 'RGB STORM',         color: 'rgb' },
     { kind: 'gems',       weight: 8,  label: 'PLUIE DE GEMMES',   color: '#3dffb0' },
+    { kind: 'blessing',   weight: 10, label: 'BÉNÉDICTION ×3 (60 s)', color: '#fff27a', buff: { id: 'blessing', name: 'Bénédiction', icon: 'ui:crown', dur: 60, cps: 3 } },
+    { kind: 'overclock',  weight: 6,  label: 'OVERCLOCK ×15',     color: '#ff2bd6', buff: { id: 'overclock', name: 'Overclock', icon: 'ui:bolt', dur: 15, cps: 15 } },
+    { kind: 'bossbait',   weight: 4,  label: 'APPÂT À BOSS !',    color: '#ff4d6d' },
   ];
 
   /* ───────────────────────── BOSSES ───────────────────────── */
@@ -785,7 +788,17 @@
     { id: 'lemon',    name: 'Citron Acide', color: '#fff23d' },
     { id: 'salt',     name: 'Salière Maléfique', color: '#ffffff' },
     { id: 'ghost',    name: 'Fantôme du Régime', color: '#c9b6ff' },
+    { id: 'celery',     name: 'Céleri Ninja',            color: '#9dff72', minKills: 3 },
+    { id: 'toothbrush', name: 'Brosse à Dents Laser',    color: '#7ff0ff', minKills: 5 },
+    { id: 'raisin',     name: 'Cookie aux Raisins Traître', color: '#c47aff', minKills: 7 },
+    { id: 'kale',       name: 'Chou Kale Hipster',       color: '#b8ff9a', minKills: 9 },
+    { id: 'bottle',     name: 'Bouteille d\'Eau Plate', color: '#d8f6ff', minKills: 11 },
+    { id: 'scale',      name: 'Balance Maudite',         color: '#ffffff', minKills: 13 },
+    { id: 'nutribot',   name: 'Nutribot 3000',           color: '#1ff4ff', minKills: 15 },
   ];
+  // every 10th fight: the mega boss. The final boss ends the game (see CO.finalGoal).
+  const megaBoss = { id: 'king', name: 'Roi Brocoli', color: '#ff5c7a', mega: true };
+  const finalBoss = { id: 'final', name: 'LE GRAND RÉGIME', color: '#b16bff', final: true };
 
   /* ───────────────────────── MINIGAME UNLOCKS ─────────────────────────
    * Minigame modules register themselves; this only says when they unlock. */
@@ -800,6 +813,14 @@
   const B = (s, id) => s.buildings[id] || 0;
   const totalB = (s) => Object.values(s.buildings).reduce((a, b) => a + b, 0);
   const achievements = [
+    { id: 'a_boss5',     name: 'Chasseur de Légumes', gems: 8,  desc: 'Bats 5 boss.',                          check: (s) => s.stats.bossKills >= 5 },
+    { id: 'a_boss15',    name: 'Terreur du Potager', gems: 15, desc: 'Bats 15 boss.',                         check: (s) => s.stats.bossKills >= 15 },
+    { id: 'a_boss40',    name: 'Végétarien Repenti', gems: 30, desc: 'Bats 40 boss.',                         check: (s) => s.stats.bossKills >= 40 },
+    { id: 'a_elite',     name: 'Élite Écrasée', gems: 10, desc: 'Bats un boss ÉLITE.',                        check: (s) => (s.stats.eliteKills || 0) >= 1 },
+    { id: 'a_king',      name: 'Régicide', gems: 20, desc: 'Bats le Roi Brocoli.',                             check: (s) => (s.stats.megaKills || 0) >= 1 },
+    { id: 'a_final',     name: 'FIN : Le Cookie Suprême', gems: 100, desc: 'Bats LE GRAND RÉGIME.',            check: (s) => !!s.gameWon },
+    { id: 'a_play1h',    name: 'Une Heure de Crunch', gems: 10, desc: 'Joue 1 heure.',                         check: (s) => s.stats.playTime >= 3600 },
+    { id: 'a_play3h',    name: 'Marathon Sucré', gems: 25, desc: 'Joue 3 heures.',                             check: (s) => s.stats.playTime >= 10800 },
     { id: 'a_daily3',    name: 'Habitué', gems: 5,  desc: 'Série de 3 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 3 },
     { id: 'a_daily7',    name: 'Accro au Cookie', gems: 15, desc: 'Série de 7 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 7 },
     { id: 'a_skins8',    name: 'Garde-Robe Sucrée', gems: 20, desc: 'Possède 8 skins.',                    check: (s) => Object.values(s.skinsOwned || {}).filter(Boolean).length >= 8 },
@@ -906,6 +927,12 @@
     'Tetris porte plainte : ton cookie empile trop bien les pépites.',
     'Nouveau skin Game Boy : les parents pleurent de nostalgie.',
     'Un cookie a été vu en train de faire la queue pour un concert de clavecin.',
+    'Le Roi Brocoli exige un tribut de 10 000 fleurettes. Refusé.',
+    'Un Céleri Ninja a été vu sur les toits. Il est très croquant.',
+    'Le Cookie aux Raisins Traître prétend être aux pépites. Personne n\'est dupe.',
+    'Le Nutribot 3000 a calculé tes calories. Il a planté.',
+    'Rumeur : LE GRAND RÉGIME attend les boulangers les plus acharnés…',
+    'La Balance Maudite affiche « ERREUR ». Victoire morale.',
     'Un Poulpe Glacé aperçu en train de cliquer avec ses 8 bras. Triche ?',
   ];
 
@@ -919,6 +946,7 @@
   ];
 
   CO.data = {
+    megaBoss, finalBoss,
     buildings, visuals, upgrades, skins, themes, rarities, pets, eggs,
     golden, bosses, minigameUnlocks, achievements, quests, news, clickSounds,
   };
@@ -1275,7 +1303,8 @@
   const eye = (x, y, rx, ry, c = OL, pr = 1.9, dx = 0.4, dy = 0.5) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" ${st(2)}/><circle cx="${P(x + dx)}" cy="${P(y + dy)}" r="${pr}" fill="${c}"/><circle cx="${P(x + dx - pr * 0.35)}" cy="${P(y + dy - pr * 0.4)}" r="${P(pr * 0.36)}" fill="#fff"/>`;
   const EGG = 'M24 3.5C14.5 3.5 7.5 17.5 7.5 28.5C7.5 38 14.5 44.5 24 44.5S40.5 38 40.5 28.5C40.5 17.5 33.5 3.5 24 3.5Z';
 
-  A.register({
+  const WORLD_BROC = () => WORLD['boss:_broc_src']();
+  const WORLD = {
     /* ═════════════════════════ BUILDINGS ═════════════════════════ */
     'b:granny': () => `<defs>${lg('s', '#ffe8d6', '#f2a883')}${lg('h', '#ffffff', '#a79fc6')}${lg('c', '#ff2bd6', '#1ff4ff')}</defs>
       <circle cx="24" cy="8.6" r="5.6" fill="url(#h)" ${st(3)}/>${shine('M20.6 7.4a3.6 3.6 0 0 1 2.4-2.4', 1.6, 0.85)}
@@ -1477,7 +1506,84 @@
       <path d="M9 30v3.6h1.9M12.3 30v3.6M13.7 30l1.1 3.6 1.1-3.6M18.4 30h-1.6v3.6h1.6M16.8 31.8h1.3" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>`,
 
     /* ═════════════════════════ BOSSES ═════════════════════════ */
-    'boss:broccoli': () => {
+
+    /* ── vague 2 de boss ── */
+    'boss:celery': () => `<defs>${lg('c', '#e8ffb0', '#5fbf3a')}${lg('h', '#ff5c7a', '#b0102f')}</defs>
+      <path d="M14 44L16 12Q18 6 24 6T32 12L34 44Z" fill="url(#c)" ${st(3.2)}/>
+      <path d="M19 42L20 14M24 42V12M29 42L28 14" fill="none" stroke="#3a9a2a" stroke-width="1.4" opacity=".6"/>
+      <path d="M17 6Q12 1 8 4M31 6Q36 1 40 4M24 6V1" fill="none" stroke="#3a9a2a" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="13" y="16" width="22" height="5" rx="1.5" fill="url(#h)" ${st(2.2)}/><path d="M35 18L43 14M35 19L42 22" stroke="#e0102f" stroke-width="2.4" stroke-linecap="round"/>
+      ${eye(19.5, 26.5, 3, 2.4, '#1a0b33', 1.5, 0.5, 0.4)}${eye(28.5, 26.5, 3, 2.4, '#1a0b33', 1.5, -0.5, 0.4)}
+      ${brows(19.4, 28.6, 23, 6.4, 3, 3)}
+      <path d="M20 35Q24 32.5 28 35" fill="none" ${st(2.4)}/>${shine('M18 14q.4-4 3-6', 1.8, 0.7)}`,
+
+    'boss:toothbrush': () => `<defs>${lg('b', '#7ff0ff', '#1b7fd6')}${lg('w', '#ffffff', '#c8e8ff')}</defs>
+      <rect x="18" y="16" width="12" height="30" rx="5" fill="url(#b)" ${st(3)}/>
+      <rect x="14" y="3" width="20" height="14" rx="3" fill="url(#w)" ${st(3)}/>
+      <g stroke="#1b7fd6" stroke-width="1.5" stroke-linecap="round"><path d="M17 5v10M20.5 5v10M24 5v10M27.5 5v10M31 5v10"/></g>
+      ${eye(21, 25, 2.4, 2.8, '#ff1f3d', 1.4, 0.4, 0.4)}${eye(27, 25, 2.4, 2.8, '#ff1f3d', 1.4, -0.4, 0.4)}
+      ${brows(21, 27, 21.4, 5, 2.6, 2.6)}
+      <path d="M26 25L46 20M26 25L46 28" stroke="#ff1f3d" stroke-width="1.6" opacity=".85"/>
+      <path d="M20.5 33Q24 31 27.5 33" fill="none" ${st(2.2)}/>${shine('M20.5 19v10', 1.6, 0.7)}`,
+
+    'boss:raisin': () => `<defs>${rg('k', '#ffe0a8', '#b86f2c', 0.35, 0.3, 0.85)}${rg('r', '#c47aff', '#4a0f6a', 0.35, 0.3, 0.8)}</defs>
+      <path d="${blob(24, 25, 19, 1.3, 18)}" fill="url(#k)" ${st(3)}/>
+      <g fill="url(#r)" ${st(1.8)}><ellipse cx="14" cy="16" rx="3.4" ry="2.6"/><ellipse cx="34" cy="15" rx="3" ry="2.4"/><ellipse cx="12" cy="31" rx="3" ry="2.6"/><ellipse cx="36" cy="33" rx="3.4" ry="2.6"/><ellipse cx="25" cy="40" rx="3" ry="2.2"/></g>
+      ${eye(18.5, 23, 3.4, 3.6, '#7a1fbf', 1.9, 0.6, 0.5)}${eye(29.5, 23, 3.4, 3.6, '#7a1fbf', 1.9, -0.6, 0.5)}
+      ${brows(18.3, 29.7, 18.6, 7.4, 3.4, 3.4)}
+      <path d="M17 31Q24 36 31 30" fill="none" ${st(2.6)}/><path d="M28 30.6l1.6 2 1.2-2.6z" fill="#fff" ${st(1)}/>
+      ${shine('M11 15c1.8-2.6 4.4-4.2 7-4.8', 2.2, 0.8)}`,
+
+    'boss:kale': () => `<defs>${lg('l', '#b8ff9a', '#1f7a3a')}${lg('g', '#3a2766', '#0b0620')}</defs>
+      <path d="${blob(24, 24, 19, 2.4, 14)}" fill="url(#l)" ${st(3.2)}/>
+      <path d="${blob(24, 22, 11, 1.6, 12, 0.5)}" fill="none" stroke="#1f7a3a" stroke-width="1.6" opacity=".6"/>
+      <path d="M24 44V30M24 36l-5-4M24 38l5-4" fill="none" stroke="#e8ffd0" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+      <path d="M11 20H37V22Q37 28 31 28Q26 28 25 23H23Q22 28 17 28Q11 28 11 22Z" fill="url(#g)" ${st(2.4)}/>
+      <path d="M14 22.4l3-1.6M27 22.4l3-1.6" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>
+      <path d="M19 33Q24 35 29 32" fill="none" ${st(2.4)}/>${spark(40, 8, 3.2, '#fff', 1.2)}`,
+
+    'boss:bottle': () => `<defs>${lg('w', '#d8f6ff', '#5ab8ff')}${lg('c', '#8a5cff', '#3a2766')}</defs>
+      <rect x="19" y="2.5" width="10" height="6" rx="1.6" fill="url(#c)" ${st(2.6)}/>
+      <path d="M19 9H29Q30 12 34 14Q36 15.5 36 19V42Q36 45 33 45H15Q12 45 12 42V19Q12 15.5 14 14Q18 12 19 9Z" fill="url(#w)" ${st(3)}/>
+      <rect x="12" y="22" width="24" height="9" fill="#ff5ec8" ${st(2)}/><path d="M15 26.5h18" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 1.6"/>
+      ${eye(19.5, 36, 2.8, 3, '#1b7fd6', 1.6, 0.4, 0.4)}${eye(28.5, 36, 2.8, 3, '#1b7fd6', 1.6, -0.4, 0.4)}
+      ${brows(19.4, 28.6, 32.4, 6, 2.6, 2.8)}<path d="M21.5 42h5" ${st(2.2)}/>
+      ${shine('M15 17v22', 2, 0.6)}`,
+
+    'boss:scale': () => `<defs>${lg('b', '#ffffff', '#b3a6dd')}${lg('d', '#9fffc8', '#1f9a6a')}</defs>
+      <rect x="5" y="10" width="38" height="34" rx="7" fill="url(#b)" ${st(3.2)}/>
+      <rect x="11" y="14" width="26" height="9" rx="2" fill="#0b2a1f" ${st(2)}/>
+      <text x="24" y="21.6" text-anchor="middle" font-family="monospace" font-weight="700" font-size="7" fill="#3dff7a">+999</text>
+      ${eye(17.5, 31, 3.2, 3.4, '#d0102f', 1.8, 0.5, 0.5)}${eye(30.5, 31, 3.2, 3.4, '#d0102f', 1.8, -0.5, 0.5)}
+      ${brows(17.3, 30.7, 27, 7, 3, 3.2)}<path d="M19 40Q24 37 29 40" fill="none" ${st(2.4)}/>
+      <path d="M13 4l3 5M35 4l-3 5" ${st(2.6)}/>${shine('M8.5 16v14', 2, 0.6)}`,
+
+    'boss:nutribot': () => `<defs>${lg('m', '#e8e6f5', '#7a7896')}${lg('v', '#1ff4ff', '#0b6d8a')}</defs>
+      <path d="M24 3v6" ${st(2.4)}/><circle cx="24" cy="3.4" r="2.6" fill="#ff1f3d" ${st(1.8)}/>
+      <rect x="7" y="9" width="34" height="30" rx="6" fill="url(#m)" ${st(3.2)}/>
+      <rect x="3" y="18" width="4" height="12" rx="1.6" fill="url(#m)" ${st(2.2)}/><rect x="41" y="18" width="4" height="12" rx="1.6" fill="url(#m)" ${st(2.2)}/>
+      <rect x="11" y="14" width="26" height="11" rx="4" fill="url(#v)" ${st(2.4)}/>
+      <path d="M14 20.5L20 18.5M34 20.5L28 18.5" stroke="#ff1f3d" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="13" y="29" width="22" height="6" rx="1.6" fill="#1a0b33"/><path d="M15 32h3l1.5-2.4 2 4.4 2-4.4 1.5 2.4h8" fill="none" stroke="#3dff7a" stroke-width="1.3"/>
+      <rect x="15" y="39" width="18" height="6" rx="2" fill="url(#m)" ${st(2.4)}/>${shine('M10 13v8', 1.8, 0.7)}`,
+
+    'boss:king': () => `<defs>${lg('cp', '#ff5c7a', '#7a0f22')}</defs>
+      <path d="M6 22Q2 40 8 46H40Q46 40 42 22Z" fill="url(#cp)" ${st(3)}/>
+      <path d="M8 44Q24 40 40 44" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="1.4 1.8" opacity=".85"/>
+      ${WORLD_BROC()}
+      <g transform="translate(24 4.4)"><path d="M-10 4L-11 -5-5 -1 0 -7 5 -1 11 -5 10 4Z" fill="#ffcc33" ${st(2.4)}/><circle cx="0" cy="1" r="1.6" fill="#1ff4ff"/><circle cx="-6" cy="2" r="1" fill="#ff2bd6"/><circle cx="6" cy="2" r="1" fill="#ff2bd6"/></g>`,
+
+    'boss:final': () => `<defs>${rg('v', '#7a2cff', '#07030f', 0.5, 0.45, 0.7)}${lg('g', '#fff27a', '#e59a00')}</defs>
+      <circle cx="24" cy="25" r="21" fill="url(#v)" ${st(3.2)}/>
+      <g fill="none" stroke="#b16bff" stroke-width="1.4" opacity=".7"><circle cx="24" cy="25" r="16"/><circle cx="24" cy="25" r="11"/></g>
+      <path d="M14 20L21 23M34 20L27 23" stroke="#ff1f3d" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="17.5" cy="25" rx="3.6" ry="2.4" fill="#ff1f3d" ${st(1.6)}/><ellipse cx="30.5" cy="25" rx="3.6" ry="2.4" fill="#ff1f3d" ${st(1.6)}/>
+      <circle cx="17.5" cy="25" r="1" fill="#fff"/><circle cx="30.5" cy="25" r="1" fill="#fff"/>
+      <path d="M14 34Q24 29 34 34L31 37 28 34.5 24 37.5 20 34.5 17 37Z" fill="#fff" ${st(2)}/>
+      <g transform="translate(24 5)"><path d="M-12 4L-13 -4-6 0 0 -6 6 0 13 -4 12 4Z" fill="url(#g)" ${st(2.4)}/></g>
+      ${spark(6, 8, 3, '#ff2bd6', 1.2)}${spark(42, 40, 3, '#1ff4ff', 1.2)}`,
+    'boss:broccoli': () => WORLD_BROC(),
+    'boss:_broc_src': () => {
       const fl = [[12.5, 20, 7.6], [24, 15.5, 8.8], [35.5, 20, 7.6], [9.8, 27.6, 5], [38.2, 27.6, 5], [18, 25, 7], [30, 25, 7]];
       return `<defs>${lg('f', '#9dff72', '#1c9438')}${lg('s', '#ecffb8', '#7cd648')}${lg('g', '#fff27a', '#e59a00')}</defs>
       <path d="M13.2 27Q13.8 37.5 10.6 42.4Q9.8 45 12.8 45H35.2Q38.2 45 37.4 42.4Q34.2 37.5 34.8 27Z" fill="url(#s)" ${st(3.2)}/>
@@ -1765,7 +1871,8 @@
       <rect x="12" y="36.2" width="19" height="4.6" rx="2.3" fill="#3a2766" ${st(2.2)}/>
       <rect x="18" y="37.8" width="7" height="1.4" rx=".7" fill="#ffc93c"/>`;
     },
-  });
+  };
+  A.register(WORLD);
 })();
 
 </script>
@@ -2612,7 +2719,7 @@
 
   function recalc(silent) {
     const s = CO.state;
-    M.click = 1; M.clickCps = 0; M.cps = 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
+    M.click = 1; M.clickCps = 0; M.cps = CO.state && CO.state.gameWon ? 2 : 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
     D.buildings.forEach((b) => (M.bld[b.id] = 1));
     const vis = {};
     for (const u of D.upgrades) {
@@ -2858,6 +2965,10 @@
       addBuff(eff.buff);
     } else if (eff.kind === 'rgbstorm') {
       if (!CO.fever.active) { CO.fever.cooldownUntil = 0; startFever(); } else CO.fever.until += 5;
+    } else if (eff.buff) {
+      addBuff(eff.buff);
+    } else if (eff.kind === 'bossbait') {
+      if (!CO.boss && CO.bossUnlocked() && !mgOpen) spawnBoss(); else { const n = 5; s.gems += n; label = 'PLUIE DE GEMMES +' + n; }
     } else if (eff.kind === 'gems') {
       const n = 3 + Math.floor(Math.random() * 6); s.gems += n; label = 'PLUIE DE GEMMES +' + n;
     }
@@ -2872,21 +2983,43 @@
   const BOSS_UNLOCK = 5000;
   CO.bossUnlocked = () => CO.state.allTimeBaked >= BOSS_UNLOCK;
   let nextBossAt = null;
-  function spawnBoss() {
-    const d = pick(D.bosses), k = CO.state.stats.bossKills;
-    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)));
-    const t = CO.now();
-    CO.boss = { ...d, hp, maxHp: hp, born: t, until: t + 30 };
+  function spawnBoss(forceFinal) {
+    const k = CO.state.stats.bossKills, t = CO.now();
+    let d, hpMul = 1, dur = 30, kind = 'normal';
+    if (forceFinal) { d = D.finalBoss; hpMul = 25; dur = 120; kind = 'final'; }
+    else if (k > 0 && (k + 1) % 10 === 0) { d = D.megaBoss; hpMul = 4; dur = 50; kind = 'mega'; }
+    else {
+      d = pick(D.bosses.filter((b) => (b.minKills || 0) <= k));
+      if (k >= 5 && Math.random() < 0.18) { hpMul = 2.2; dur = 35; kind = 'elite'; }
+    }
+    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)) * hpMul);
+    CO.boss = { ...d, name: kind === 'elite' ? d.name + ' ÉLITE' : d.name, kind, hp, maxHp: hp, born: t, until: t + dur };
     CO.sfx.play('boss');
     CO.emit('boss:spawn', { boss: CO.boss });
   }
   CO.spawnBoss = spawnBoss;
+  /* ─ Objectif final : conditions pour affronter le boss de fin (≥ 2 h de jeu garanties) ─ */
+  CO.finalGoal = () => {
+    const s = CO.state;
+    return [
+      { label: 'Jouer 2 heures', cur: s.stats.playTime, need: 7200, time: true },
+      { label: 'Faire 3 Rebirths', cur: s.rebirths, need: 3 },
+      { label: 'Battre 15 boss', cur: s.stats.bossKills, need: 15 },
+      { label: 'Produire 10 000 milliards de cookies (au total)', cur: s.allTimeBaked, need: 1e13 },
+    ];
+  };
+  CO.finalReady = () => CO.finalGoal().every((g) => g.cur >= g.need);
+  CO.fightFinal = () => { if (CO.boss || !CO.finalReady()) return false; spawnBoss(true); return true; };
   function defeatBoss() {
     const b = CO.boss, s = CO.state; if (!b) return;
     CO.boss = null;
     s.stats.bossKills++;
-    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100);
-    const gems = Math.min(20, 8 + s.stats.bossKills);
+    const rm = { elite: 2.5, mega: 5, final: 20 }[b.kind] || 1;
+    if (b.kind === 'elite') s.stats.eliteKills = (s.stats.eliteKills || 0) + 1;
+    if (b.kind === 'mega') s.stats.megaKills = (s.stats.megaKills || 0) + 1;
+    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100) * rm;
+    const gems = Math.round(Math.min(20, 8 + s.stats.bossKills) * rm);
+    if (b.kind === 'final' && !s.gameWon) { s.gameWon = true; s.stats.wonAt = s.stats.playTime; recalc(); setTimeout(() => CO.emit('game:won', {}), 1200); }
     earn(cookies); s.gems += gems;
     addBuff({ id: 'victory', name: 'Victoire', icon: 'ui:trophy', dur: 60, cps: 2 });
     questProgress('boss', 1);
@@ -10529,8 +10662,24 @@
         h('div.rb-box', h('h4', I('ui:skull'), ' Tu perds'), 'Cookies', h('br'), 'Bâtiments', h('br'), 'Upgrades (et leurs effets sur le cookie)'),
         h('div.rb-box', h('h4', I('ui:gem'), ' Tu gardes'), 'Gemmes, pets, skins, thèmes', h('br'), 'Succès et records', h('br'),
           h('b', { style: { color: 'var(--gold)' } }, '+10 % par étoile, pour toujours'), h('br'), h('b', { style: { color: 'var(--cyan)' } }, '+10 gemmes par étoile gagnée'))),
+      finalBox(),
       h('p.muted.tip', 'Le skin Néant se débloque au 3ᵉ rebirth.'));
   };
+  function finalBox() {
+    const s = S(), goals = CO.finalGoal(), ready = CO.finalReady();
+    const fmtT = (sec) => Math.floor(sec / 3600) + ' h ' + String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    return h('div.rb-box', { style: { marginTop: '14px', border: '2px solid #b16bff' } },
+      h('h4', I('boss:final'), s.gameWon ? ' Jeu terminé ! Production ×2 pour toujours' : ' Objectif final : LE GRAND RÉGIME'),
+      goals.map((g) => {
+        const pct = clampN((g.cur / g.need) * 100, 0, 100), ok = g.cur >= g.need;
+        return h('div', { style: { margin: '6px 0', fontSize: '13px' } },
+          (ok ? '✅ ' : '⬜ ') + g.label + ' — ' + (g.time ? fmtT(Math.min(g.cur, g.need)) + ' / ' + fmtT(g.need) : fmt(Math.min(g.cur, g.need), { int: 1 }) + ' / ' + fmt(g.need, { int: 1 })),
+          h('div.mprog', h('i', { style: { width: pct + '%' } })));
+      }),
+      h('button.btn.big' + (ready ? '.red' : ''), { type: 'button', disabled: !ready || !!CO.boss, style: { width: '100%', marginTop: '8px' },
+        onclick: () => { if (CO.fightFinal()) { CO.toast('LE GRAND RÉGIME arrive ! 2 minutes pour le vaincre !', { icon: 'boss:final', color: '#b16bff' }); render(true); } } },
+        s.gameWon ? 'Revanche contre LE GRAND RÉGIME' : ready ? 'AFFRONTER LE BOSS FINAL' : 'Verrouillé'));
+  }
   function rebirthFx(g) {
     const fx = h('div.rbflash', h('div.ol.ol-lg', 'REBIRTH ! +' + g + ' ', I('ui:star', 'xl')));
     document.body.append(fx);
@@ -10545,7 +10694,7 @@
     shop: () => D.buildings.filter((b) => CO.buildingUnlocked(b.id)).length,
     upgrades: () => D.upgrades.filter((u) => !S().upgrades[u.id] && CO.reqMet(u)).length + '|' + Object.keys(S().upgrades).length,
     games: () => MG_ORDER.map((id) => (CO.minigameUnlocked(id) ? (CO.minigames[id] ? 'u' : 'l') : Math.floor(clampN(S().allTimeBaked / D.minigameUnlocks[id].baked, 0, 1) * 40))).join(','),
-    rebirth: () => CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
+    rebirth: () => CO.finalGoal().map((g) => Math.floor(clampN(g.cur / g.need, 0, 1) * 20)).join(',') + '|' + !!CO.boss + '|' + CO.rebirthGain() + '|' + Math.floor(clampN(S().totalBaked / (Math.pow(CO.rebirthGain() + 1, 2) * CO.REBIRTH_MIN), 0, 1) * 50),
     quests: () => S().quests.map((q) => q.id + (q.done ? 'd' : '')).join(','),
     style: () => S().gems,
     pets: () => S().pets.length + '|' + S().equipped.join(','),
@@ -10804,6 +10953,12 @@
     CO.on('pets', () => rerender(['pets']));
     CO.on('rebirth', () => render());
     CO.on('music:track', (e) => CO.toast('♪ ' + String(e.name || '').replace(/\.[a-z0-9]+$/i, ''), { icon: 'ui:music' }));
+    CO.on('game:won', () => {
+      CO.emit('fx:confetti', {});
+      const st = S().stats, m = Math.floor((st.wonAt || st.playTime) / 60);
+      modal('TU AS GAGNÉ !', 'LE GRAND RÉGIME est vaincu. Le cookie règne sur l\'univers. Temps de jeu : ' + Math.floor(m / 60) + ' h ' + (m % 60) + ' min, ' + st.bossKills + ' boss battus. Bonus permanent : production ×2. Tu peux continuer à jouer !',
+        [{ label: 'Continuer à crunch', cls: 'gold' }], 'boss:final');
+    });
     CO.on('tab:blocked', () => {
       if (document.getElementById('tab-block')) return;
       const d = document.createElement('div'); d.id = 'tab-block';
@@ -10820,7 +10975,7 @@
       const txt = { frenzy: 'Production ×7 pendant ' + Math.round(30 * CO.mult.goldenDur) + ' s !', clickstorm: 'Chaque clic ×77 pendant ' + Math.round(10 * CO.mult.goldenDur) + ' s. SPAM !', rgbstorm: 'Fièvre RGB instantanée !' }[kind];
       if (txt) toast({ text: txt, icon: 'ui:golden', color: '#ffc93c' });
     });
-    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (30 s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
+    CO.on('boss:spawn', ({ boss }) => toast({ text: 'BOSS : ' + boss.name + ' ! Clique le cookie pour l\'attaquer (' + Math.round(boss.until - boss.born) + ' s)', icon: 'boss:' + boss.id, color: '#ff4d6d' }));
     CO.on('fever:start', () => document.body.classList.add('fever'));
     CO.on('fever:end', () => document.body.classList.remove('fever'));
     CO.on('settings', ({ key }) => { if (key === 'numFormat') { hud.lastStr = ''; hud.lastCps = ''; hud.lastGems = -1; hud.lastStars = -1; } });

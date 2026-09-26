@@ -37,7 +37,8 @@
   const eye = (x, y, rx, ry, c = OL, pr = 1.9, dx = 0.4, dy = 0.5) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff" ${st(2)}/><circle cx="${P(x + dx)}" cy="${P(y + dy)}" r="${pr}" fill="${c}"/><circle cx="${P(x + dx - pr * 0.35)}" cy="${P(y + dy - pr * 0.4)}" r="${P(pr * 0.36)}" fill="#fff"/>`;
   const EGG = 'M24 3.5C14.5 3.5 7.5 17.5 7.5 28.5C7.5 38 14.5 44.5 24 44.5S40.5 38 40.5 28.5C40.5 17.5 33.5 3.5 24 3.5Z';
 
-  A.register({
+  const WORLD_BROC = () => WORLD['boss:_broc_src']();
+  const WORLD = {
     /* ═════════════════════════ BUILDINGS ═════════════════════════ */
     'b:granny': () => `<defs>${lg('s', '#ffe8d6', '#f2a883')}${lg('h', '#ffffff', '#a79fc6')}${lg('c', '#ff2bd6', '#1ff4ff')}</defs>
       <circle cx="24" cy="8.6" r="5.6" fill="url(#h)" ${st(3)}/>${shine('M20.6 7.4a3.6 3.6 0 0 1 2.4-2.4', 1.6, 0.85)}
@@ -239,7 +240,84 @@
       <path d="M9 30v3.6h1.9M12.3 30v3.6M13.7 30l1.1 3.6 1.1-3.6M18.4 30h-1.6v3.6h1.6M16.8 31.8h1.3" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>`,
 
     /* ═════════════════════════ BOSSES ═════════════════════════ */
-    'boss:broccoli': () => {
+
+    /* ── vague 2 de boss ── */
+    'boss:celery': () => `<defs>${lg('c', '#e8ffb0', '#5fbf3a')}${lg('h', '#ff5c7a', '#b0102f')}</defs>
+      <path d="M14 44L16 12Q18 6 24 6T32 12L34 44Z" fill="url(#c)" ${st(3.2)}/>
+      <path d="M19 42L20 14M24 42V12M29 42L28 14" fill="none" stroke="#3a9a2a" stroke-width="1.4" opacity=".6"/>
+      <path d="M17 6Q12 1 8 4M31 6Q36 1 40 4M24 6V1" fill="none" stroke="#3a9a2a" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="13" y="16" width="22" height="5" rx="1.5" fill="url(#h)" ${st(2.2)}/><path d="M35 18L43 14M35 19L42 22" stroke="#e0102f" stroke-width="2.4" stroke-linecap="round"/>
+      ${eye(19.5, 26.5, 3, 2.4, '#1a0b33', 1.5, 0.5, 0.4)}${eye(28.5, 26.5, 3, 2.4, '#1a0b33', 1.5, -0.5, 0.4)}
+      ${brows(19.4, 28.6, 23, 6.4, 3, 3)}
+      <path d="M20 35Q24 32.5 28 35" fill="none" ${st(2.4)}/>${shine('M18 14q.4-4 3-6', 1.8, 0.7)}`,
+
+    'boss:toothbrush': () => `<defs>${lg('b', '#7ff0ff', '#1b7fd6')}${lg('w', '#ffffff', '#c8e8ff')}</defs>
+      <rect x="18" y="16" width="12" height="30" rx="5" fill="url(#b)" ${st(3)}/>
+      <rect x="14" y="3" width="20" height="14" rx="3" fill="url(#w)" ${st(3)}/>
+      <g stroke="#1b7fd6" stroke-width="1.5" stroke-linecap="round"><path d="M17 5v10M20.5 5v10M24 5v10M27.5 5v10M31 5v10"/></g>
+      ${eye(21, 25, 2.4, 2.8, '#ff1f3d', 1.4, 0.4, 0.4)}${eye(27, 25, 2.4, 2.8, '#ff1f3d', 1.4, -0.4, 0.4)}
+      ${brows(21, 27, 21.4, 5, 2.6, 2.6)}
+      <path d="M26 25L46 20M26 25L46 28" stroke="#ff1f3d" stroke-width="1.6" opacity=".85"/>
+      <path d="M20.5 33Q24 31 27.5 33" fill="none" ${st(2.2)}/>${shine('M20.5 19v10', 1.6, 0.7)}`,
+
+    'boss:raisin': () => `<defs>${rg('k', '#ffe0a8', '#b86f2c', 0.35, 0.3, 0.85)}${rg('r', '#c47aff', '#4a0f6a', 0.35, 0.3, 0.8)}</defs>
+      <path d="${blob(24, 25, 19, 1.3, 18)}" fill="url(#k)" ${st(3)}/>
+      <g fill="url(#r)" ${st(1.8)}><ellipse cx="14" cy="16" rx="3.4" ry="2.6"/><ellipse cx="34" cy="15" rx="3" ry="2.4"/><ellipse cx="12" cy="31" rx="3" ry="2.6"/><ellipse cx="36" cy="33" rx="3.4" ry="2.6"/><ellipse cx="25" cy="40" rx="3" ry="2.2"/></g>
+      ${eye(18.5, 23, 3.4, 3.6, '#7a1fbf', 1.9, 0.6, 0.5)}${eye(29.5, 23, 3.4, 3.6, '#7a1fbf', 1.9, -0.6, 0.5)}
+      ${brows(18.3, 29.7, 18.6, 7.4, 3.4, 3.4)}
+      <path d="M17 31Q24 36 31 30" fill="none" ${st(2.6)}/><path d="M28 30.6l1.6 2 1.2-2.6z" fill="#fff" ${st(1)}/>
+      ${shine('M11 15c1.8-2.6 4.4-4.2 7-4.8', 2.2, 0.8)}`,
+
+    'boss:kale': () => `<defs>${lg('l', '#b8ff9a', '#1f7a3a')}${lg('g', '#3a2766', '#0b0620')}</defs>
+      <path d="${blob(24, 24, 19, 2.4, 14)}" fill="url(#l)" ${st(3.2)}/>
+      <path d="${blob(24, 22, 11, 1.6, 12, 0.5)}" fill="none" stroke="#1f7a3a" stroke-width="1.6" opacity=".6"/>
+      <path d="M24 44V30M24 36l-5-4M24 38l5-4" fill="none" stroke="#e8ffd0" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+      <path d="M11 20H37V22Q37 28 31 28Q26 28 25 23H23Q22 28 17 28Q11 28 11 22Z" fill="url(#g)" ${st(2.4)}/>
+      <path d="M14 22.4l3-1.6M27 22.4l3-1.6" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>
+      <path d="M19 33Q24 35 29 32" fill="none" ${st(2.4)}/>${spark(40, 8, 3.2, '#fff', 1.2)}`,
+
+    'boss:bottle': () => `<defs>${lg('w', '#d8f6ff', '#5ab8ff')}${lg('c', '#8a5cff', '#3a2766')}</defs>
+      <rect x="19" y="2.5" width="10" height="6" rx="1.6" fill="url(#c)" ${st(2.6)}/>
+      <path d="M19 9H29Q30 12 34 14Q36 15.5 36 19V42Q36 45 33 45H15Q12 45 12 42V19Q12 15.5 14 14Q18 12 19 9Z" fill="url(#w)" ${st(3)}/>
+      <rect x="12" y="22" width="24" height="9" fill="#ff5ec8" ${st(2)}/><path d="M15 26.5h18" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 1.6"/>
+      ${eye(19.5, 36, 2.8, 3, '#1b7fd6', 1.6, 0.4, 0.4)}${eye(28.5, 36, 2.8, 3, '#1b7fd6', 1.6, -0.4, 0.4)}
+      ${brows(19.4, 28.6, 32.4, 6, 2.6, 2.8)}<path d="M21.5 42h5" ${st(2.2)}/>
+      ${shine('M15 17v22', 2, 0.6)}`,
+
+    'boss:scale': () => `<defs>${lg('b', '#ffffff', '#b3a6dd')}${lg('d', '#9fffc8', '#1f9a6a')}</defs>
+      <rect x="5" y="10" width="38" height="34" rx="7" fill="url(#b)" ${st(3.2)}/>
+      <rect x="11" y="14" width="26" height="9" rx="2" fill="#0b2a1f" ${st(2)}/>
+      <text x="24" y="21.6" text-anchor="middle" font-family="monospace" font-weight="700" font-size="7" fill="#3dff7a">+999</text>
+      ${eye(17.5, 31, 3.2, 3.4, '#d0102f', 1.8, 0.5, 0.5)}${eye(30.5, 31, 3.2, 3.4, '#d0102f', 1.8, -0.5, 0.5)}
+      ${brows(17.3, 30.7, 27, 7, 3, 3.2)}<path d="M19 40Q24 37 29 40" fill="none" ${st(2.4)}/>
+      <path d="M13 4l3 5M35 4l-3 5" ${st(2.6)}/>${shine('M8.5 16v14', 2, 0.6)}`,
+
+    'boss:nutribot': () => `<defs>${lg('m', '#e8e6f5', '#7a7896')}${lg('v', '#1ff4ff', '#0b6d8a')}</defs>
+      <path d="M24 3v6" ${st(2.4)}/><circle cx="24" cy="3.4" r="2.6" fill="#ff1f3d" ${st(1.8)}/>
+      <rect x="7" y="9" width="34" height="30" rx="6" fill="url(#m)" ${st(3.2)}/>
+      <rect x="3" y="18" width="4" height="12" rx="1.6" fill="url(#m)" ${st(2.2)}/><rect x="41" y="18" width="4" height="12" rx="1.6" fill="url(#m)" ${st(2.2)}/>
+      <rect x="11" y="14" width="26" height="11" rx="4" fill="url(#v)" ${st(2.4)}/>
+      <path d="M14 20.5L20 18.5M34 20.5L28 18.5" stroke="#ff1f3d" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="13" y="29" width="22" height="6" rx="1.6" fill="#1a0b33"/><path d="M15 32h3l1.5-2.4 2 4.4 2-4.4 1.5 2.4h8" fill="none" stroke="#3dff7a" stroke-width="1.3"/>
+      <rect x="15" y="39" width="18" height="6" rx="2" fill="url(#m)" ${st(2.4)}/>${shine('M10 13v8', 1.8, 0.7)}`,
+
+    'boss:king': () => `<defs>${lg('cp', '#ff5c7a', '#7a0f22')}</defs>
+      <path d="M6 22Q2 40 8 46H40Q46 40 42 22Z" fill="url(#cp)" ${st(3)}/>
+      <path d="M8 44Q24 40 40 44" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="1.4 1.8" opacity=".85"/>
+      ${WORLD_BROC()}
+      <g transform="translate(24 4.4)"><path d="M-10 4L-11 -5-5 -1 0 -7 5 -1 11 -5 10 4Z" fill="#ffcc33" ${st(2.4)}/><circle cx="0" cy="1" r="1.6" fill="#1ff4ff"/><circle cx="-6" cy="2" r="1" fill="#ff2bd6"/><circle cx="6" cy="2" r="1" fill="#ff2bd6"/></g>`,
+
+    'boss:final': () => `<defs>${rg('v', '#7a2cff', '#07030f', 0.5, 0.45, 0.7)}${lg('g', '#fff27a', '#e59a00')}</defs>
+      <circle cx="24" cy="25" r="21" fill="url(#v)" ${st(3.2)}/>
+      <g fill="none" stroke="#b16bff" stroke-width="1.4" opacity=".7"><circle cx="24" cy="25" r="16"/><circle cx="24" cy="25" r="11"/></g>
+      <path d="M14 20L21 23M34 20L27 23" stroke="#ff1f3d" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="17.5" cy="25" rx="3.6" ry="2.4" fill="#ff1f3d" ${st(1.6)}/><ellipse cx="30.5" cy="25" rx="3.6" ry="2.4" fill="#ff1f3d" ${st(1.6)}/>
+      <circle cx="17.5" cy="25" r="1" fill="#fff"/><circle cx="30.5" cy="25" r="1" fill="#fff"/>
+      <path d="M14 34Q24 29 34 34L31 37 28 34.5 24 37.5 20 34.5 17 37Z" fill="#fff" ${st(2)}/>
+      <g transform="translate(24 5)"><path d="M-12 4L-13 -4-6 0 0 -6 6 0 13 -4 12 4Z" fill="url(#g)" ${st(2.4)}/></g>
+      ${spark(6, 8, 3, '#ff2bd6', 1.2)}${spark(42, 40, 3, '#1ff4ff', 1.2)}`,
+    'boss:broccoli': () => WORLD_BROC(),
+    'boss:_broc_src': () => {
       const fl = [[12.5, 20, 7.6], [24, 15.5, 8.8], [35.5, 20, 7.6], [9.8, 27.6, 5], [38.2, 27.6, 5], [18, 25, 7], [30, 25, 7]];
       return `<defs>${lg('f', '#9dff72', '#1c9438')}${lg('s', '#ecffb8', '#7cd648')}${lg('g', '#fff27a', '#e59a00')}</defs>
       <path d="M13.2 27Q13.8 37.5 10.6 42.4Q9.8 45 12.8 45H35.2Q38.2 45 37.4 42.4Q34.2 37.5 34.8 27Z" fill="url(#s)" ${st(3.2)}/>
@@ -527,5 +605,6 @@
       <rect x="12" y="36.2" width="19" height="4.6" rx="2.3" fill="#3a2766" ${st(2.2)}/>
       <rect x="18" y="37.8" width="7" height="1.4" rx=".7" fill="#ffc93c"/>`;
     },
-  });
+  };
+  A.register(WORLD);
 })();

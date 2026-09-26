@@ -199,6 +199,9 @@
     { kind: 'clickstorm', weight: 14, label: 'CLIC-TEMPÊTE ×77',  color: '#1ff4ff', buff: { id: 'clickstorm', name: 'Clic-Tempête', icon: 'ui:tornado', dur: 10, click: 77 } },
     { kind: 'rgbstorm',   weight: 8,  label: 'RGB STORM',         color: 'rgb' },
     { kind: 'gems',       weight: 8,  label: 'PLUIE DE GEMMES',   color: '#3dffb0' },
+    { kind: 'blessing',   weight: 10, label: 'BÉNÉDICTION ×3 (60 s)', color: '#fff27a', buff: { id: 'blessing', name: 'Bénédiction', icon: 'ui:crown', dur: 60, cps: 3 } },
+    { kind: 'overclock',  weight: 6,  label: 'OVERCLOCK ×15',     color: '#ff2bd6', buff: { id: 'overclock', name: 'Overclock', icon: 'ui:bolt', dur: 15, cps: 15 } },
+    { kind: 'bossbait',   weight: 4,  label: 'APPÂT À BOSS !',    color: '#ff4d6d' },
   ];
 
   /* ───────────────────────── BOSSES ───────────────────────── */
@@ -210,7 +213,17 @@
     { id: 'lemon',    name: 'Citron Acide', color: '#fff23d' },
     { id: 'salt',     name: 'Salière Maléfique', color: '#ffffff' },
     { id: 'ghost',    name: 'Fantôme du Régime', color: '#c9b6ff' },
+    { id: 'celery',     name: 'Céleri Ninja',            color: '#9dff72', minKills: 3 },
+    { id: 'toothbrush', name: 'Brosse à Dents Laser',    color: '#7ff0ff', minKills: 5 },
+    { id: 'raisin',     name: 'Cookie aux Raisins Traître', color: '#c47aff', minKills: 7 },
+    { id: 'kale',       name: 'Chou Kale Hipster',       color: '#b8ff9a', minKills: 9 },
+    { id: 'bottle',     name: 'Bouteille d\'Eau Plate', color: '#d8f6ff', minKills: 11 },
+    { id: 'scale',      name: 'Balance Maudite',         color: '#ffffff', minKills: 13 },
+    { id: 'nutribot',   name: 'Nutribot 3000',           color: '#1ff4ff', minKills: 15 },
   ];
+  // every 10th fight: the mega boss. The final boss ends the game (see CO.finalGoal).
+  const megaBoss = { id: 'king', name: 'Roi Brocoli', color: '#ff5c7a', mega: true };
+  const finalBoss = { id: 'final', name: 'LE GRAND RÉGIME', color: '#b16bff', final: true };
 
   /* ───────────────────────── MINIGAME UNLOCKS ─────────────────────────
    * Minigame modules register themselves; this only says when they unlock. */
@@ -225,6 +238,14 @@
   const B = (s, id) => s.buildings[id] || 0;
   const totalB = (s) => Object.values(s.buildings).reduce((a, b) => a + b, 0);
   const achievements = [
+    { id: 'a_boss5',     name: 'Chasseur de Légumes', gems: 8,  desc: 'Bats 5 boss.',                          check: (s) => s.stats.bossKills >= 5 },
+    { id: 'a_boss15',    name: 'Terreur du Potager', gems: 15, desc: 'Bats 15 boss.',                         check: (s) => s.stats.bossKills >= 15 },
+    { id: 'a_boss40',    name: 'Végétarien Repenti', gems: 30, desc: 'Bats 40 boss.',                         check: (s) => s.stats.bossKills >= 40 },
+    { id: 'a_elite',     name: 'Élite Écrasée', gems: 10, desc: 'Bats un boss ÉLITE.',                        check: (s) => (s.stats.eliteKills || 0) >= 1 },
+    { id: 'a_king',      name: 'Régicide', gems: 20, desc: 'Bats le Roi Brocoli.',                             check: (s) => (s.stats.megaKills || 0) >= 1 },
+    { id: 'a_final',     name: 'FIN : Le Cookie Suprême', gems: 100, desc: 'Bats LE GRAND RÉGIME.',            check: (s) => !!s.gameWon },
+    { id: 'a_play1h',    name: 'Une Heure de Crunch', gems: 10, desc: 'Joue 1 heure.',                         check: (s) => s.stats.playTime >= 3600 },
+    { id: 'a_play3h',    name: 'Marathon Sucré', gems: 25, desc: 'Joue 3 heures.',                             check: (s) => s.stats.playTime >= 10800 },
     { id: 'a_daily3',    name: 'Habitué', gems: 5,  desc: 'Série de 3 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 3 },
     { id: 'a_daily7',    name: 'Accro au Cookie', gems: 15, desc: 'Série de 7 jours de connexion.',        check: (s) => (s.dailyStreak || 0) >= 7 },
     { id: 'a_skins8',    name: 'Garde-Robe Sucrée', gems: 20, desc: 'Possède 8 skins.',                    check: (s) => Object.values(s.skinsOwned || {}).filter(Boolean).length >= 8 },
@@ -331,6 +352,12 @@
     'Tetris porte plainte : ton cookie empile trop bien les pépites.',
     'Nouveau skin Game Boy : les parents pleurent de nostalgie.',
     'Un cookie a été vu en train de faire la queue pour un concert de clavecin.',
+    'Le Roi Brocoli exige un tribut de 10 000 fleurettes. Refusé.',
+    'Un Céleri Ninja a été vu sur les toits. Il est très croquant.',
+    'Le Cookie aux Raisins Traître prétend être aux pépites. Personne n\'est dupe.',
+    'Le Nutribot 3000 a calculé tes calories. Il a planté.',
+    'Rumeur : LE GRAND RÉGIME attend les boulangers les plus acharnés…',
+    'La Balance Maudite affiche « ERREUR ». Victoire morale.',
     'Un Poulpe Glacé aperçu en train de cliquer avec ses 8 bras. Triche ?',
   ];
 
@@ -344,6 +371,7 @@
   ];
 
   CO.data = {
+    megaBoss, finalBoss,
     buildings, visuals, upgrades, skins, themes, rarities, pets, eggs,
     golden, bosses, minigameUnlocks, achievements, quests, news, clickSounds,
   };

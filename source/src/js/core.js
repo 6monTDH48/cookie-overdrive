@@ -116,7 +116,7 @@
 
   function recalc(silent) {
     const s = CO.state;
-    M.click = 1; M.clickCps = 0; M.cps = 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
+    M.click = 1; M.clickCps = 0; M.cps = CO.state && CO.state.gameWon ? 2 : 1; M.crit = 0.03; M.critX = 10; M.goldenFreq = 1; M.goldenDur = 1; M.comboCap = 3; M.feverDur = 8;
     D.buildings.forEach((b) => (M.bld[b.id] = 1));
     const vis = {};
     for (const u of D.upgrades) {
@@ -362,6 +362,10 @@
       addBuff(eff.buff);
     } else if (eff.kind === 'rgbstorm') {
       if (!CO.fever.active) { CO.fever.cooldownUntil = 0; startFever(); } else CO.fever.until += 5;
+    } else if (eff.buff) {
+      addBuff(eff.buff);
+    } else if (eff.kind === 'bossbait') {
+      if (!CO.boss && CO.bossUnlocked() && !mgOpen) spawnBoss(); else { const n = 5; s.gems += n; label = 'PLUIE DE GEMMES +' + n; }
     } else if (eff.kind === 'gems') {
       const n = 3 + Math.floor(Math.random() * 6); s.gems += n; label = 'PLUIE DE GEMMES +' + n;
     }
@@ -376,21 +380,43 @@
   const BOSS_UNLOCK = 5000;
   CO.bossUnlocked = () => CO.state.allTimeBaked >= BOSS_UNLOCK;
   let nextBossAt = null;
-  function spawnBoss() {
-    const d = pick(D.bosses), k = CO.state.stats.bossKills;
-    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)));
-    const t = CO.now();
-    CO.boss = { ...d, hp, maxHp: hp, born: t, until: t + 30 };
+  function spawnBoss(forceFinal) {
+    const k = CO.state.stats.bossKills, t = CO.now();
+    let d, hpMul = 1, dur = 30, kind = 'normal';
+    if (forceFinal) { d = D.finalBoss; hpMul = 25; dur = 120; kind = 'final'; }
+    else if (k > 0 && (k + 1) % 10 === 0) { d = D.megaBoss; hpMul = 4; dur = 50; kind = 'mega'; }
+    else {
+      d = pick(D.bosses.filter((b) => (b.minKills || 0) <= k));
+      if (k >= 5 && Math.random() < 0.18) { hpMul = 2.2; dur = 35; kind = 'elite'; }
+    }
+    const hp = Math.round(80 * (1 + 0.35 * Math.min(k, 30)) * hpMul);
+    CO.boss = { ...d, name: kind === 'elite' ? d.name + ' ÉLITE' : d.name, kind, hp, maxHp: hp, born: t, until: t + dur };
     CO.sfx.play('boss');
     CO.emit('boss:spawn', { boss: CO.boss });
   }
   CO.spawnBoss = spawnBoss;
+  /* ─ Objectif final : conditions pour affronter le boss de fin (≥ 2 h de jeu garanties) ─ */
+  CO.finalGoal = () => {
+    const s = CO.state;
+    return [
+      { label: 'Jouer 2 heures', cur: s.stats.playTime, need: 7200, time: true },
+      { label: 'Faire 3 Rebirths', cur: s.rebirths, need: 3 },
+      { label: 'Battre 15 boss', cur: s.stats.bossKills, need: 15 },
+      { label: 'Produire 10 000 milliards de cookies (au total)', cur: s.allTimeBaked, need: 1e13 },
+    ];
+  };
+  CO.finalReady = () => CO.finalGoal().every((g) => g.cur >= g.need);
+  CO.fightFinal = () => { if (CO.boss || !CO.finalReady()) return false; spawnBoss(true); return true; };
   function defeatBoss() {
     const b = CO.boss, s = CO.state; if (!b) return;
     CO.boss = null;
     s.stats.bossKills++;
-    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100);
-    const gems = Math.min(20, 8 + s.stats.bossKills);
+    const rm = { elite: 2.5, mega: 5, final: 20 }[b.kind] || 1;
+    if (b.kind === 'elite') s.stats.eliteKills = (s.stats.eliteKills || 0) + 1;
+    if (b.kind === 'mega') s.stats.megaKills = (s.stats.megaKills || 0) + 1;
+    const cookies = Math.max(500, CO.cpsNow() * 300 + CO.clickValue() * 100) * rm;
+    const gems = Math.round(Math.min(20, 8 + s.stats.bossKills) * rm);
+    if (b.kind === 'final' && !s.gameWon) { s.gameWon = true; s.stats.wonAt = s.stats.playTime; recalc(); setTimeout(() => CO.emit('game:won', {}), 1200); }
     earn(cookies); s.gems += gems;
     addBuff({ id: 'victory', name: 'Victoire', icon: 'ui:trophy', dur: 60, cps: 2 });
     questProgress('boss', 1);
