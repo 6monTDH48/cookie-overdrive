@@ -108,6 +108,23 @@
     { id: 'trou_noir',     name: 'Trou Noir', cost: 1.7e15,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 1] }, vis: ['black_hole', 1] },
     { id: 'prisme',        name: 'Afterimage Prismatique', cost: 2.1e16,  fx: { bld: 'prism', x: 2, cps: 1.2 },   req: { bld: ['prism', 1] },     vis: ['afterimage', 1] },
     { id: 'chat_direct',   name: 'Chat en Direct', cost: 2.6e17,  fx: { bld: 'streamer', x: 2 },          req: { bld: ['streamer', 1] },  vis: ['chat', 1] },
+    // ── vague 2 : paliers 25 / 50 et bonus globaux ──
+    { id: 'curseurs_50',   name: 'Curseurs Hyperthreadés', cost: 5e6,     fx: { bld: 'cursor', x: 3 },            req: { bld: ['cursor', 50] },   vis: ['cursor_rgb', 1] },
+    { id: 'mamies_50',     name: 'Mamies Pro League', cost: 4e7,     fx: { bld: 'granny', x: 3 },            req: { bld: ['granny', 50] },   vis: ['headphones', 1] },
+    { id: 'ferme_50',      name: 'Serres Hydroponiques', cost: 4.4e8,   fx: { bld: 'farm', x: 3 },              req: { bld: ['farm', 50] },     vis: ['sprinkles', 1] },
+    { id: 'temple_25',     name: 'Chorale Céleste', cost: 5e9,     fx: { bld: 'temple', x: 2 },            req: { bld: ['temple', 25] },   vis: ['halo', 1] },
+    { id: 'wizard_25',     name: 'Grimoire Interdit', cost: 8e10,    fx: { bld: 'wizard', x: 2 },            req: { bld: ['wizard', 25] },   vis: ['disco', 1] },
+    { id: 'rocket_25',     name: 'Réacteurs Ionique', cost: 1.3e12,  fx: { bld: 'rocket', x: 2 },            req: { bld: ['rocket', 25] },   vis: ['warp', 1] },
+    { id: 'lab_25',        name: 'Pierre Philosophale', cost: 1.9e13,  fx: { bld: 'lab', x: 2 },               req: { bld: ['lab', 25] },      vis: ['crystals', 1] },
+    { id: 'portal_25',     name: 'Multivers Stable', cost: 2.5e14,  fx: { bld: 'portal', x: 2 },            req: { bld: ['portal', 25] },   vis: ['galaxy_core', 1] },
+    { id: 'time_25',       name: 'Paradoxe Maîtrisé', cost: 3.5e15,  fx: { bld: 'timemachine', x: 2 },       req: { bld: ['timemachine', 25] }, vis: ['afterimage', 1] },
+    { id: 'anti_25',       name: 'Singularité Domptée', cost: 4.3e16,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 25] }, vis: ['black_hole', 1] },
+    { id: 'prism_25',      name: 'Spectre Infini', cost: 5.3e17,  fx: { bld: 'prism', x: 2 },             req: { bld: ['prism', 25] },    vis: ['holo', 1] },
+    { id: 'stream_25',     name: 'Raid de 100 000 Viewers', cost: 6.5e18, fx: { bld: 'streamer', x: 2 },     req: { bld: ['streamer', 25] }, vis: ['chat', 1] },
+    { id: 'crit_2',        name: 'Doigt Stroboscopique', cost: 3e10,    fx: { crit: 0.04 },                     req: { crits: 300 },            vis: ['lightning', 1] },
+    { id: 'lucky_2',       name: 'Trèfle à Quatre Pépites', cost: 9e13,    fx: { goldenFreq: 1.25 },               req: { golden: 50 },            vis: ['god_rays', 1] },
+    { id: 'clic_divin',    name: 'Index Divin', cost: 4e14,    fx: { click: 3, clickCps: 0.02 },       req: { clicks: 25000 },         vis: ['laser_eyes', 1] },
+    { id: 'turbo_global',  name: 'Overclock Total', cost: 1e18,    fx: { cps: 1.25 },                      req: { baked: 5e17 },           vis: ['glitch', 1] },
   ];
 
   /* ───────────────────────── SKINS ─────────────────────────
@@ -125,6 +142,12 @@
     { id: 'hologram',     name: 'Hologramme',       style: 'holo',    cost: 150, pal: { base: '#39f0ff', dark: '#0b6d8a', light: '#b7fbff', chip: '#ff4fe1', chipHi: '#ffffff', rim: '#39f0ff' } },
     { id: 'golden',       name: 'Cookie Doré',      style: 'gold',    cost: 0, unlock: { ach: 'a_golden10', text: 'Attrape 10 cookies dorés' }, pal: { base: '#ffcc33', dark: '#c98a00', light: '#fff2a8', chip: '#b36b00', chipHi: '#ffe07a', rim: '#8a5a00' } },
     { id: 'rainbow',      name: 'Arc-en-ciel RGB',  style: 'rainbow', cost: 250, pal: { base: '#ff4fd8', dark: '#7a2cff', light: '#ffffff', chip: '#1a0b33', chipHi: '#5a3a8a', rim: '#ffffff' } },
+    { id: 'mint',         name: 'Menthe Glaciale',  style: 'classic', cost: 30,  pal: { base: '#9fe8d2', dark: '#4fb89a', light: '#d8fff2', chip: '#2b1a12', chipHi: '#5a3a28', rim: '#3a9a80' } },
+    { id: 'blueberry',    name: 'Myrtille',         style: 'classic', cost: 35,  pal: { base: '#5b5bd6', dark: '#2e2e8a', light: '#9a9aff', chip: '#e8e0ff', chipHi: '#ffffff', rim: '#23236a' } },
+    { id: 'retro_gb',     name: 'Game Boy',         style: 'pixel',   cost: 70,  pal: { base: '#8bac0f', dark: '#306230', light: '#9bbc0f', chip: '#0f380f', chipHi: '#306230', rim: '#0f380f' } },
+    { id: 'ice',          name: 'Cristal de Glace', style: 'diamond', cost: 140, pal: { base: '#cfe9ff', dark: '#7aa8d6', light: '#ffffff', chip: '#9ad0ff', chipHi: '#ffffff', rim: '#5b8fc9' } },
+    { id: 'plasma',       name: 'Plasma',           style: 'lava',    cost: 180, pal: { base: '#12062a', dark: '#05010f', light: '#2a1060', chip: '#00e5ff', chipHi: '#e0ffff', rim: '#7a2cff' } },
+    { id: 'nebula_rose',  name: 'Nébuleuse Rose',   style: 'galaxy',  cost: 200, pal: { base: '#5a0f4a', dark: '#2a0522', light: '#b03c8f', chip: '#ffd0f0', chipHi: '#ffffff', rim: '#ff5ec8' } },
     { id: 'void',         name: 'Néant',            style: 'void',    cost: 0, unlock: { rebirths: 3, text: 'Fais 3 Rebirths' }, pal: { base: '#07030f', dark: '#000000', light: '#1d1033', chip: '#b16bff', chipHi: '#ffffff', rim: '#b16bff' } },
   ];
 
@@ -298,6 +321,11 @@
     'Sondage : 100 % des cookies votent pour plus de pépites.',
     'Le Stream 24/7 bat un record : 3 millions de « W » dans le chat.',
     'Ta mamie gameuse vient de te carry en ranked. Gênant.',
+    'Beethoven aurait composé l\'Hymne à la Joie en mangeant un cookie. Source : tkt.',
+    'Le Roi de la Montagne réclame des droits d\'auteur. Il est dans le domaine public, frérot.',
+    'Tetris porte plainte : ton cookie empile trop bien les pépites.',
+    'Nouveau skin Game Boy : les parents pleurent de nostalgie.',
+    'Un cookie a été vu en train de faire la queue pour un concert de clavecin.',
     'Un Poulpe Glacé aperçu en train de cliquer avec ses 8 bras. Triche ?',
   ];
 

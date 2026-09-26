@@ -83,13 +83,13 @@
   /* ═════════════════════════ STATE ═════════════════════════ */
   const reduced = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
   function defaultSettings() {
-    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1 };
+    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1, track: 'synthwave' };
   }
   function defaultState() {
     return {
       v: 1,
       cookies: 0, totalBaked: 0, allTimeBaked: 0, clicks: 0, clickBaked: 0,
-      gems: 0, rebirths: 0, stars: 0,
+      gems: 0, rebirths: 0, stars: 0, lastDaily: '', dailyStreak: 0,
       buildings: Object.fromEntries(D.buildings.map((b) => [b.id, 0])),
       upgrades: {},
       skin: 'classic', skinsOwned: { classic: true },
@@ -782,6 +782,25 @@
     const CH = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]; // Am F C G
     const BASS = [45, 41, 36, 43];
     const stepDur = () => 60 / CO.bpm / 4;
+    // Classical melodies (public domain) over the same drum engine. mel: [midi|0 (rest), length in 16th steps]
+    const TRI = { Am: [57, 60, 64], E: [56, 59, 64], Dm: [57, 62, 65], C: [55, 60, 64], G: [55, 59, 62], F: [57, 60, 65] };
+    const ROOT = { Am: 45, E: 40, Dm: 38, C: 36, G: 43, F: 41 };
+    const TRACKS = {
+      korobeiniki: { ch: ['E', 'Am', 'E', 'Am', 'Dm', 'C', 'E', 'Am'], wave: 'square',
+        mel: [[76, 4], [71, 2], [72, 2], [74, 4], [72, 2], [71, 2], [69, 4], [69, 2], [72, 2], [76, 4], [74, 2], [72, 2], [71, 6], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8],
+          [0, 2], [74, 4], [77, 2], [81, 4], [79, 2], [77, 2], [76, 6], [72, 2], [76, 4], [74, 2], [72, 2], [71, 4], [71, 2], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8]] },
+      ode: { ch: ['C', 'G', 'C', 'G', 'C', 'G', 'C', 'C'], wave: 'triangle',
+        mel: [[76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [76, 6], [74, 2], [74, 8],
+          [76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [74, 6], [72, 2], [72, 8]] },
+      montagne: { ch: ['Am', 'E', 'Am', 'E', 'Am', 'E', 'Am', 'E'], wave: 'sawtooth',
+        mel: [].concat(...[0, 1].map(() => [[69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 4], [75, 2], [71, 2], [75, 4], [74, 2], [70, 2], [74, 4],
+          [69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 2], [81, 2], [79, 2], [76, 2], [72, 2], [76, 2], [79, 8]])) },
+      elise: { ch: ['E', 'Am', 'E', 'E', 'Am', 'Am', 'E', 'Am', 'E', 'E', 'Am', 'Am'], wave: 'triangle',
+        mel: [].concat(...[0, 1].map(() => [[76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4],
+          [64, 2], [68, 2], [71, 2], [72, 6], [64, 2], [76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4], [64, 2], [72, 2], [71, 2], [69, 10]])) },
+    };
+    Object.values(TRACKS).forEach((tr) => { tr.at = []; let i = 0; tr.mel.forEach(([n, l]) => { if (n) tr.at[i] = [n, l]; i += l; }); tr.len = Math.max(i, tr.ch.length * 16); });
+    CO.musicTracks = [['synthwave', 'Synthwave (originale)'], ['korobeiniki', 'Korobeïniki (thème Tetris)'], ['ode', 'Hymne à la Joie — Beethoven'], ['montagne', 'Antre du Roi de la Montagne — Grieg'], ['elise', 'Lettre à Élise — Beethoven']];
     function kick(t) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14); g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.32); }
     function snare(t) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.7; const g = actx.createGain(); g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.2); const o = actx.createOscillator(), g2 = actx.createGain(); o.frequency.value = 190; g2.gain.setValueAtTime(0.25, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); g2.connect(musicBus); o.start(t); o.stop(t + 0.12); }
     function hat(t, v) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 8000; const g = actx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.06); }
@@ -797,9 +816,17 @@
         }
         if (s === 4 || s === 12) snare(t);
         if (s % 2 === 1 || hot) hat(t, s % 2 === 1 ? 0.12 : 0.05);
+        const tr = TRACKS[CO.settings.track];
+        if (tr) {
+          const pos = step % tr.len, cn = tr.ch[Math.floor(pos / 16) % tr.ch.length];
+          if (s % 2 === 0) synth(NOTE(ROOT[cn] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.14, hot ? 1400 : 700);
+          if (s === 0) TRI[cn].forEach((n) => synth(NOTE(n), t, stepDur() * 15, 'sawtooth', 0.025, 1400));
+          const nt = tr.at[pos]; if (nt) synth(NOTE(nt[0]), t, stepDur() * nt[1] * 0.95, tr.wave, hot ? 0.075 : 0.06, hot ? 5000 : 3200);
+        } else {
         if (s % 2 === 0) synth(NOTE(BASS[chord] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.16, hot ? 1400 : 700);
         if (s === 0 && bar % 2 === 0) CH[chord].forEach((n) => synth(NOTE(n + 12), t, stepDur() * 30, 'sawtooth', 0.035, 1600));
         if ((hot || bar % 8 >= 4)) { const arp = CH[chord]; synth(NOTE(arp[s % 3] + 24 + (s % 8 >= 6 ? 12 : 0)), t, stepDur() * 0.9, 'square', hot ? 0.05 : 0.03, hot ? 5000 : 2600); }
+        }
         nextT += stepDur(); step++; if (step % 16 === 0) bar++;
       }
     }
@@ -825,6 +852,7 @@
   CO.setSetting = (k, v) => {
     CO.settings[k] = v;
     if (k === 'sfx' || k === 'music') CO.applyVolumes();
+    if (k === 'track' && music.playing) { music.stop(); music.start(); }
     if (k === 'musicOn') { if (v) { unlockAudio(); music.start(); } else music.stop(); }
     CO.emit('settings', { settings: CO.settings, key: k });
     saveSoon();
@@ -992,6 +1020,19 @@
         if (gain > 0) { earn(gain, 'offline'); CO.offline = { away, gain }; }
       }
     }
+    // daily gift: gems for coming back each day, streak bonus up to 7 days
+    try {
+      const day = new Date().toISOString().slice(0, 10), st = CO.state;
+      if (st.lastDaily !== day) {
+        const yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+        st.dailyStreak = st.lastDaily === yest ? Math.min(7, (+st.dailyStreak || 0) + 1) : 1;
+        st.lastDaily = day;
+        const g = 2 + st.dailyStreak;
+        st.gems += g;
+        CO.daily = { gems: g, streak: st.dailyStreak };
+        setTimeout(() => CO.toast('Cadeau du jour : +' + g + ' gemmes (série ' + st.dailyStreak + '/7)', { icon: 'ui:gem', color: '#ffcc33' }), 2500);
+      }
+    } catch (e) { /* optional */ }
     lastT = CO.now();
     setInterval(tick, 50);
     window.addEventListener('pagehide', save);

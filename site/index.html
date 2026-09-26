@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cookie Overdrive</title>
 <meta name="description" content="Cookie clicker RGB hyperactif : upgrades qui transforment le cookie, pets, boss, mini-jeux.">
 <meta name="theme-color" content="#14062b">
@@ -681,6 +683,23 @@
     { id: 'trou_noir',     name: 'Trou Noir', cost: 1.7e15,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 1] }, vis: ['black_hole', 1] },
     { id: 'prisme',        name: 'Afterimage Prismatique', cost: 2.1e16,  fx: { bld: 'prism', x: 2, cps: 1.2 },   req: { bld: ['prism', 1] },     vis: ['afterimage', 1] },
     { id: 'chat_direct',   name: 'Chat en Direct', cost: 2.6e17,  fx: { bld: 'streamer', x: 2 },          req: { bld: ['streamer', 1] },  vis: ['chat', 1] },
+    // ── vague 2 : paliers 25 / 50 et bonus globaux ──
+    { id: 'curseurs_50',   name: 'Curseurs Hyperthreadés', cost: 5e6,     fx: { bld: 'cursor', x: 3 },            req: { bld: ['cursor', 50] },   vis: ['cursor_rgb', 1] },
+    { id: 'mamies_50',     name: 'Mamies Pro League', cost: 4e7,     fx: { bld: 'granny', x: 3 },            req: { bld: ['granny', 50] },   vis: ['headphones', 1] },
+    { id: 'ferme_50',      name: 'Serres Hydroponiques', cost: 4.4e8,   fx: { bld: 'farm', x: 3 },              req: { bld: ['farm', 50] },     vis: ['sprinkles', 1] },
+    { id: 'temple_25',     name: 'Chorale Céleste', cost: 5e9,     fx: { bld: 'temple', x: 2 },            req: { bld: ['temple', 25] },   vis: ['halo', 1] },
+    { id: 'wizard_25',     name: 'Grimoire Interdit', cost: 8e10,    fx: { bld: 'wizard', x: 2 },            req: { bld: ['wizard', 25] },   vis: ['disco', 1] },
+    { id: 'rocket_25',     name: 'Réacteurs Ionique', cost: 1.3e12,  fx: { bld: 'rocket', x: 2 },            req: { bld: ['rocket', 25] },   vis: ['warp', 1] },
+    { id: 'lab_25',        name: 'Pierre Philosophale', cost: 1.9e13,  fx: { bld: 'lab', x: 2 },               req: { bld: ['lab', 25] },      vis: ['crystals', 1] },
+    { id: 'portal_25',     name: 'Multivers Stable', cost: 2.5e14,  fx: { bld: 'portal', x: 2 },            req: { bld: ['portal', 25] },   vis: ['galaxy_core', 1] },
+    { id: 'time_25',       name: 'Paradoxe Maîtrisé', cost: 3.5e15,  fx: { bld: 'timemachine', x: 2 },       req: { bld: ['timemachine', 25] }, vis: ['afterimage', 1] },
+    { id: 'anti_25',       name: 'Singularité Domptée', cost: 4.3e16,  fx: { bld: 'antimatter', x: 2 },        req: { bld: ['antimatter', 25] }, vis: ['black_hole', 1] },
+    { id: 'prism_25',      name: 'Spectre Infini', cost: 5.3e17,  fx: { bld: 'prism', x: 2 },             req: { bld: ['prism', 25] },    vis: ['holo', 1] },
+    { id: 'stream_25',     name: 'Raid de 100 000 Viewers', cost: 6.5e18, fx: { bld: 'streamer', x: 2 },     req: { bld: ['streamer', 25] }, vis: ['chat', 1] },
+    { id: 'crit_2',        name: 'Doigt Stroboscopique', cost: 3e10,    fx: { crit: 0.04 },                     req: { crits: 300 },            vis: ['lightning', 1] },
+    { id: 'lucky_2',       name: 'Trèfle à Quatre Pépites', cost: 9e13,    fx: { goldenFreq: 1.25 },               req: { golden: 50 },            vis: ['god_rays', 1] },
+    { id: 'clic_divin',    name: 'Index Divin', cost: 4e14,    fx: { click: 3, clickCps: 0.02 },       req: { clicks: 25000 },         vis: ['laser_eyes', 1] },
+    { id: 'turbo_global',  name: 'Overclock Total', cost: 1e18,    fx: { cps: 1.25 },                      req: { baked: 5e17 },           vis: ['glitch', 1] },
   ];
 
   /* ───────────────────────── SKINS ─────────────────────────
@@ -698,6 +717,12 @@
     { id: 'hologram',     name: 'Hologramme',       style: 'holo',    cost: 150, pal: { base: '#39f0ff', dark: '#0b6d8a', light: '#b7fbff', chip: '#ff4fe1', chipHi: '#ffffff', rim: '#39f0ff' } },
     { id: 'golden',       name: 'Cookie Doré',      style: 'gold',    cost: 0, unlock: { ach: 'a_golden10', text: 'Attrape 10 cookies dorés' }, pal: { base: '#ffcc33', dark: '#c98a00', light: '#fff2a8', chip: '#b36b00', chipHi: '#ffe07a', rim: '#8a5a00' } },
     { id: 'rainbow',      name: 'Arc-en-ciel RGB',  style: 'rainbow', cost: 250, pal: { base: '#ff4fd8', dark: '#7a2cff', light: '#ffffff', chip: '#1a0b33', chipHi: '#5a3a8a', rim: '#ffffff' } },
+    { id: 'mint',         name: 'Menthe Glaciale',  style: 'classic', cost: 30,  pal: { base: '#9fe8d2', dark: '#4fb89a', light: '#d8fff2', chip: '#2b1a12', chipHi: '#5a3a28', rim: '#3a9a80' } },
+    { id: 'blueberry',    name: 'Myrtille',         style: 'classic', cost: 35,  pal: { base: '#5b5bd6', dark: '#2e2e8a', light: '#9a9aff', chip: '#e8e0ff', chipHi: '#ffffff', rim: '#23236a' } },
+    { id: 'retro_gb',     name: 'Game Boy',         style: 'pixel',   cost: 70,  pal: { base: '#8bac0f', dark: '#306230', light: '#9bbc0f', chip: '#0f380f', chipHi: '#306230', rim: '#0f380f' } },
+    { id: 'ice',          name: 'Cristal de Glace', style: 'diamond', cost: 140, pal: { base: '#cfe9ff', dark: '#7aa8d6', light: '#ffffff', chip: '#9ad0ff', chipHi: '#ffffff', rim: '#5b8fc9' } },
+    { id: 'plasma',       name: 'Plasma',           style: 'lava',    cost: 180, pal: { base: '#12062a', dark: '#05010f', light: '#2a1060', chip: '#00e5ff', chipHi: '#e0ffff', rim: '#7a2cff' } },
+    { id: 'nebula_rose',  name: 'Nébuleuse Rose',   style: 'galaxy',  cost: 200, pal: { base: '#5a0f4a', dark: '#2a0522', light: '#b03c8f', chip: '#ffd0f0', chipHi: '#ffffff', rim: '#ff5ec8' } },
     { id: 'void',         name: 'Néant',            style: 'void',    cost: 0, unlock: { rebirths: 3, text: 'Fais 3 Rebirths' }, pal: { base: '#07030f', dark: '#000000', light: '#1d1033', chip: '#b16bff', chipHi: '#ffffff', rim: '#b16bff' } },
   ];
 
@@ -871,6 +896,11 @@
     'Sondage : 100 % des cookies votent pour plus de pépites.',
     'Le Stream 24/7 bat un record : 3 millions de « W » dans le chat.',
     'Ta mamie gameuse vient de te carry en ranked. Gênant.',
+    'Beethoven aurait composé l\'Hymne à la Joie en mangeant un cookie. Source : tkt.',
+    'Le Roi de la Montagne réclame des droits d\'auteur. Il est dans le domaine public, frérot.',
+    'Tetris porte plainte : ton cookie empile trop bien les pépites.',
+    'Nouveau skin Game Boy : les parents pleurent de nostalgie.',
+    'Un cookie a été vu en train de faire la queue pour un concert de clavecin.',
     'Un Poulpe Glacé aperçu en train de cliquer avec ses 8 bras. Triche ?',
   ];
 
@@ -2544,13 +2574,13 @@
   /* ═════════════════════════ STATE ═════════════════════════ */
   const reduced = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
   function defaultSettings() {
-    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1 };
+    return { sfx: 0.55, music: 0.4, musicOn: false, rgbSpeed: 1, particles: 2, shake: !reduced, trail: true, reducedMotion: reduced, numFormat: 'short', showFps: false, uiHue: 'rgb', clickSound: 'pop', buyQty: 1, track: 'synthwave' };
   }
   function defaultState() {
     return {
       v: 1,
       cookies: 0, totalBaked: 0, allTimeBaked: 0, clicks: 0, clickBaked: 0,
-      gems: 0, rebirths: 0, stars: 0,
+      gems: 0, rebirths: 0, stars: 0, lastDaily: '', dailyStreak: 0,
       buildings: Object.fromEntries(D.buildings.map((b) => [b.id, 0])),
       upgrades: {},
       skin: 'classic', skinsOwned: { classic: true },
@@ -3243,6 +3273,25 @@
     const CH = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]; // Am F C G
     const BASS = [45, 41, 36, 43];
     const stepDur = () => 60 / CO.bpm / 4;
+    // Classical melodies (public domain) over the same drum engine. mel: [midi|0 (rest), length in 16th steps]
+    const TRI = { Am: [57, 60, 64], E: [56, 59, 64], Dm: [57, 62, 65], C: [55, 60, 64], G: [55, 59, 62], F: [57, 60, 65] };
+    const ROOT = { Am: 45, E: 40, Dm: 38, C: 36, G: 43, F: 41 };
+    const TRACKS = {
+      korobeiniki: { ch: ['E', 'Am', 'E', 'Am', 'Dm', 'C', 'E', 'Am'], wave: 'square',
+        mel: [[76, 4], [71, 2], [72, 2], [74, 4], [72, 2], [71, 2], [69, 4], [69, 2], [72, 2], [76, 4], [74, 2], [72, 2], [71, 6], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8],
+          [0, 2], [74, 4], [77, 2], [81, 4], [79, 2], [77, 2], [76, 6], [72, 2], [76, 4], [74, 2], [72, 2], [71, 4], [71, 2], [72, 2], [74, 4], [76, 4], [72, 4], [69, 4], [69, 8]] },
+      ode: { ch: ['C', 'G', 'C', 'G', 'C', 'G', 'C', 'C'], wave: 'triangle',
+        mel: [[76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [76, 6], [74, 2], [74, 8],
+          [76, 4], [76, 4], [77, 4], [79, 4], [79, 4], [77, 4], [76, 4], [74, 4], [72, 4], [72, 4], [74, 4], [76, 4], [74, 6], [72, 2], [72, 8]] },
+      montagne: { ch: ['Am', 'E', 'Am', 'E', 'Am', 'E', 'Am', 'E'], wave: 'sawtooth',
+        mel: [].concat(...[0, 1].map(() => [[69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 4], [75, 2], [71, 2], [75, 4], [74, 2], [70, 2], [74, 4],
+          [69, 2], [71, 2], [72, 2], [74, 2], [76, 2], [72, 2], [76, 2], [81, 2], [79, 2], [76, 2], [72, 2], [76, 2], [79, 8]])) },
+      elise: { ch: ['E', 'Am', 'E', 'E', 'Am', 'Am', 'E', 'Am', 'E', 'E', 'Am', 'Am'], wave: 'triangle',
+        mel: [].concat(...[0, 1].map(() => [[76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4],
+          [64, 2], [68, 2], [71, 2], [72, 6], [64, 2], [76, 2], [75, 2], [76, 2], [75, 2], [76, 2], [71, 2], [74, 2], [72, 2], [69, 6], [60, 2], [64, 2], [69, 2], [71, 4], [64, 2], [72, 2], [71, 2], [69, 10]])) },
+    };
+    Object.values(TRACKS).forEach((tr) => { tr.at = []; let i = 0; tr.mel.forEach(([n, l]) => { if (n) tr.at[i] = [n, l]; i += l; }); tr.len = Math.max(i, tr.ch.length * 16); });
+    CO.musicTracks = [['synthwave', 'Synthwave (originale)'], ['korobeiniki', 'Korobeïniki (thème Tetris)'], ['ode', 'Hymne à la Joie — Beethoven'], ['montagne', 'Antre du Roi de la Montagne — Grieg'], ['elise', 'Lettre à Élise — Beethoven']];
     function kick(t) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14); g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.32); }
     function snare(t) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.7; const g = actx.createGain(); g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.2); const o = actx.createOscillator(), g2 = actx.createGain(); o.frequency.value = 190; g2.gain.setValueAtTime(0.25, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); g2.connect(musicBus); o.start(t); o.stop(t + 0.12); }
     function hat(t, v) { const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 8000; const g = actx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); s.connect(f); f.connect(g); g.connect(musicBus); s.start(t, Math.random() * 0.5); s.stop(t + 0.06); }
@@ -3258,9 +3307,17 @@
         }
         if (s === 4 || s === 12) snare(t);
         if (s % 2 === 1 || hot) hat(t, s % 2 === 1 ? 0.12 : 0.05);
+        const tr = TRACKS[CO.settings.track];
+        if (tr) {
+          const pos = step % tr.len, cn = tr.ch[Math.floor(pos / 16) % tr.ch.length];
+          if (s % 2 === 0) synth(NOTE(ROOT[cn] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.14, hot ? 1400 : 700);
+          if (s === 0) TRI[cn].forEach((n) => synth(NOTE(n), t, stepDur() * 15, 'sawtooth', 0.025, 1400));
+          const nt = tr.at[pos]; if (nt) synth(NOTE(nt[0]), t, stepDur() * nt[1] * 0.95, tr.wave, hot ? 0.075 : 0.06, hot ? 5000 : 3200);
+        } else {
         if (s % 2 === 0) synth(NOTE(BASS[chord] + (s % 4 === 2 ? 12 : 0)), t, stepDur() * 1.8, 'sawtooth', 0.16, hot ? 1400 : 700);
         if (s === 0 && bar % 2 === 0) CH[chord].forEach((n) => synth(NOTE(n + 12), t, stepDur() * 30, 'sawtooth', 0.035, 1600));
         if ((hot || bar % 8 >= 4)) { const arp = CH[chord]; synth(NOTE(arp[s % 3] + 24 + (s % 8 >= 6 ? 12 : 0)), t, stepDur() * 0.9, 'square', hot ? 0.05 : 0.03, hot ? 5000 : 2600); }
+        }
         nextT += stepDur(); step++; if (step % 16 === 0) bar++;
       }
     }
@@ -3286,6 +3343,7 @@
   CO.setSetting = (k, v) => {
     CO.settings[k] = v;
     if (k === 'sfx' || k === 'music') CO.applyVolumes();
+    if (k === 'track' && music.playing) { music.stop(); music.start(); }
     if (k === 'musicOn') { if (v) { unlockAudio(); music.start(); } else music.stop(); }
     CO.emit('settings', { settings: CO.settings, key: k });
     saveSoon();
@@ -3453,6 +3511,19 @@
         if (gain > 0) { earn(gain, 'offline'); CO.offline = { away, gain }; }
       }
     }
+    // daily gift: gems for coming back each day, streak bonus up to 7 days
+    try {
+      const day = new Date().toISOString().slice(0, 10), st = CO.state;
+      if (st.lastDaily !== day) {
+        const yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+        st.dailyStreak = st.lastDaily === yest ? Math.min(7, (+st.dailyStreak || 0) + 1) : 1;
+        st.lastDaily = day;
+        const g = 2 + st.dailyStreak;
+        st.gems += g;
+        CO.daily = { gems: g, streak: st.dailyStreak };
+        setTimeout(() => CO.toast('Cadeau du jour : +' + g + ' gemmes (série ' + st.dailyStreak + '/7)', { icon: 'ui:gem', color: '#ffcc33' }), 2500);
+      }
+    } catch (e) { /* optional */ }
     lastT = CO.now();
     setInterval(tick, 50);
     window.addEventListener('pagehide', save);
@@ -10474,7 +10545,8 @@
       subTitle('ui:sound', 'Son'),
       h('div.opts',
         range('sfx', 'Effets sonores', 0, 1, 0.05),
-        sw('musicOn', 'Musique synthwave', 'Générée en direct, elle s\'emballe en Fièvre'),
+        sw('musicOn', 'Musique', 'Générée en direct, elle s\'emballe en Fièvre'),
+        select('track', 'Morceau', CO.musicTracks || [['synthwave', 'Synthwave']]),
         range('music', 'Volume musique', 0, 1, 0.05),
         select('clickSound', 'Son du clic', D.clickSounds.map((c) => [c.id, c.name]))),
       subTitle('ui:sparkle', 'Visuel'),
